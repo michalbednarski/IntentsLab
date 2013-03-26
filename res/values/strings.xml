@@ -1,0 +1,46 @@
+<resources>
+
+    <string name="app_name">TestApp1</string>
+    <string name="start_empty">Empty Intent</string>
+    <string name="start_recent_task">Pick running task</string>
+    <string name="start_browse_apps">Browse apps</string>
+    <string name="menu_add_extra">Add extra</string>
+    <string name="menu_startActivity">startActivity</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_entry_editor">Intent extra/Bundle entry</string>
+
+    <!-- Intent editor -->
+    <string name="label_intent_action">Intent action</string>
+    <string name="label_intent_data">Intent data (URI)</string>
+    <string name="label_intent_extras">Extras</string>
+    <string name="label_intent_component">Component name (for explicit intents)</string>
+    <string name="label_pick">Pick</string>
+    <string name="label_clear">Clear</string>
+    <string name="use_startactivityforresult">Read result of activity</string>
+    <string name="startactivity_error_invalid_component_no_slash">Component name is invalid: no /</string>
+    <string name="startactivity_error_not_found">Activity not found</string>
+    <string name="startactivity_error_security_exception">Not allowed to start activity</string>
+    <!-- <string name="title_activity_start">StartActivity</string> -->
+
+
+    <!-- Unused -->
+    <string name="hello_world">Hello world!</string>
+
+    <!-- Recents picker -->
+    <string name="title_activity_pick_recenly_running">PickRecenlyRunningActivity</string>
+    <string name="menu_show_boring">Show all</string>
+    <string name="menu_hide_boring">Hide boring</string>
+    <string name="title_activity_browse_apps">BrowseAppsActivity</string>
+    
+
+    <!-- Broadcast catcher -->
+    <string name="register_receiver">Register receiver</string>
+    <string name="unregister_receiver">Unregister</string>
+    <string name="title_activity_catch_broadcast">Catch broadcast</string>
+    <string name="waiting_for_broadcast">Waiting for broadcast&#8230;</string>
+    <string name="got_broadcast">Got broadcast</string>
+    
+    <string name="broadcast_autoedit">Autoedit broadcast</string>
+    <string name="broadcast_autoedit_on">Open editor immediately after catching broadcast</string>
+    <string name="broadcast_autoedit_off">Wait for notification click to edit non-sticky caught broadcast</string>
+</resources>

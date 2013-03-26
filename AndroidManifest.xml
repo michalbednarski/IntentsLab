@@ -1,0 +1,55 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.testapp1"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="7"
+        android:targetSdkVersion="15" />
+
+    <uses-permission android:name="android.permission.GET_TASKS" />
+
+    <application
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity android:name=".StartActivity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".editor.IntentEditorActivity" >
+        </activity>
+        <activity android:name=".editor.EntryEditorActivity" >
+        </activity>
+        <activity
+            android:name=".PickRecentlyRunningActivity"
+            android:label="@string/title_activity_pick_recenly_running" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.testapp1.StartActivity" />
+        </activity>
+        <activity
+            android:name=".BrowseAppsActivity"
+            android:label="@string/title_activity_browse_apps" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.testapp1.StartActivity" />
+        </activity>
+
+        <activity
+            android:name=".CatchBroadcastActivity"
+            android:label="@string/title_activity_catch_broadcast"
+            android:theme="@style/DialogTheme" />
+
+        <service
+            android:name=".CatchBroadcastService"
+            android:exported="false" />
+        
+        <activity
+            android:name=".PrefsActivity"
+            />
+    </application>
+
+</manifest>

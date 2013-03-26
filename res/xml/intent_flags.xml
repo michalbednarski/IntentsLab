@@ -1,0 +1,82 @@
+<flags>
+
+    <flag
+        name="FLAG_ACTIVITY_BROUGHT_TO_FRONT"
+        desc="This flag is not normally set by application code, but set for you by the system as described in the launchMode documentation for the singleTask mode." />
+    <flag
+        name="FLAG_ACTIVITY_CLEAR_TASK"
+        desc="If set in an Intent passed to Context.startActivity(), this flag will cause any existing task that would be associated with the activity to be cleared before the activity is started." />
+    <flag
+        name="FLAG_ACTIVITY_CLEAR_TOP"
+        desc="If set, and the activity being launched is already running in the current task, then instead of launching a new instance of that activity, all of the other activities on top of it will be closed and this Intent will be delivered to the (now on top) old activity as a new Intent." />
+    <flag
+        name="FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET"
+        desc="If set, this marks a point in the task&apos;s activity stack that should be cleared when the task is reset." />
+    <flag
+        name="FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS"
+        desc="If set, the new activity is not kept in the list of recently launched activities." />
+    <flag
+        name="FLAG_ACTIVITY_FORWARD_RESULT"
+        desc="If set and this intent is being used to launch a new activity from an existing one, then the reply target of the existing activity will be transfered to the new activity." />
+    <flag
+        name="FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY"
+        desc="This flag is not normally set by application code, but set for you by the system if this activity is being launched from history (longpress home key)." />
+    <flag
+        name="FLAG_ACTIVITY_MULTIPLE_TASK"
+        desc="Do not use this flag unless you are implementing your own top-level application launcher." />
+    <flag
+        name="FLAG_ACTIVITY_NEW_TASK"
+        desc="If set, this activity will become the start of a new task on this history stack." />
+    <flag
+        name="FLAG_ACTIVITY_NO_ANIMATION"
+        desc="If set in an Intent passed to Context.startActivity(), this flag will prevent the system from applying an activity transition animation to go to the next activity state." />
+    <flag
+        name="FLAG_ACTIVITY_NO_HISTORY"
+        desc="If set, the new activity is not kept in the history stack." />
+    <flag
+        name="FLAG_ACTIVITY_NO_USER_ACTION"
+        desc="If set, this flag will prevent the normal onUserLeaveHint() callback from occurring on the current frontmost activity before it is paused as the newly-started activity is brought to the front." />
+    <flag
+        name="FLAG_ACTIVITY_PREVIOUS_IS_TOP"
+        desc="If set and this intent is being used to launch a new activity from an existing one, the current activity will not be counted as the top activity for deciding whether the new intent should be delivered to the top instead of starting a new one." />
+    <flag
+        name="FLAG_ACTIVITY_REORDER_TO_FRONT"
+        desc="If set in an Intent passed to Context.startActivity(), this flag will cause the launched activity to be brought to the front of its task&apos;s history stack if it is already running." />
+    <flag
+        name="FLAG_ACTIVITY_RESET_TASK_IF_NEEDED"
+        desc="If set, and this activity is either being started in a new task or bringing to the top an existing task, then it will be launched as the front door of the task." />
+    <flag
+        name="FLAG_ACTIVITY_SINGLE_TOP"
+        desc="If set, the activity will not be launched if it is already running at the top of the history stack." />
+    <flag
+        name="FLAG_ACTIVITY_TASK_ON_HOME"
+        desc="If set in an Intent passed to Context.startActivity(), this flag will cause a newly launching task to be placed on top of the current home activity task (if there is one)." />
+    <flag
+        name="FLAG_DEBUG_LOG_RESOLUTION"
+        desc="A flag you can enable for debugging: when set, log messages will be printed during the resolution of this intent to show you what has been found to create the final resolved list." />
+    <flag
+        name="FLAG_EXCLUDE_STOPPED_PACKAGES"
+        desc="If set, this intent will not match any components in packages that are currently stopped." />
+    <flag
+        name="FLAG_FROM_BACKGROUND"
+        desc="Can be set by the caller to indicate that this Intent is coming from a background operation, not from direct user interaction." />
+    <flag
+        name="FLAG_GRANT_READ_URI_PERMISSION"
+        desc="If set, the recipient of this Intent will be granted permission to perform read operations on the Uri in the Intent&apos;s data and any URIs specified in its ClipData." />
+    <flag
+        name="FLAG_GRANT_WRITE_URI_PERMISSION"
+        desc="If set, the recipient of this Intent will be granted permission to perform write operations on the Uri in the Intent&apos;s data and any URIs specified in its ClipData." />
+    <flag
+        name="FLAG_INCLUDE_STOPPED_PACKAGES"
+        desc="If set, this intent will always match any components in packages that are currently stopped." />
+    <flag
+        name="FLAG_RECEIVER_FOREGROUND"
+        desc="If set, when sending a broadcast the recipient is allowed to run at foreground priority, with a shorter timeout interval." />
+    <flag
+        name="FLAG_RECEIVER_REGISTERED_ONLY"
+        desc="If set, when sending a broadcast only registered receivers will be called -- no BroadcastReceiver components will be launched." />
+    <flag
+        name="FLAG_RECEIVER_REPLACE_PENDING"
+        desc="If set, when sending a broadcast the new broadcast will replace any existing pending broadcast that matches it." />
+
+</flags>

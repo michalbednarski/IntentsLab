@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="boring_actions">
+        <item >android.intent.action.MAIN</item>
+    </string-array>
+    <string-array name="boring_categories">
+        <item >android.intent.category.LAUNCHER</item>
+    </string-array>
+    
+    <!-- DON'T REORDER -->
+    <string-array name="intenttypes">
+        <item>Activity (Ignore result)</item>
+        <item>Activity (For result)</item>
+        <item>Broadcast</item>
+        <item>Start service</item>
+    </string-array>
+</resources>
