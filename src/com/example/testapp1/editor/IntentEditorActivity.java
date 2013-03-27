@@ -23,6 +23,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.testapp1.R;
+import com.example.testapp1.TabsHelper;
+import com.example.testapp1.TabsHelper.TabDef;
 
 public class IntentEditorActivity extends Activity implements
 		AdapterView.OnItemClickListener, OnItemLongClickListener {
@@ -41,6 +43,8 @@ public class IntentEditorActivity extends Activity implements
 	private Spinner mIntentDispositionSpinner;
 
 	private CheckBox[] mFlagCheckboxes = new CheckBox[32];
+	
+	private TabsHelper mTabsHelper = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -90,9 +94,10 @@ public class IntentEditorActivity extends Activity implements
 
 		// Flags list
 		try {
-			int baseIntentFlags = savedInstanceState != null ? savedInstanceState
-					.getInt("flags") : baseIntent != null ? baseIntent
-					.getFlags() : 0;
+			int baseIntentFlags =
+					savedInstanceState != null ? savedInstanceState.getInt("flags") :
+					baseIntent != null ? baseIntent.getFlags() : 0;
+			
 			LinearLayout l = (LinearLayout) findViewById(R.id.flags);
 			XmlPullParser xrp = getResources().getXml(R.xml.intent_flags);
 
@@ -134,12 +139,35 @@ public class IntentEditorActivity extends Activity implements
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		// Tab switching
+		TabDef tabDefs[] = null;
+		switch (getResources().getInteger(R.integer.intent_editor_tabcount)) {
+		case 2:
+			tabDefs = new TabDef[] {
+					new TabDef("General", R.id.generalWrapper,
+							R.id.extrasWrapper),
+					new TabDef("Flags", R.id.flagsWrapper) };
+			break;
+		case 3:
+			tabDefs = new TabDef[] {
+					new TabDef("General", R.id.generalWrapper),
+					new TabDef("Extras", R.id.extrasWrapper),
+					new TabDef("Flags", R.id.flagsWrapper) };
+		}
+		mTabsHelper = TabsHelper.makeTabsHelper(this, tabDefs);
+		if (mTabsHelper != null && savedInstanceState != null) {
+			mTabsHelper.setCurrentView(savedInstanceState.getInt("tab"));
+		}
 	}
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		outState.putInt("flags", getFlagsFromCheckboxes());
+		if (mTabsHelper != null) {
+			outState.putInt("tab", mTabsHelper.getCurrentView());
+		}
 		// TODO: dump extras
 	}
 

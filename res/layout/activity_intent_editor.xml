@@ -6,6 +6,7 @@
     tools:context=".editor.IntentEditorActivity" >
 
     <LinearLayout
+        android:id="@+id/generalWrapper"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
@@ -83,6 +84,7 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/extrasWrapper"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
@@ -102,6 +104,7 @@
     </LinearLayout>
 
     <ScrollView
+        android:id="@+id/flagsWrapper"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1" >

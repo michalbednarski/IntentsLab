@@ -1,0 +1,3 @@
+<resources>
+    <integer name="intent_editor_tabcount">2</integer>
+</resources>

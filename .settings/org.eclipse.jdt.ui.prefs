@@ -1,4 +1,4 @@
-#Tue Mar 26 19:49:27 CET 2013
+#Wed Mar 27 20:08:56 CET 2013
 cleanup.add_default_serial_version_id=true
 cleanup.add_generated_serial_version_id=false
 cleanup.add_missing_annotations=true
@@ -53,7 +53,7 @@ cleanup.use_this_for_non_static_method_access_only_if_necessary=true
 cleanup_profile=org.eclipse.jdt.ui.default.eclipse_clean_up_profile
 cleanup_settings_version=2
 eclipse.preferences.version=1
-editor_save_participant_org.eclipse.jdt.ui.postsavelistener.cleanup=true
+editor_save_participant_org.eclipse.jdt.ui.postsavelistener.cleanup=false
 sp_cleanup.add_default_serial_version_id=true
 sp_cleanup.add_generated_serial_version_id=false
 sp_cleanup.add_missing_annotations=true
@@ -69,7 +69,7 @@ sp_cleanup.always_use_this_for_non_static_field_access=false
 sp_cleanup.always_use_this_for_non_static_method_access=false
 sp_cleanup.convert_to_enhanced_for_loop=false
 sp_cleanup.correct_indentation=true
-sp_cleanup.format_source_code=true
+sp_cleanup.format_source_code=false
 sp_cleanup.format_source_code_changes_only=false
 sp_cleanup.make_local_variable_final=false
 sp_cleanup.make_parameters_final=false
@@ -86,7 +86,7 @@ sp_cleanup.qualify_static_member_accesses_through_subtypes_with_declaring_class=
 sp_cleanup.qualify_static_member_accesses_with_declaring_class=false
 sp_cleanup.qualify_static_method_accesses_with_declaring_class=false
 sp_cleanup.remove_private_constructors=true
-sp_cleanup.remove_trailing_whitespaces=true
+sp_cleanup.remove_trailing_whitespaces=false
 sp_cleanup.remove_trailing_whitespaces_all=true
 sp_cleanup.remove_trailing_whitespaces_ignore_empty=false
 sp_cleanup.remove_unnecessary_casts=true
