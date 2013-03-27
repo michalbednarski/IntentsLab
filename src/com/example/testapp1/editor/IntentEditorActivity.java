@@ -1,17 +1,22 @@
 package com.example.testapp1.editor;
 
+import org.xmlpull.v1.XmlPullParser;
+
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -21,6 +26,7 @@ import com.example.testapp1.R;
 
 public class IntentEditorActivity extends Activity implements
 		AdapterView.OnItemClickListener, OnItemLongClickListener {
+	private static final String TAG = "IntentEditor";
 
 	public static final String EXTRA_DISPOSITION = "intenteditor.disposition";
 
@@ -33,6 +39,8 @@ public class IntentEditorActivity extends Activity implements
 	private TextView mDataText;
 	private TextView mComponentText;
 	private Spinner mIntentDispositionSpinner;
+
+	private CheckBox[] mFlagCheckboxes = new CheckBox[32];
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -80,11 +88,58 @@ public class IntentEditorActivity extends Activity implements
 		extrasList.setOnItemClickListener(this);
 		extrasList.setOnItemLongClickListener(this);
 
+		// Flags list
+		try {
+			int baseIntentFlags = savedInstanceState != null ? savedInstanceState
+					.getInt("flags") : baseIntent != null ? baseIntent
+					.getFlags() : 0;
+			LinearLayout l = (LinearLayout) findViewById(R.id.flags);
+			XmlPullParser xrp = getResources().getXml(R.xml.intent_flags);
+
+			int parserEvent;
+			while ((parserEvent = xrp.next()) != XmlPullParser.END_DOCUMENT) {
+				if (parserEvent != XmlPullParser.START_TAG
+						|| !xrp.getName().equals("flag")) {
+					continue;
+				}
+				String flagName = xrp.getAttributeValue(null, "name");
+				int flagValue;
+				try {
+					flagValue = Intent.class.getField(flagName).getInt(null);
+				} catch (NoSuchFieldException e) {
+					Log.w(TAG, "Intent flag " + flagName
+							+ " is unsupported on this version");
+					continue;
+				}
+				int flagIndex = -1;
+
+				for (int i = 0; i < 32; i++) {
+					if (flagValue == 1 << i) {
+						flagIndex = i;
+						break;
+					}
+				}
+
+				if (flagIndex == -1) {
+					Log.w(TAG, "Unknown flag index for " + flagName);
+					continue;
+				}
+				CheckBox cb = new CheckBox(this);
+				cb.setText(flagName);
+				cb.setChecked((baseIntentFlags & flagValue) != 0);
+				l.addView(cb);
+				mFlagCheckboxes[flagIndex] = cb;
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
+		outState.putInt("flags", getFlagsFromCheckboxes());
 		// TODO: dump extras
 	}
 
@@ -130,6 +185,9 @@ public class IntentEditorActivity extends Activity implements
 		if (!component.equals("")) {
 			intent.setComponent(ComponentName.unflattenFromString(component));
 		}
+
+		// Flags
+		intent.setFlags(getFlagsFromCheckboxes());
 
 		// TODO extras and categories
 
@@ -194,5 +252,16 @@ public class IntentEditorActivity extends Activity implements
 		// view.startDrag(null, null, null, 0);
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	private int getFlagsFromCheckboxes() {
+		int flags = 0;
+		for (int i = 0; i < 32; i++) {
+			CheckBox checkbox = mFlagCheckboxes[i];
+			if (checkbox != null && checkbox.isChecked()) {
+				flags |= 1 << i;
+			}
+		}
+		return flags;
 	}
 }
