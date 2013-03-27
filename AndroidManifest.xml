@@ -16,10 +16,13 @@
         <activity android:name=".StartActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".editor.IntentEditorActivity" >
+        <activity
+            android:name=".editor.IntentEditorActivity"
+            android:windowSoftInputMode="stateHidden" >
         </activity>
         <activity android:name=".editor.EntryEditorActivity" >
         </activity>
@@ -37,7 +40,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.testapp1.StartActivity" />
         </activity>
-
         <activity
             android:name=".CatchBroadcastActivity"
             android:label="@string/title_activity_catch_broadcast"
@@ -46,10 +48,8 @@
         <service
             android:name=".CatchBroadcastService"
             android:exported="false" />
-        
-        <activity
-            android:name=".PrefsActivity"
-            />
+
+        <activity android:name=".PrefsActivity" />
     </application>
 
 </manifest>
