@@ -164,10 +164,6 @@ AdapterView.OnItemClickListener, OnItemLongClickListener, OnItemSelectedListener
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle item selection
 		switch (item.getItemId()) {
-		case R.id.menu_add:
-			Intent i = new Intent(this, EntryEditorActivity.class);
-			startActivity(i); // TODO: for result
-			return true;
 		case R.id.menu_startActivity:
 			startProvidedActivity();
 			return true;

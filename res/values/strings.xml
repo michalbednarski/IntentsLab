@@ -16,6 +16,7 @@
     <string name="label_intent_component">Component name (for explicit intents)</string>
     <string name="label_pick">Pick</string>
     <string name="label_clear">Clear</string>
+    <string name="btn_add_extra">Add</string>
     <string name="use_startactivityforresult">Read result of activity</string>
     <string name="startactivity_error_invalid_component_no_slash">Component name is invalid: no /</string>
     <string name="startactivity_error_not_found">Activity not found</string>

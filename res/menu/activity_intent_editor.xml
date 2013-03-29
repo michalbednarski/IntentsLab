@@ -1,10 +1,4 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_add"
-        android:title="@string/menu_add_extra"
-        android:orderInCategory="100"
-        android:showAsAction="always"
-        android:icon="@drawable/ic_action_add"
-    />
     <item android:id="@+id/menu_startActivity"
         android:title="@string/menu_startActivity"
         android:orderInCategory="100"
