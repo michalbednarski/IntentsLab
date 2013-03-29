@@ -11,7 +11,6 @@ class Flag {
 	private static final String TAG = "FLAG";
 
 	CheckBox mCheckbox;
-	boolean mIsInvalid = false;
 	String mFlagName;
 	int mFlagValue;
 
