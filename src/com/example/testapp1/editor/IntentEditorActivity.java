@@ -57,7 +57,7 @@ AdapterView.OnItemClickListener, OnItemLongClickListener, OnItemSelectedListener
 					R.layout.intent_editor
 			)
 			.tryTabsConfiguration(
-					"General", R.id.generalAndFlagsWrapper,
+					"General", R.id.generalAndExtrasWrapper,
 					"Flags", R.id.flagsWrapper
 			)
 			.tryTabsConfiguration(

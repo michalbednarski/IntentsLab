@@ -4,16 +4,14 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     tools:context=".editor.IntentEditorActivity" >
-
+
     <LinearLayout
-        android:id="@+id/generalAndFlagsWrapper"
+        android:id="@+id/generalAndExtrasWrapper"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal" >
 
-        <include
-            android:layout_weight="1"
-            layout="@layout/intent_editor_general" />
+        <include layout="@layout/intent_editor_general" />
 
         <include layout="@layout/intent_editor_extras" />
     </LinearLayout>
