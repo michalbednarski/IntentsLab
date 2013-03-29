@@ -1,5 +1,7 @@
 package com.example.testapp1.editor;
 
+import java.util.ArrayList;
+
 import org.xmlpull.v1.XmlPullParser;
 
 import android.app.Activity;
@@ -8,14 +10,13 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
-import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
@@ -26,7 +27,7 @@ import com.example.testapp1.R;
 import com.example.testapp1.TabsHelper;
 
 public class IntentEditorActivity extends Activity implements
-AdapterView.OnItemClickListener, OnItemLongClickListener {
+AdapterView.OnItemClickListener, OnItemLongClickListener, OnItemSelectedListener {
 	private static final String TAG = "IntentEditor";
 
 	public static final String EXTRA_DISPOSITION = "intenteditor.disposition";
@@ -41,7 +42,7 @@ AdapterView.OnItemClickListener, OnItemLongClickListener {
 	private TextView mComponentText;
 	private Spinner mIntentDispositionSpinner;
 
-	private CheckBox[] mFlagCheckboxes = new CheckBox[32];
+	private ArrayList<Flag> mFlags = new ArrayList<Flag>();
 
 	private TabsHelper mTabsHelper = null;
 
@@ -67,10 +68,7 @@ AdapterView.OnItemClickListener, OnItemLongClickListener {
 			.build();
 
 
-
-		// Fill form
-		Bundle extras;
-
+		// Prepare form
 		mActionText = (TextView) findViewById(R.id.action);
 		mDataText = (TextView) findViewById(R.id.data);
 		mComponentText = (TextView) findViewById(R.id.component);
@@ -79,12 +77,18 @@ AdapterView.OnItemClickListener, OnItemLongClickListener {
 		mIntentDispositionSpinner.setAdapter(new ArrayAdapter<String>(this,
 				android.R.layout.simple_spinner_item, getResources()
 				.getStringArray(R.array.intenttypes)));
+		mIntentDispositionSpinner.setOnItemSelectedListener(this);
 
 		// Apparently using android:scrollHorizontally="true" does not work.
 		// http://stackoverflow.com/questions/9011944/android-ice-cream-sandwich-edittext-disabling-spell-check-and-word-wrap
 		mComponentText.setHorizontallyScrolling(true);
 
+
+		// Load intent
 		Intent baseIntent = getIntent().getParcelableExtra("intent");
+
+		Bundle extras;
+		int intentDisposition = 0;
 
 		if (savedInstanceState == null) {
 			if (baseIntent != null) {
@@ -99,9 +103,9 @@ AdapterView.OnItemClickListener, OnItemLongClickListener {
 				extras = new Bundle();
 			}
 
-			int disposition = getIntent().getIntExtra(EXTRA_DISPOSITION,
+			intentDisposition = getIntent().getIntExtra(EXTRA_DISPOSITION,
 					DISPOSITION_ACTIVITY);
-			mIntentDispositionSpinner.setSelection(disposition);
+			mIntentDispositionSpinner.setSelection(intentDisposition);
 		} else {
 			extras = savedInstanceState.getBundle("_extras");
 		}
@@ -126,33 +130,13 @@ AdapterView.OnItemClickListener, OnItemLongClickListener {
 									|| !xrp.getName().equals("flag")) {
 								continue;
 							}
-							String flagName = xrp.getAttributeValue(null, "name");
-							int flagValue;
+
 							try {
-								flagValue = Intent.class.getField(flagName).getInt(null);
-							} catch (NoSuchFieldException e) {
-								Log.w(TAG, "Intent flag " + flagName
-										+ " is unsupported on this version");
-								continue;
-							}
-							int flagIndex = -1;
-
-							for (int i = 0; i < 32; i++) {
-								if (flagValue == 1 << i) {
-									flagIndex = i;
-									break;
-								}
-							}
-
-							if (flagIndex == -1) {
-								Log.w(TAG, "Unknown flag index for " + flagName);
-								continue;
-							}
-							CheckBox cb = new CheckBox(this);
-							cb.setText(flagName);
-							cb.setChecked((baseIntentFlags & flagValue) != 0);
-							l.addView(cb);
-							mFlagCheckboxes[flagIndex] = cb;
+								Flag flag = new Flag(xrp, this, l);
+								flag.updateValue(baseIntentFlags, intentDisposition);
+								mFlags.add(flag);
+								l.addView(flag.mCheckbox);
+							} catch (Exception e) {}
 						}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -283,12 +267,23 @@ AdapterView.OnItemClickListener, OnItemLongClickListener {
 
 	private int getFlagsFromCheckboxes() {
 		int flags = 0;
-		for (int i = 0; i < 32; i++) {
-			CheckBox checkbox = mFlagCheckboxes[i];
-			if (checkbox != null && checkbox.isChecked()) {
-				flags |= 1 << i;
-			}
+		for (Flag flag : mFlags) {
+			flags |= flag.getValue();
 		}
 		return flags;
+	}
+
+	public void onItemSelected(AdapterView<?> parent, View view, int position,
+			long id) {
+		if (parent == mIntentDispositionSpinner) {
+			int flags = getFlagsFromCheckboxes();
+			for (Flag flag : mFlags) {
+				flag.updateValue(flags, position);
+			}
+		}
+	}
+
+	public void onNothingSelected(AdapterView<?> parent) {
+		// Spinner won't have nothing selected
 	}
 }
