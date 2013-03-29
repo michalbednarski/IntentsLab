@@ -1,6 +1,6 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_height="fill_parent" >
 
     <TabHost
         android:id="@android:id/tabhost"
@@ -26,13 +26,6 @@
                 android:layout_height="match_parent" >
 
                 <include layout="@layout/intent_editor" />
-                
-                <!-- <LinearLayout
-                    android:id="@+id/tab1"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" >
-                </LinearLayout> -->
-
             </FrameLayout>
         </LinearLayout>
     </TabHost>

@@ -62,7 +62,7 @@ AdapterView.OnItemClickListener, OnItemLongClickListener, OnItemSelectedListener
 			)
 			.tryTabsConfiguration(
 					"General", R.id.generalWrapper,
-					"Extras", R.id.extrasWrapper,
+					"Extras", R.id.extrasList,
 					"Flags", R.id.flagsWrapper
 			)
 			.build();

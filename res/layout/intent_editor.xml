@@ -7,7 +7,11 @@
 
     <include layout="@layout/intent_editor_general" />
 
-    <include layout="@layout/intent_editor_extras" />
+    <ListView
+        android:id="@+id/extrasList"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" >
+    </ListView>
 
     <include layout="@layout/intent_editor_flags" />
 
