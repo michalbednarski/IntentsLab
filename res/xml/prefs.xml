@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
-    <CheckBoxPreference android:key="autoeditbroadcast" android:title="@string/broadcast_autoedit" android:summaryOff="@string/broadcast_autoedit_off" android:summaryOn="@string/broadcast_autoedit_on"/>
-    
+
+    <CheckBoxPreference
+        android:key="autoeditbroadcast"
+        android:summaryOff="@string/broadcast_autoedit_off"
+        android:summaryOn="@string/broadcast_autoedit_on"
+        android:title="@string/broadcast_autoedit" />
+
+    <PreferenceScreen android:title="Developer options" >
+        <CheckBoxPreference android:key="forcelegacytabs" android:title="Force legacy tabs"/>
+    </PreferenceScreen>
 
 </PreferenceScreen>

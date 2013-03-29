@@ -24,10 +24,9 @@ import android.widget.Toast;
 
 import com.example.testapp1.R;
 import com.example.testapp1.TabsHelper;
-import com.example.testapp1.TabsHelper.TabDef;
 
 public class IntentEditorActivity extends Activity implements
-		AdapterView.OnItemClickListener, OnItemLongClickListener {
+AdapterView.OnItemClickListener, OnItemLongClickListener {
 	private static final String TAG = "IntentEditor";
 
 	public static final String EXTRA_DISPOSITION = "intenteditor.disposition";
@@ -43,13 +42,33 @@ public class IntentEditorActivity extends Activity implements
 	private Spinner mIntentDispositionSpinner;
 
 	private CheckBox[] mFlagCheckboxes = new CheckBox[32];
-	
+
 	private TabsHelper mTabsHelper = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_intent_editor);
+
+		// Tab switching and setContentView
+		mTabsHelper = TabsHelper.getBuilder(this)
+			.setLayout(
+					R.layout.intent_editor_with_tabhost,
+					R.layout.intent_editor
+			)
+			.tryTabsConfiguration(
+					"General", R.id.generalAndFlagsWrapper,
+					"Flags", R.id.flagsWrapper
+			)
+			.tryTabsConfiguration(
+					"General", R.id.generalWrapper,
+					"Extras", R.id.extrasWrapper,
+					"Flags", R.id.flagsWrapper
+			)
+			.build();
+
+
+
+		// Fill form
 		Bundle extras;
 
 		mActionText = (TextView) findViewById(R.id.action);
@@ -59,7 +78,7 @@ public class IntentEditorActivity extends Activity implements
 		mIntentDispositionSpinner = (Spinner) findViewById(R.id.intenttype);
 		mIntentDispositionSpinner.setAdapter(new ArrayAdapter<String>(this,
 				android.R.layout.simple_spinner_item, getResources()
-						.getStringArray(R.array.intenttypes)));
+				.getStringArray(R.array.intenttypes)));
 
 		// Apparently using android:scrollHorizontally="true" does not work.
 		// http://stackoverflow.com/questions/9011944/android-ice-cream-sandwich-edittext-disabling-spell-check-and-word-wrap
@@ -96,68 +115,48 @@ public class IntentEditorActivity extends Activity implements
 		try {
 			int baseIntentFlags =
 					savedInstanceState != null ? savedInstanceState.getInt("flags") :
-					baseIntent != null ? baseIntent.getFlags() : 0;
-			
-			LinearLayout l = (LinearLayout) findViewById(R.id.flags);
-			XmlPullParser xrp = getResources().getXml(R.xml.intent_flags);
+						baseIntent != null ? baseIntent.getFlags() : 0;
 
-			int parserEvent;
-			while ((parserEvent = xrp.next()) != XmlPullParser.END_DOCUMENT) {
-				if (parserEvent != XmlPullParser.START_TAG
-						|| !xrp.getName().equals("flag")) {
-					continue;
-				}
-				String flagName = xrp.getAttributeValue(null, "name");
-				int flagValue;
-				try {
-					flagValue = Intent.class.getField(flagName).getInt(null);
-				} catch (NoSuchFieldException e) {
-					Log.w(TAG, "Intent flag " + flagName
-							+ " is unsupported on this version");
-					continue;
-				}
-				int flagIndex = -1;
+						LinearLayout l = (LinearLayout) findViewById(R.id.flags);
+						XmlPullParser xrp = getResources().getXml(R.xml.intent_flags);
 
-				for (int i = 0; i < 32; i++) {
-					if (flagValue == 1 << i) {
-						flagIndex = i;
-						break;
-					}
-				}
+						int parserEvent;
+						while ((parserEvent = xrp.next()) != XmlPullParser.END_DOCUMENT) {
+							if (parserEvent != XmlPullParser.START_TAG
+									|| !xrp.getName().equals("flag")) {
+								continue;
+							}
+							String flagName = xrp.getAttributeValue(null, "name");
+							int flagValue;
+							try {
+								flagValue = Intent.class.getField(flagName).getInt(null);
+							} catch (NoSuchFieldException e) {
+								Log.w(TAG, "Intent flag " + flagName
+										+ " is unsupported on this version");
+								continue;
+							}
+							int flagIndex = -1;
 
-				if (flagIndex == -1) {
-					Log.w(TAG, "Unknown flag index for " + flagName);
-					continue;
-				}
-				CheckBox cb = new CheckBox(this);
-				cb.setText(flagName);
-				cb.setChecked((baseIntentFlags & flagValue) != 0);
-				l.addView(cb);
-				mFlagCheckboxes[flagIndex] = cb;
-			}
+							for (int i = 0; i < 32; i++) {
+								if (flagValue == 1 << i) {
+									flagIndex = i;
+									break;
+								}
+							}
+
+							if (flagIndex == -1) {
+								Log.w(TAG, "Unknown flag index for " + flagName);
+								continue;
+							}
+							CheckBox cb = new CheckBox(this);
+							cb.setText(flagName);
+							cb.setChecked((baseIntentFlags & flagValue) != 0);
+							l.addView(cb);
+							mFlagCheckboxes[flagIndex] = cb;
+						}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-
-		// Tab switching
-		TabDef tabDefs[] = null;
-		switch (getResources().getInteger(R.integer.intent_editor_tabcount)) {
-		case 2:
-			tabDefs = new TabDef[] {
-					new TabDef("General", R.id.generalWrapper,
-							R.id.extrasWrapper),
-					new TabDef("Flags", R.id.flagsWrapper) };
-			break;
-		case 3:
-			tabDefs = new TabDef[] {
-					new TabDef("General", R.id.generalWrapper),
-					new TabDef("Extras", R.id.extrasWrapper),
-					new TabDef("Flags", R.id.flagsWrapper) };
-		}
-		mTabsHelper = TabsHelper.makeTabsHelper(this, tabDefs);
-		if (mTabsHelper != null && savedInstanceState != null) {
-			mTabsHelper.setCurrentView(savedInstanceState.getInt("tab"));
 		}
 	}
 
@@ -165,9 +164,9 @@ public class IntentEditorActivity extends Activity implements
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
 		outState.putInt("flags", getFlagsFromCheckboxes());
-		if (mTabsHelper != null) {
+		/*if (mTabsHelper != null) {
 			outState.putInt("tab", mTabsHelper.getCurrentView());
-		}
+		}*/
 		// TODO: dump extras
 	}
 
