@@ -40,16 +40,14 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.testapp1.StartActivity" />
         </activity>
-        <activity
-            android:name=".CatchBroadcastActivity"
-            android:label="@string/title_activity_catch_broadcast"
-            android:theme="@style/DialogTheme" />
 
         <service
             android:name=".CatchBroadcastService"
             android:exported="false" />
 
         <activity android:name=".PrefsActivity" />
+        
+        <service android:name=".browser.ScanService"></service>
     </application>
 
 </manifest>

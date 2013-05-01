@@ -11,16 +11,22 @@
 
     <!-- Intent editor -->
     <string name="label_intent_action">Intent action</string>
+    <string name="intent_categories">Categories:</string>
+    <string name="intent_categories_add">Add category</string>
     <string name="label_intent_data">Intent data (URI)</string>
     <string name="label_intent_extras">Extras</string>
     <string name="label_intent_component">Component name (for explicit intents)</string>
+    
     <string name="label_pick">Pick</string>
     <string name="label_clear">Clear</string>
-    <string name="btn_add_extra">Add</string>
-    <string name="use_startactivityforresult">Read result of activity</string>
-    <string name="startactivity_error_invalid_component_no_slash">Component name is invalid: no /</string>
+    <string name="no_matching_components_found">No matching components found</string>
+    <string name="btn_add">Add</string>
+    <string name="type_unsupported">Type unsupported</string>
     <string name="startactivity_error_not_found">Activity not found</string>
     <string name="startactivity_error_security_exception">Not allowed to start activity</string>
+    <string name="item_name">Name:</string>
+    <string name="item_type">Type:</string>
+    <string name="item_value">Value:</string>
     <!-- <string name="title_activity_start">StartActivity</string> -->
 
 
@@ -33,6 +39,11 @@
     <string name="menu_hide_boring">Hide boring</string>
     <string name="title_activity_browse_apps">BrowseAppsActivity</string>
     
+    <!-- Apps browser -->
+    <string name="system_apps">System apps</string>
+    <string name="user_apps">User apps</string>
+    <string name="loading_apps_list">Loading apps list&#8230;</string>
+    <string name="no_matching_apps_found">No apps matching to given criteria</string>
 
     <!-- Broadcast catcher -->
     <string name="register_receiver">Register receiver</string>

@@ -1,20 +1,23 @@
 package com.example.testapp1.editor;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import org.xmlpull.v1.XmlPullParser;
 
 import android.app.Activity;
-import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
@@ -26,21 +29,24 @@ import android.widget.Toast;
 import com.example.testapp1.R;
 import com.example.testapp1.TabsHelper;
 
-public class IntentEditorActivity extends Activity implements
-AdapterView.OnItemClickListener, OnItemLongClickListener, OnItemSelectedListener {
+public class IntentEditorActivity extends Activity implements OnItemSelectedListener {
 	private static final String TAG = "IntentEditor";
 
 	public static final String EXTRA_DISPOSITION = "intenteditor.disposition";
 
-	public static final int DISPOSITION_ACTIVITY = 0;
-	public static final int DISPOSITION_ACTIVITYFORRESULT = 1;
-	public static final int DISPOSITION_BROADCAST = 2;
-	public static final int DISPOSITION_SERVICE = 3;
+	public static final int COMPONENT_TYPE_ACTIVITY = 0;
+	public static final int COMPONENT_TYPE_BROADCAST = 1;
+	public static final int COMPONENT_TYPE_SERVICE = 2;
 
 	private TextView mActionText;
 	private TextView mDataText;
 	private TextView mComponentText;
-	private Spinner mIntentDispositionSpinner;
+	private Spinner mComponentTypeSpinner;
+	private Spinner mMethodSpinner;
+	private ViewGroup mCategoriesContainer;
+	private ArrayList<ViewGroup> mCategoryRows = new ArrayList<ViewGroup>();
+
+	private BundleAdapter mExtrasAdapter;
 
 	private ArrayList<Flag> mFlags = new ArrayList<Flag>();
 
@@ -73,11 +79,15 @@ AdapterView.OnItemClickListener, OnItemLongClickListener, OnItemSelectedListener
 		mDataText = (TextView) findViewById(R.id.data);
 		mComponentText = (TextView) findViewById(R.id.component);
 
-		mIntentDispositionSpinner = (Spinner) findViewById(R.id.intenttype);
-		mIntentDispositionSpinner.setAdapter(new ArrayAdapter<String>(this,
+		mComponentTypeSpinner = (Spinner) findViewById(R.id.componenttype);
+		mComponentTypeSpinner.setAdapter(new ArrayAdapter<String>(this,
 				android.R.layout.simple_spinner_item, getResources()
-				.getStringArray(R.array.intenttypes)));
-		mIntentDispositionSpinner.setOnItemSelectedListener(this);
+				.getStringArray(R.array.componenttypes)));
+		mComponentTypeSpinner.setOnItemSelectedListener(this);
+
+		mMethodSpinner = (Spinner) findViewById(R.id.method);
+
+		mCategoriesContainer = (ViewGroup) findViewById(R.id.categories);
 
 		// Apparently using android:scrollHorizontally="true" does not work.
 		// http://stackoverflow.com/questions/9011944/android-ice-cream-sandwich-edittext-disabling-spell-check-and-word-wrap
@@ -88,7 +98,7 @@ AdapterView.OnItemClickListener, OnItemLongClickListener, OnItemSelectedListener
 		Intent baseIntent = getIntent().getParcelableExtra("intent");
 
 		Bundle extras;
-		int intentDisposition = 0;
+		int componentType = 0;
 
 		if (savedInstanceState == null) {
 			if (baseIntent != null) {
@@ -103,17 +113,24 @@ AdapterView.OnItemClickListener, OnItemLongClickListener, OnItemSelectedListener
 				extras = new Bundle();
 			}
 
-			intentDisposition = getIntent().getIntExtra(EXTRA_DISPOSITION,
-					DISPOSITION_ACTIVITY);
-			mIntentDispositionSpinner.setSelection(intentDisposition);
+			componentType = getIntent().getIntExtra(EXTRA_DISPOSITION,
+					COMPONENT_TYPE_ACTIVITY);
+			mComponentTypeSpinner.setSelection(componentType);
 		} else {
 			extras = savedInstanceState.getBundle("_extras");
 		}
-		BundleAdapter hma = new BundleAdapter(this, extras);
+
+		Set<String> categories = baseIntent == null ? null : baseIntent.getCategories();
+		if (categories != null) {
+			for (String category : categories) {
+				addCategory(category);
+			}
+		}
+		mExtrasAdapter = new BundleAdapter(this, extras);
 		ListView extrasList = (ListView) findViewById(R.id.extrasList);
-		extrasList.setAdapter(hma);
-		extrasList.setOnItemClickListener(this);
-		extrasList.setOnItemLongClickListener(this);
+		mExtrasAdapter.settleOnList(extrasList);
+
+		initMethodSpinner();
 
 		// Flags list
 		try {
@@ -133,25 +150,38 @@ AdapterView.OnItemClickListener, OnItemLongClickListener, OnItemSelectedListener
 
 							try {
 								Flag flag = new Flag(xrp, this, l);
-								flag.updateValue(baseIntentFlags, intentDisposition);
+								flag.updateValue(baseIntentFlags, componentType);
 								mFlags.add(flag);
 								l.addView(flag.mCheckbox);
 							} catch (Exception e) {}
 						}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	private void initMethodSpinner() {
+		int componentType = getComponentType();
+		mMethodSpinner.setAdapter(new ArrayAdapter<String>(this,
+			android.R.layout.simple_spinner_item,
+				getResources().getStringArray(
+					componentType == COMPONENT_TYPE_ACTIVITY ? R.array.activitymethods :
+					componentType == COMPONENT_TYPE_BROADCAST ? R.array.broadcastmethods :
+					componentType == COMPONENT_TYPE_SERVICE ? R.array.servicemethods : 0
+				)
+			)
+		);
 	}
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
+		outState.putBundle("_extras", mExtrasAdapter.getBundle());
 		outState.putInt("flags", getFlagsFromCheckboxes());
 		/*if (mTabsHelper != null) {
 			outState.putInt("tab", mTabsHelper.getCurrentView());
 		}*/
-		// TODO: dump extras
+		// TODO: current tab?
 	}
 
 	@Override
@@ -181,6 +211,11 @@ AdapterView.OnItemClickListener, OnItemLongClickListener, OnItemSelectedListener
 			intent.setAction(action);
 		}
 
+		// Categories
+		for (ViewGroup cat : mCategoryRows) {
+			intent.addCategory(((TextView) cat.findViewById(R.id.categoryText)).getText().toString());
+		}
+
 		// Intent data (Uri)
 		String data = mDataText.getText().toString();
 		if (!data.equals("")) {
@@ -196,45 +231,81 @@ AdapterView.OnItemClickListener, OnItemLongClickListener, OnItemSelectedListener
 		// Flags
 		intent.setFlags(getFlagsFromCheckboxes());
 
-		// TODO extras and categories
+		// Extras
+		intent.putExtras(mExtrasAdapter.getBundle());
 
 		return intent;
+	}
+
+	int getComponentType() {
+		return mComponentTypeSpinner.getSelectedItemPosition();
+	}
+	int getMethodId() {
+		return mMethodSpinner.getSelectedItemPosition();
 	}
 
 	public void startProvidedActivity() { // TODO better name
 
 		Intent intent = buildIntent();
 		try {
-			switch (mIntentDispositionSpinner.getSelectedItemPosition()) {
-			case 0:
+			switch (getComponentType()) {
+			case COMPONENT_TYPE_ACTIVITY:
 				startActivity(intent);
 				break;
-			case 1:
+			/*case DISPOSITION_ACTIVITYFORRESULT:
 				startActivityForResult(intent, 1);
-				break;
+				break;*/
+			case COMPONENT_TYPE_BROADCAST:
+				sendBroadcast(intent);
 			}
-		} catch (ActivityNotFoundException exception) {
-			Toast.makeText(this, R.string.startactivity_error_not_found,
-					Toast.LENGTH_SHORT).show();
-		} catch (SecurityException exception) {
-			Toast.makeText(this,
-					R.string.startactivity_error_security_exception,
-					Toast.LENGTH_SHORT).show();
+		} catch(Exception exception) {
+			String exceptionName = exception.getClass().getName();
+			exceptionName = exceptionName.substring(exceptionName.lastIndexOf('.') + 1);
+			Toast.makeText(this, exceptionName + ": " + exception.getMessage(), Toast.LENGTH_LONG).show();
 		}
 	}
 
-	public void pickComponent(View view) { // TODO
-		ComponentName c = buildIntent().setComponent(null).resolveActivity(
-				getPackageManager());
-		if (c != null) {
-			mComponentText.setText(c.flattenToShortString());
+	// CATEGORIES
+	public void addCategory(String category) {
+		ViewGroup row = (ViewGroup) getLayoutInflater().inflate(R.layout.category_row, mCategoriesContainer);
+		((TextView) row.findViewById(R.id.categoryText)).setText(category);
+		mCategoryRows.add(row);
+	}
+	public void addCategory(View view) {
+		addCategory("");
+	}
+	public void removeCategory(View view) {
+		ViewGroup row = (ViewGroup) view.getParent();
+		mCategoriesContainer.removeView(row);
+		mCategoryRows.remove(row);
+	}
+
+	// COMPONENT
+	public void pickComponent(View view) {
+		Intent intent = buildIntent().setComponent(null);
+		PackageManager pm = getPackageManager();
+		List<ResolveInfo> ri = null;
+
+		switch (getComponentType()) {
+		case COMPONENT_TYPE_ACTIVITY:
+			ri = pm.queryIntentActivities(intent, 0);
+			break;
+		case COMPONENT_TYPE_BROADCAST:
+			ri = pm.queryBroadcastReceivers(intent, 0);
+			break;
+		case COMPONENT_TYPE_SERVICE:
+			ri = pm.queryIntentServices(intent, 0);
+			break;
 		}
+		new ComponentPicker(this, ri, mComponentText).show();
+
 	}
 
 	public void clearComponent(View view) {
-		((TextView) findViewById(R.id.component)).setText("");
+		mComponentText.setText("");
 	}
 
+	// RESULT
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode,
 			Intent intent) {
@@ -242,25 +313,7 @@ AdapterView.OnItemClickListener, OnItemLongClickListener, OnItemSelectedListener
 		// TODO Auto-generated method stub
 	}
 
-	public void onItemClick(AdapterView<?> parent, View view, int position,
-			long id) {
-		Toast.makeText(this,
-				"onItemClick\nposition=" + position + "\nid=" + id,
-				Toast.LENGTH_SHORT).show();
-		// TODO Auto-generated method stub
-
-	}
-
-	public boolean onItemLongClick(AdapterView<?> parent, View view,
-			int position, long id) {
-		Toast.makeText(this,
-				"onItemLongClick\nposition=" + position + "\nid=" + id,
-				Toast.LENGTH_SHORT).show();
-		// view.startDrag(null, null, null, 0);
-		// TODO Auto-generated method stub
-		return false;
-	}
-
+	// FLAGS
 	private int getFlagsFromCheckboxes() {
 		int flags = 0;
 		for (Flag flag : mFlags) {
@@ -269,16 +322,20 @@ AdapterView.OnItemClickListener, OnItemLongClickListener, OnItemSelectedListener
 		return flags;
 	}
 
+	// Component type and method
+	@Override
 	public void onItemSelected(AdapterView<?> parent, View view, int position,
 			long id) {
-		if (parent == mIntentDispositionSpinner) {
+		if (parent == mComponentTypeSpinner) {
 			int flags = getFlagsFromCheckboxes();
 			for (Flag flag : mFlags) {
 				flag.updateValue(flags, position);
 			}
+			initMethodSpinner();
 		}
 	}
 
+	@Override
 	public void onNothingSelected(AdapterView<?> parent) {
 		// Spinner won't have nothing selected
 	}

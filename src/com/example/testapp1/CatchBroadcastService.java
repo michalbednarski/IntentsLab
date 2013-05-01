@@ -46,7 +46,7 @@ public class CatchBroadcastService extends Service {
 		showWaitingNotification(action);
 		return START_NOT_STICKY;
 	}
-	
+
 	private boolean isAutoEditEnabled() {
 		return PreferenceManager.getDefaultSharedPreferences(this).getBoolean("autoeditbroadcast", false);
 	}
@@ -58,7 +58,7 @@ public class CatchBroadcastService extends Service {
 	void showWaitingNotification(String action) {
 		mGotBroadcast = false;
 
-		Intent requeryAction = new Intent(this, CatchBroadcastActivity.class);
+		Intent requeryAction = new Intent(this, StartActivity.class);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				requeryAction, 0);
 
@@ -77,24 +77,24 @@ public class CatchBroadcastService extends Service {
 
 		Intent runEditor = new Intent(this, IntentEditorActivity.class);
 		runEditor.putExtra("intent", receivedBroadcast);
-		runEditor.putExtra(IntentEditorActivity.EXTRA_DISPOSITION, IntentEditorActivity.DISPOSITION_BROADCAST);
+		runEditor.putExtra(IntentEditorActivity.EXTRA_DISPOSITION, IntentEditorActivity.COMPONENT_TYPE_BROADCAST);
 		runEditor.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 					runEditor, 0);
-		
+
 		if (isSticky || isAutoEditEnabled()) {
 			removeNotification();
 			startActivity(runEditor);
 		} else {
 			String title = getResources().getString(R.string.got_broadcast);
-	
+
 			Notification notif = new Notification();
 			notif.icon = R.drawable.ic_action_send;
 			notif.flags = Notification.FLAG_AUTO_CANCEL;
 			notif.tickerText = title;
 			notif.setLatestEventInfo(this, title, receivedBroadcast.getAction(),
 					contentIntent);
-	
+
 			getNotificationManager().notify(1, notif);
 		}
 	}

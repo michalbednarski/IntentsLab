@@ -22,7 +22,7 @@ public class StartActivity extends Activity {
         getMenuInflater().inflate(R.menu.activity_start, menu);
         return true;
     }
-    
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
@@ -32,18 +32,21 @@ public class StartActivity extends Activity {
     	}
     	return super.onOptionsItemSelected(item);
     }
-    
+
+    // Button actions
     public void startNew(View view) {
     	startActivity(new Intent(this, IntentEditorActivity.class));
     }
-    
+
     public void pickFromRecents(View view) {
     	startActivity(new Intent(this, PickRecentlyRunningActivity.class));
     }
-    
-    // TODO: browse apps
-    
+
+    public void browseApps(View view) {
+    	startActivity(new Intent(this, BrowseAppsActivity.class));
+    }
+
     public void catchBroadcast(View view) {
-    	startActivity(new Intent(this, CatchBroadcastActivity.class));
+    	(new CatchBroadcastDialog(this)).show();
     }
 }

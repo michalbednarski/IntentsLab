@@ -1,6 +1,32 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_settings"
-        android:title="@string/menu_settings"
-        android:orderInCategory="100"
-        android:showAsAction="never" />
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/system_apps"
+        android:icon="@drawable/ic_action_system_apps"
+        android:title="@string/system_apps">
+    </item>
+    <item
+        android:id="@+id/user_apps"
+        android:icon="@drawable/ic_action_user_apps"
+        android:title="@string/user_apps">
+    </item>
+    <item android:title="CT">
+        <menu>
+            <group android:id="@+id/xg" android:checkableBehavior="single">
+                <item
+                    android:id="@+id/activities"
+                    android:title="A">
+                </item>
+                <item
+                    android:id="@+id/broadcasts"
+                    android:title="B">
+                </item>
+                <item
+                    android:id="@+id/services"
+                    android:title="S">
+                </item>
+            </group>
+        </menu>
+    </item>
+
 </menu>

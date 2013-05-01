@@ -8,10 +8,25 @@
     </string-array>
     
     <!-- DON'T REORDER -->
-    <string-array name="intenttypes">
-        <item>Activity (Ignore result)</item>
-        <item>Activity (For result)</item>
+    <string-array name="componenttypes">
+        <item>Activity</item>
         <item>Broadcast</item>
-        <item>Start service</item>
+        <item>Service</item>
+    </string-array>
+    
+    <string-array name="activitymethods">
+        <item>startActivty</item>
+        <item>startActivityForResult</item>
+    </string-array>
+    
+    <string-array name="broadcastmethods">
+        <item>sendBroadcast</item>
+        <item>sendOrderedBroadcast</item>
+        <item>sendStickyBroadcast</item>
+    </string-array>
+    
+    <string-array name="servicemethods">
+        <item>startService</item>
+        <item>bindService</item>
     </string-array>
 </resources>
