@@ -1,40 +1,60 @@
 package com.example.testapp1;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
 
-public class CatchBroadcastDialog implements OnClickListener {
+public class CatchBroadcastDialog implements OnClickListener, OnCancelListener {
 
 	Context mContext;
 	TextView mActionTextView;
+	private Activity mWrapperActivity = null;
+	private AlertDialog.Builder mBuilder;
+
 
 	CatchBroadcastDialog(Context context) {
 		mContext = context;
-	}
-
-	void show() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+		mBuilder = new AlertDialog.Builder(mContext);
 		View view = ((LayoutInflater)mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.dialog_catch_broadcast, null);
 		mActionTextView = (TextView)view.findViewById(R.id.action);
 		mActionTextView.setText(PreferenceManager
 				.getDefaultSharedPreferences(mContext)
 				.getString("lastcatchbroadcastaction", "")
 				);
-		builder.setView(view);
-		builder.setTitle(R.string.title_activity_catch_broadcast);
-		builder.setPositiveButton(R.string.register_receiver, this);
+		mBuilder.setView(view);
+		mBuilder.setTitle(R.string.title_activity_catch_broadcast);
+		mBuilder.setPositiveButton(R.string.register_receiver, this);
 		if (CatchBroadcastService.sIsRunning) {
-			builder.setNegativeButton(R.string.unregister_receiver, this);
+			mBuilder.setNegativeButton(R.string.unregister_receiver, this);
 		}
-		builder.show();
+	}
+
+	private CatchBroadcastDialog setWrapperActivty(Activity wrapperActivty) {
+		mWrapperActivity = wrapperActivty;
+		mBuilder.setOnCancelListener(this);
+		return this;
+	}
+
+	void show() {
+		mBuilder.show();
+	}
+
+
+	@Override
+	public void onCancel(DialogInterface dialog) {
+		// Note: this listener is set only if we are running with WrapperActivty
+		// Note: this is not DRY, but we cannot use onDismiss because we support older Android versions
+		mWrapperActivity.finish();
 	}
 
 	@Override
@@ -43,6 +63,9 @@ public class CatchBroadcastDialog implements OnClickListener {
 			stopCatcher();
 		} else {
 			startCatcher();
+		}
+		if (mWrapperActivity != null) {
+			mWrapperActivity.finish();
 		}
 	}
 
@@ -62,4 +85,13 @@ public class CatchBroadcastDialog implements OnClickListener {
 	void stopCatcher() {
 		mContext.stopService(new Intent(mContext, CatchBroadcastService.class));
 	}
+
+	public class WrapperActivity extends Activity {
+		@Override
+		protected void onCreate(Bundle savedInstanceState) {
+			new CatchBroadcastDialog(this).setWrapperActivty(this).show();
+		}
+	}
+
+
 }

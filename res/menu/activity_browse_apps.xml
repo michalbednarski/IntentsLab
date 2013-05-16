@@ -12,7 +12,9 @@
     </item>
     <item android:title="CT">
         <menu>
-            <group android:id="@+id/xg" android:checkableBehavior="single">
+            <group
+                android:id="@+id/xg1"
+                android:checkableBehavior="single" >
                 <item
                     android:id="@+id/activities"
                     android:title="A">
@@ -25,6 +27,26 @@
                     android:id="@+id/services"
                     android:title="S">
                 </item>
+            </group>
+        </menu>
+    </item>
+    <item android:title="PF">
+        <menu>
+            <group
+                android:id="@+id/xg2"
+                android:checkableBehavior="single" >
+                <item
+                    android:id="@+id/permission_filter_all"
+                    android:title="ALL"/>
+                <item
+                    android:id="@+id/permission_filter_exported"
+                    android:title="EXPORTED"/>
+                <item
+                    android:id="@+id/permission_filter_obtaiable"
+                    android:title="OBTAIABLE"/>
+                <item
+                    android:id="@+id/permission_filter_world_accessible"
+                    android:title="WORLD ACCESSIBLE"/>
             </group>
         </menu>
     </item>

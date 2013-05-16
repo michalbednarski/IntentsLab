@@ -8,6 +8,7 @@
         android:targetSdkVersion="15" />
 
     <uses-permission android:name="android.permission.GET_TASKS" />
+    <uses-permission android:name="android.permission.BROADCAST_STICKY" />
 
     <application
         android:icon="@drawable/ic_launcher"
@@ -34,7 +35,7 @@
                 android:value="com.example.testapp1.StartActivity" />
         </activity>
         <activity
-            android:name=".BrowseAppsActivity"
+            android:name=".browser.BrowseAppsActivity"
             android:label="@string/title_activity_browse_apps" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -46,8 +47,9 @@
             android:exported="false" />
 
         <activity android:name=".PrefsActivity" />
-        
-        <service android:name=".browser.ScanService"></service>
+        <activity
+            android:name=".browser.ComponentInfoActivity"
+            android:label="@string/component_info" />
     </application>
 
 </manifest>

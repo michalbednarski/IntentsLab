@@ -24,12 +24,12 @@ class Flag {
 
 	boolean appliesTo(int intentDisposition) {
 		if (mFlagName.startsWith("FLAG_ACTIVITY_") &&
-				intentDisposition != IntentEditorActivity.COMPONENT_TYPE_ACTIVITY
+				intentDisposition != IntentEditorConstants.ACTIVITY
 				) {
 			return false;
 		}
 		if (mFlagName.startsWith("FLAG_RECEIVER_") &&
-				intentDisposition != IntentEditorActivity.COMPONENT_TYPE_BROADCAST) {
+				intentDisposition != IntentEditorConstants.BROADCAST) {
 			return false;
 		}
 		return true;

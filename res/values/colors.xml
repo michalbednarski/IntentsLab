@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="xml_tag">#006</color>
+    <color name="xml_attr_name">#066</color>
+    <color name="xml_attr_value">#060</color>
+    
+</resources>

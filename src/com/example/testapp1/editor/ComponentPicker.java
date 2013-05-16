@@ -23,7 +23,6 @@ import com.example.testapp1.R;
 class ComponentPicker extends ArrayAdapter<ResolveInfo> implements OnItemClickListener {
 	private LayoutInflater mInflater;
 	private PackageManager mPm;
-	private AlertDialog.Builder mDialogBuilder;
 	private AlertDialog mDialog;
 	private TextView mComponentTextView;
 
@@ -35,14 +34,17 @@ class ComponentPicker extends ArrayAdapter<ResolveInfo> implements OnItemClickLi
 		}
 		mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		mPm = context.getPackageManager();
-		mDialogBuilder = new AlertDialog.Builder(context);
 		mComponentTextView = componentTextView;
 		ListView lv = new ListView(context, null);
 		lv.setAdapter(this);
+		lv.setBackgroundColor(context.getResources().getColor(android.R.color.background_light));
 		lv.setOnItemClickListener(this);
-		mDialogBuilder.setView(lv);
-		mDialogBuilder.show();
-	};
+
+		mDialog =
+				new AlertDialog.Builder(context)
+				.setView(lv)
+				.show();
+	}
 
 	void show() {}
 

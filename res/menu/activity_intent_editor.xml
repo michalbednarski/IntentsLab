@@ -1,12 +1,20 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_startActivity"
-        android:title="@string/menu_startActivity"
-        android:orderInCategory="100"
-        android:showAsAction="always"
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" >
+
+    <item
+        android:id="@+id/menu_run_intent"
         android:icon="@drawable/ic_action_send"
-    />
-    <!--<item android:id="@+id/menu_settings"
+        android:showAsAction="always"
+        android:title="[startActivity]"
+        tools:ignore="hardcodedText"/>
+    <item
+        android:id="@+id/detach_intent_filter"
+        android:title="Detach IntentFilter"/>
+    <!--
+    <item android:id="@+id/menu_settings"
         android:title="@string/menu_settings"
         android:orderInCategory="100"
-    />-->
+    />
+    -->
+
 </menu>

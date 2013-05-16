@@ -7,8 +7,8 @@
         android:summaryOn="@string/broadcast_autoedit_on"
         android:title="@string/broadcast_autoedit" />
 
-    <PreferenceScreen android:title="Developer options" >
+    <PreferenceCategory android:title="Developer options" >
         <CheckBoxPreference android:key="forcelegacytabs" android:title="Force legacy tabs"/>
-    </PreferenceScreen>
+    </PreferenceCategory>
 
 </PreferenceScreen>

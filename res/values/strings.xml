@@ -10,20 +10,24 @@
     <string name="title_activity_entry_editor">Intent extra/Bundle entry</string>
 
     <!-- Intent editor -->
-    <string name="label_intent_action">Intent action</string>
+    
+    <string name="general">General</string>
+    <string name="intent_action">Intent action</string>
     <string name="intent_categories">Categories:</string>
     <string name="intent_categories_add">Add category</string>
-    <string name="label_intent_data">Intent data (URI)</string>
-    <string name="label_intent_extras">Extras</string>
-    <string name="label_intent_component">Component name (for explicit intents)</string>
+    <string name="intent_data">Intent data (URI)</string>
     
+    <string name="intent_component">Component name (for explicit intents)</string>
     <string name="label_pick">Pick</string>
     <string name="label_clear">Clear</string>
     <string name="no_matching_components_found">No matching components found</string>
+    
+    <string name="intent_extras">Extras</string>
+    
     <string name="btn_add">Add</string>
     <string name="type_unsupported">Type unsupported</string>
-    <string name="startactivity_error_not_found">Activity not found</string>
-    <string name="startactivity_error_security_exception">Not allowed to start activity</string>
+    <!--<string name="startactivity_error_not_found">Activity not found</string>
+    <string name="startactivity_error_security_exception">Not allowed to start activity</string>-->
     <string name="item_name">Name:</string>
     <string name="item_type">Type:</string>
     <string name="item_value">Value:</string>
@@ -31,7 +35,7 @@
 
 
     <!-- Unused -->
-    <string name="hello_world">Hello world!</string>
+    <!--<string name="hello_world">Hello world!</string>-->
 
     <!-- Recents picker -->
     <string name="title_activity_pick_recenly_running">PickRecenlyRunningActivity</string>
@@ -44,6 +48,15 @@
     <string name="user_apps">User apps</string>
     <string name="loading_apps_list">Loading apps list&#8230;</string>
     <string name="no_matching_apps_found">No apps matching to given criteria</string>
+    
+    <!-- Component Info -->
+    <string name="component_info">Component info</string>
+    <string name="component_not_found_in_manifest">Component not found in manifest</string>
+    <string name="component_not_exported">Component not exported</string>
+    <string name="permission_required_title">Permission</string> <!-- [[Permission]]: [permission attribute value] -->
+    <string name="intent_filters">Intent filters:</string>
+    <string name="no_intent_filters">No intent filters</string>
+    <string name="go_to_intent_editor">Go to intent editor</string>
 
     <!-- Broadcast catcher -->
     <string name="register_receiver">Register receiver</string>

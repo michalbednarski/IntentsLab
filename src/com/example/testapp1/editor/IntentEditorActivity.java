@@ -1,183 +1,94 @@
 package com.example.testapp1.editor;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
-import org.xmlpull.v1.XmlPullParser;
-
-import android.app.Activity;
-import android.content.ComponentName;
+import android.annotation.TargetApi;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.net.Uri;
+import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.ArrayAdapter;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.testapp1.R;
-import com.example.testapp1.TabsHelper;
 
-public class IntentEditorActivity extends Activity implements OnItemSelectedListener {
+/**
+ * Intent editor activity
+ */
+public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity*/ {
 	private static final String TAG = "IntentEditor";
+	private static final int REQUEST_CODE_TEST_STARTACTIVITYFORRESULT = 657;
 
-	public static final String EXTRA_DISPOSITION = "intenteditor.disposition";
+	public static final String EXTRA_COMPONENT_TYPE = "componentType_";
+	public static final String EXTRA_INTENT_FILTERS = "intentFilters_";
 
-	public static final int COMPONENT_TYPE_ACTIVITY = 0;
-	public static final int COMPONENT_TYPE_BROADCAST = 1;
-	public static final int COMPONENT_TYPE_SERVICE = 2;
+	//private BundleAdapter mExtrasAdapter;
 
-	private TextView mActionText;
-	private TextView mDataText;
-	private TextView mComponentText;
-	private Spinner mComponentTypeSpinner;
-	private Spinner mMethodSpinner;
-	private ViewGroup mCategoriesContainer;
-	private ArrayList<ViewGroup> mCategoryRows = new ArrayList<ViewGroup>();
+	ArrayList<IntentEditorPanel> loadedPanels = new ArrayList<IntentEditorPanel>(3);
 
-	private BundleAdapter mExtrasAdapter;
-
-	private ArrayList<Flag> mFlags = new ArrayList<Flag>();
-
-	private TabsHelper mTabsHelper = null;
+	private Intent mEditedIntent;
+	private int mComponentType;
+	private int mMethodId;
+	private IntentFilter[] mAttachedIntentFilters = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		// Tab switching and setContentView
-		mTabsHelper = TabsHelper.getBuilder(this)
-			.setLayout(
-					R.layout.intent_editor_with_tabhost,
-					R.layout.intent_editor
-			)
-			.tryTabsConfiguration(
-					"General", R.id.generalAndExtrasWrapper,
-					"Flags", R.id.flagsWrapper
-			)
-			.tryTabsConfiguration(
-					"General", R.id.generalWrapper,
-					"Extras", R.id.extrasList,
-					"Flags", R.id.flagsWrapper
-			)
-			.build();
-
-
-		// Prepare form
-		mActionText = (TextView) findViewById(R.id.action);
-		mDataText = (TextView) findViewById(R.id.data);
-		mComponentText = (TextView) findViewById(R.id.component);
-
-		mComponentTypeSpinner = (Spinner) findViewById(R.id.componenttype);
-		mComponentTypeSpinner.setAdapter(new ArrayAdapter<String>(this,
-				android.R.layout.simple_spinner_item, getResources()
-				.getStringArray(R.array.componenttypes)));
-		mComponentTypeSpinner.setOnItemSelectedListener(this);
-
-		mMethodSpinner = (Spinner) findViewById(R.id.method);
-
-		mCategoriesContainer = (ViewGroup) findViewById(R.id.categories);
-
-		// Apparently using android:scrollHorizontally="true" does not work.
-		// http://stackoverflow.com/questions/9011944/android-ice-cream-sandwich-edittext-disabling-spell-check-and-word-wrap
-		mComponentText.setHorizontallyScrolling(true);
-
-
 		// Load intent
-		Intent baseIntent = getIntent().getParcelableExtra("intent");
-
-		Bundle extras;
-		int componentType = 0;
-
-		if (savedInstanceState == null) {
-			if (baseIntent != null) {
-				mActionText.setText(baseIntent.getAction());
-				mDataText.setText(baseIntent.getDataString());
-				if (baseIntent.getComponent() != null) {
-					mComponentText.setText(baseIntent.getComponent()
-							.flattenToShortString());
-				}
-				extras = baseIntent.getExtras();
-			} else {
-				extras = new Bundle();
-			}
-
-			componentType = getIntent().getIntExtra(EXTRA_DISPOSITION,
-					COMPONENT_TYPE_ACTIVITY);
-			mComponentTypeSpinner.setSelection(componentType);
+		Parcelable[] uncastedIntentFilters = null;
+		if (savedInstanceState != null) {
+			mEditedIntent = savedInstanceState.getParcelable("intent");
+			mComponentType = savedInstanceState.getInt("componentType");
+			mMethodId = savedInstanceState.getInt("methodId");
+			uncastedIntentFilters = savedInstanceState.getParcelableArray("intentFilters");
 		} else {
-			extras = savedInstanceState.getBundle("_extras");
-		}
-
-		Set<String> categories = baseIntent == null ? null : baseIntent.getCategories();
-		if (categories != null) {
-			for (String category : categories) {
-				addCategory(category);
+			mEditedIntent = getIntent().getParcelableExtra("intent");
+			mComponentType = getIntent().getIntExtra(EXTRA_COMPONENT_TYPE, IntentEditorConstants.ACTIVITY);
+			mMethodId = getIntent().getIntExtra("methodId", 0);
+			uncastedIntentFilters = getIntent().getParcelableArrayExtra(EXTRA_INTENT_FILTERS);
+			if (mEditedIntent == null) {
+				mEditedIntent = new Intent();
 			}
 		}
-		mExtrasAdapter = new BundleAdapter(this, extras);
-		ListView extrasList = (ListView) findViewById(R.id.extrasList);
-		mExtrasAdapter.settleOnList(extrasList);
-
-		initMethodSpinner();
-
-		// Flags list
-		try {
-			int baseIntentFlags =
-					savedInstanceState != null ? savedInstanceState.getInt("flags") :
-						baseIntent != null ? baseIntent.getFlags() : 0;
-
-						LinearLayout l = (LinearLayout) findViewById(R.id.flags);
-						XmlPullParser xrp = getResources().getXml(R.xml.intent_flags);
-
-						int parserEvent;
-						while ((parserEvent = xrp.next()) != XmlPullParser.END_DOCUMENT) {
-							if (parserEvent != XmlPullParser.START_TAG
-									|| !xrp.getName().equals("flag")) {
-								continue;
-							}
-
-							try {
-								Flag flag = new Flag(xrp, this, l);
-								flag.updateValue(baseIntentFlags, componentType);
-								mFlags.add(flag);
-								l.addView(flag.mCheckbox);
-							} catch (Exception e) {}
-						}
-		} catch (Exception e) {
-			e.printStackTrace();
+		if (uncastedIntentFilters != null) {
+			try {
+				mAttachedIntentFilters = new IntentFilter[uncastedIntentFilters.length];
+				for (int i = 0; i < uncastedIntentFilters.length; i++) {
+					mAttachedIntentFilters[i] = (IntentFilter) uncastedIntentFilters[i];
+				}
+			} catch(ClassCastException e) {
+				Log.w(TAG, "Invalid intent filters");
+				mAttachedIntentFilters = null;
+			}
 		}
-	}
 
-	private void initMethodSpinner() {
-		int componentType = getComponentType();
-		mMethodSpinner.setAdapter(new ArrayAdapter<String>(this,
-			android.R.layout.simple_spinner_item,
-				getResources().getStringArray(
-					componentType == COMPONENT_TYPE_ACTIVITY ? R.array.activitymethods :
-					componentType == COMPONENT_TYPE_BROADCAST ? R.array.broadcastmethods :
-					componentType == COMPONENT_TYPE_SERVICE ? R.array.servicemethods : 0
-				)
-			)
-		);
+		// Setup tabs
+		if (getResources().getBoolean(R.bool.merge_general_and_extras_tabs)) {
+			addTab(getString(R.string.general), IntentGeneralWithExtrasFragment.class);
+		} else {
+			addTab(getString(R.string.general), IntentGeneralFragment.class);
+			addTab(getString(R.string.intent_extras), IntentExtrasFragment.class);
+		}
+		addTab("Flags", IntentFlagsFragment.class);
+
+
+
 	}
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		outState.putBundle("_extras", mExtrasAdapter.getBundle());
-		outState.putInt("flags", getFlagsFromCheckboxes());
+		updateIntent();
+		outState.putParcelable("intent", mEditedIntent);
+		outState.putInt("componentType", mComponentType);
+		outState.putInt("methodId", mMethodId);
+		outState.putParcelableArray("intentFilters", mAttachedIntentFilters);
 		/*if (mTabsHelper != null) {
 			outState.putInt("tab", mTabsHelper.getCurrentView());
 		}*/
@@ -191,72 +102,129 @@ public class IntentEditorActivity extends Activity implements OnItemSelectedList
 	}
 
 	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		super.onPrepareOptionsMenu(menu);
+		try {
+			menu.findItem(R.id.menu_run_intent)
+				.setTitle(IntentGeneralFragment.getMethodNamesArray(getResources(), mComponentType)[mMethodId]);
+		} catch (ArrayIndexOutOfBoundsException e) {
+			e.printStackTrace();
+		}
+		menu.findItem(R.id.detach_intent_filter)
+			.setVisible(mAttachedIntentFilters != null);
+		return true;
+	}
+
+	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// Handle item selection
 		switch (item.getItemId()) {
-		case R.id.menu_startActivity:
-			startProvidedActivity();
+		case R.id.menu_run_intent:
+			runIntent();
+			return true;
+		case R.id.detach_intent_filter:
+			clearAttachedIntentFilters();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}
 	}
 
-	public Intent buildIntent() {
-		Intent intent = new Intent();
-
-		// Intent action
-		String action = mActionText.getText().toString();
-		if (!action.equals("")) {
-			intent.setAction(action);
-		}
-
-		// Categories
-		for (ViewGroup cat : mCategoryRows) {
-			intent.addCategory(((TextView) cat.findViewById(R.id.categoryText)).getText().toString());
-		}
-
-		// Intent data (Uri)
-		String data = mDataText.getText().toString();
-		if (!data.equals("")) {
-			intent.setData(Uri.parse(data));
-		}
-
-		// Set component for explicit intent
-		String component = mComponentText.getText().toString();
-		if (!component.equals("")) {
-			intent.setComponent(ComponentName.unflattenFromString(component));
-		}
-
-		// Flags
-		intent.setFlags(getFlagsFromCheckboxes());
-
-		// Extras
-		intent.putExtras(mExtrasAdapter.getBundle());
-
-		return intent;
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	private void safelyInvalidateOptionsMenu() {
+		try {
+			invalidateOptionsMenu();
+		} catch(NoSuchMethodError error) {}
 	}
+
+	public void updateIntent() {
+		for (IntentEditorPanel panel : loadedPanels) {
+			panel.updateEditedIntent(mEditedIntent);
+		}
+	}
+
 
 	int getComponentType() {
-		return mComponentTypeSpinner.getSelectedItemPosition();
+		return mComponentType;
 	}
+
+	void setComponentType(int newComponentType) {
+		mComponentType = newComponentType;
+		for (IntentEditorPanel panel : loadedPanels) {
+			panel.onComponentTypeChanged(newComponentType);
+		}
+		safelyInvalidateOptionsMenu();
+	}
+
 	int getMethodId() {
-		return mMethodSpinner.getSelectedItemPosition();
+		return mMethodId;
+	}
+	void setMethodId(int newMethodId) {
+		mMethodId = newMethodId;
+		safelyInvalidateOptionsMenu();
 	}
 
-	public void startProvidedActivity() { // TODO better name
+	void clearAttachedIntentFilters() {
+		updateIntent();
+		mAttachedIntentFilters = null;
+		for (IntentEditorPanel panel : loadedPanels) {
+			panel.onIntentFiltersChanged(null);
+		}
+		safelyInvalidateOptionsMenu();
+	}
 
-		Intent intent = buildIntent();
+	public void runIntent() {
+		updateIntent();
 		try {
 			switch (getComponentType()) {
-			case COMPONENT_TYPE_ACTIVITY:
-				startActivity(intent);
+
+			case IntentEditorConstants.ACTIVITY:
+				switch (getMethodId()) {
+				case IntentEditorConstants.ACTIVITY_METHOD_STARTACTIVITY:
+					startActivity(mEditedIntent);
+					break;
+				case IntentEditorConstants.ACTIVITY_METHOD_STARTACTIVITYFORRESULT:
+					startActivityForResult(mEditedIntent, REQUEST_CODE_TEST_STARTACTIVITYFORRESULT);
+					break;
+				}
 				break;
-			/*case DISPOSITION_ACTIVITYFORRESULT:
-				startActivityForResult(intent, 1);
-				break;*/
-			case COMPONENT_TYPE_BROADCAST:
-				sendBroadcast(intent);
+
+
+			case IntentEditorConstants.BROADCAST:
+				switch (getMethodId()) {
+				case IntentEditorConstants.BROADCAST_METHOD_SENDBROADCAST:
+					sendBroadcast(mEditedIntent);
+					break;
+				case IntentEditorConstants.BROADCAST_METHOD_SENDORDEREDBROADCAST:
+					{
+						sendOrderedBroadcast(
+							mEditedIntent, // intent
+							null, // permission
+							new BroadcastReceiver() { // resultReceiver
+								@Override
+								public void onReceive(Context context, Intent intent) {
+									// TODO Auto-generated method stub
+									Toast.makeText(IntentEditorActivity.this, "Received result", Toast.LENGTH_SHORT).show();
+								}
+							},
+							null, // scheduler
+							0, // initialCode
+							null, // initialData
+							null // initialExtras
+						);
+					}
+					break;
+				case IntentEditorConstants.BROADCAST_METHOD_SENDSTICKYBROADCAST:
+					sendStickyBroadcast(mEditedIntent);
+					break;
+				}
+				break;
+
+
+			case IntentEditorConstants.SERVICE:
+				Toast.makeText(this, "Not implemented", Toast.LENGTH_SHORT).show();
+				// TODO runIntent services
+				break;
 			}
 		} catch(Exception exception) {
 			String exceptionName = exception.getClass().getName();
@@ -265,78 +233,23 @@ public class IntentEditorActivity extends Activity implements OnItemSelectedList
 		}
 	}
 
-	// CATEGORIES
-	public void addCategory(String category) {
-		ViewGroup row = (ViewGroup) getLayoutInflater().inflate(R.layout.category_row, mCategoriesContainer);
-		((TextView) row.findViewById(R.id.categoryText)).setText(category);
-		mCategoryRows.add(row);
-	}
-	public void addCategory(View view) {
-		addCategory("");
-	}
-	public void removeCategory(View view) {
-		ViewGroup row = (ViewGroup) view.getParent();
-		mCategoriesContainer.removeView(row);
-		mCategoryRows.remove(row);
-	}
 
-	// COMPONENT
-	public void pickComponent(View view) {
-		Intent intent = buildIntent().setComponent(null);
-		PackageManager pm = getPackageManager();
-		List<ResolveInfo> ri = null;
-
-		switch (getComponentType()) {
-		case COMPONENT_TYPE_ACTIVITY:
-			ri = pm.queryIntentActivities(intent, 0);
-			break;
-		case COMPONENT_TYPE_BROADCAST:
-			ri = pm.queryBroadcastReceivers(intent, 0);
-			break;
-		case COMPONENT_TYPE_SERVICE:
-			ri = pm.queryIntentServices(intent, 0);
-			break;
-		}
-		new ComponentPicker(this, ri, mComponentText).show();
-
-	}
-
-	public void clearComponent(View view) {
-		mComponentText.setText("");
-	}
 
 	// RESULT
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode,
 			Intent intent) {
-		Toast.makeText(this, "GOT ACTIVITY RESULT", Toast.LENGTH_SHORT).show();
+		if (requestCode == REQUEST_CODE_TEST_STARTACTIVITYFORRESULT) {
+			Toast.makeText(this, "GOT ACTIVITY RESULT", Toast.LENGTH_SHORT).show();
+		}
 		// TODO Auto-generated method stub
 	}
 
-	// FLAGS
-	private int getFlagsFromCheckboxes() {
-		int flags = 0;
-		for (Flag flag : mFlags) {
-			flags |= flag.getValue();
-		}
-		return flags;
+	Intent getEditedIntent() {
+		return mEditedIntent;
 	}
 
-	// Component type and method
-	@Override
-	public void onItemSelected(AdapterView<?> parent, View view, int position,
-			long id) {
-		if (parent == mComponentTypeSpinner) {
-			int flags = getFlagsFromCheckboxes();
-			for (Flag flag : mFlags) {
-				flag.updateValue(flags, position);
-			}
-			initMethodSpinner();
-		}
-	}
-
-	@Override
-	public void onNothingSelected(AdapterView<?> parent) {
-		// Spinner won't have nothing selected
+	IntentFilter[] getAttachedIntentFilters() {
+		return mAttachedIntentFilters;
 	}
 }

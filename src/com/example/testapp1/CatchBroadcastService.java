@@ -12,6 +12,7 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 
 import com.example.testapp1.editor.IntentEditorActivity;
+import com.example.testapp1.editor.IntentEditorConstants;
 
 public class CatchBroadcastService extends Service {
 	static boolean sIsRunning = false;
@@ -58,9 +59,9 @@ public class CatchBroadcastService extends Service {
 	void showWaitingNotification(String action) {
 		mGotBroadcast = false;
 
-		Intent requeryAction = new Intent(this, StartActivity.class);
+		Intent requeryAction = new Intent(this, CatchBroadcastDialog.WrapperActivity.class);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				requeryAction, 0);
+				requeryAction, Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
 
 		String title = getResources().getString(R.string.waiting_for_broadcast);
 
@@ -77,7 +78,7 @@ public class CatchBroadcastService extends Service {
 
 		Intent runEditor = new Intent(this, IntentEditorActivity.class);
 		runEditor.putExtra("intent", receivedBroadcast);
-		runEditor.putExtra(IntentEditorActivity.EXTRA_DISPOSITION, IntentEditorActivity.COMPONENT_TYPE_BROADCAST);
+		runEditor.putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, IntentEditorConstants.BROADCAST);
 		runEditor.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 					runEditor, 0);
