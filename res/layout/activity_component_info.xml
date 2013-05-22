@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical" >
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical">
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" >
+        android:layout_weight="1">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" >
+            android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" >
+                android:layout_height="wrap_content">
 
                 <!-- 48x48dp icon + 2dp padding -->
 
@@ -24,26 +25,28 @@
                     android:id="@+id/icon"
                     android:layout_width="52dp"
                     android:layout_height="52dp"
-                    android:padding="2dp" />
+                    android:padding="2dp"/>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical" >
+                    android:orientation="vertical">
 
                     <TextView
                         android:id="@+id/title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="[title]"
-                        android:textAppearance="?android:attr/textAppearanceMedium" />
+                        android:textAppearance="?android:attr/textAppearanceMedium"
+                        tools:ignore="HardcodedText"/>
 
                     <TextView
                         android:id="@+id/component"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="[com.pon/.ent]"
-                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                        android:textAppearance="?android:attr/textAppearanceSmall"
+                        tools:ignore="HardcodedText"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -52,7 +55,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingLeft="3dp"
-                android:text="TextView" />
+                android:text="TextView"
+                tools:ignore="HardcodedText"/>
+
         </LinearLayout>
     </ScrollView>
 
@@ -60,6 +65,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:onClick="goToIntentEditor"
-        android:text="@string/go_to_intent_editor" />
+        android:text="@string/go_to_intent_editor"/>
 
 </LinearLayout>

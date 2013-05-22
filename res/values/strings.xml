@@ -2,32 +2,28 @@
 
     <string name="app_name">TestApp1</string>
     <string name="start_empty">Empty Intent</string>
-    <string name="start_recent_task">Pick running task</string>
-    <string name="start_browse_apps">Browse apps</string>
-    <string name="menu_add_extra">Add extra</string>
-    <string name="menu_startActivity">startActivity</string>
+
+    <string name="detach_intentfilter">Detach IntentFilter</string>
     <string name="menu_settings">Settings</string>
     <string name="title_activity_entry_editor">Intent extra/Bundle entry</string>
 
     <!-- Intent editor -->
-    
+
     <string name="general">General</string>
     <string name="intent_action">Intent action</string>
     <string name="intent_categories">Categories:</string>
     <string name="intent_categories_add">Add category</string>
     <string name="intent_data">Intent data (URI)</string>
-    
+
     <string name="intent_component">Component name (for explicit intents)</string>
     <string name="label_pick">Pick</string>
     <string name="label_clear">Clear</string>
     <string name="no_matching_components_found">No matching components found</string>
-    
+
     <string name="intent_extras">Extras</string>
-    
+
     <string name="btn_add">Add</string>
     <string name="type_unsupported">Type unsupported</string>
-    <!--<string name="startactivity_error_not_found">Activity not found</string>
-    <string name="startactivity_error_security_exception">Not allowed to start activity</string>-->
     <string name="item_name">Name:</string>
     <string name="item_type">Type:</string>
     <string name="item_value">Value:</string>
@@ -38,25 +34,57 @@
     <!--<string name="hello_world">Hello world!</string>-->
 
     <!-- Recents picker -->
-    <string name="title_activity_pick_recenly_running">PickRecenlyRunningActivity</string>
+    <string name="pick_recent_task">Pick running task</string>
     <string name="menu_show_boring">Show all</string>
     <string name="menu_hide_boring">Hide boring</string>
-    <string name="title_activity_browse_apps">BrowseAppsActivity</string>
-    
-    <!-- Apps browser -->
+
+    <!-- Components browser -->
+    <string name="browse_components">Browse apps</string>
+    <string name="app_type">App type</string>
     <string name="system_apps">System apps</string>
     <string name="user_apps">User apps</string>
+    <string name="component_type">Component type</string>
+    <string name="activities">Activities</string>
+    <string name="broadcast_receivers">BroadcastReceivers</string>
+    <string name="services">Services</string>
     <string name="loading_apps_list">Loading apps list&#8230;</string>
     <string name="no_matching_apps_found">No apps matching to given criteria</string>
-    
+
+    <string name="permission_filter">Protection</string>
+    <string name="permission_filter_show_all">All</string>
+    <string name="permission_filter_show_exported">Exported</string>
+    <string name="permission_filter_show_obtainable">Obtainable</string>
+
+    <string name="permission_filter_world_accessible">World accessible</string>
+    <string name="permission_filter_normal">Normal</string>
+    <string name="permission_filter_dangerous">Dangerous</string>
+    <string name="permission_filter_signature">Signature</string>
+    <string name="permission_filter_system">System</string>
+    <string name="permission_filter_development">Development</string>
+    <string name="permission_filter_unexported">Not exported</string>
+    <string name="permission_filter_unknown">Unknown permission</string>
+
+    <string name="filter_custom">Custom</string>
+    <string name="custom_filter">Custom filter</string>
+    <string name="set_custom_filter">Set filter</string>
+
     <!-- Component Info -->
     <string name="component_info">Component info</string>
     <string name="component_not_found_in_manifest">Component not found in manifest</string>
     <string name="component_not_exported">Component not exported</string>
-    <string name="permission_required_title">Permission</string> <!-- [[Permission]]: [permission attribute value] -->
+    <string name="permission_required_title">Permission</string>
+    <!-- [[Permission]]: [permission attribute value] -->
     <string name="intent_filters">Intent filters:</string>
     <string name="no_intent_filters">No intent filters</string>
+    <string name="unknown_intent_filters">Intent filters unknown (retrieving error)</string>
     <string name="go_to_intent_editor">Go to intent editor</string>
+    <string name="view_android_manifest_xml">View AndroidManifest.xml</string>
+
+    <!-- Metadata -->
+    <string name="metadata_header">Metadata</string>
+    <string name="metadata_filter">Having metadata</string>
+    <string name="metadata_filter_substring">Substring:</string>
+    <string name="view_as_xml_resource">View as XML</string>
 
     <!-- Broadcast catcher -->
     <string name="register_receiver">Register receiver</string>
@@ -64,8 +92,10 @@
     <string name="title_activity_catch_broadcast">Catch broadcast</string>
     <string name="waiting_for_broadcast">Waiting for broadcast&#8230;</string>
     <string name="got_broadcast">Got broadcast</string>
-    
+
     <string name="broadcast_autoedit">Autoedit broadcast</string>
     <string name="broadcast_autoedit_on">Open editor immediately after catching broadcast</string>
     <string name="broadcast_autoedit_off">Wait for notification click to edit non-sticky caught broadcast</string>
+
+
 </resources>

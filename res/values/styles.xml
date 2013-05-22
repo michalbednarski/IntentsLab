@@ -1,6 +1,7 @@
 <resources>
 
-    <style name="AppTheme" parent="android:Theme.Light" />
-    <style name="DialogTheme" parent="android:Theme.Dialog" />
+    <style name="AppTheme" parent="android:Theme.Light"/>
+
+    <style name="NoDisplayForDialogTheme" parent="android:Theme.NoDisplay"/>
 
 </resources>

@@ -1,54 +1,57 @@
-<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
         android:id="@+id/system_apps"
-        android:icon="@drawable/ic_action_system_apps"
-        android:title="@string/system_apps">
-    </item>
+        android:icon="@drawable/ic_menu_system_apps"
+        android:title="@string/system_apps"/>
     <item
         android:id="@+id/user_apps"
-        android:icon="@drawable/ic_action_user_apps"
-        android:title="@string/user_apps">
-    </item>
-    <item android:title="CT">
+        android:icon="@drawable/ic_menu_user_apps"
+        android:title="@string/user_apps"/>
+    <item
+        android:title="@string/component_type"
+        android:id="@+id/simple_filter_component_type">
         <menu>
             <group
                 android:id="@+id/xg1"
-                android:checkableBehavior="single" >
+                android:checkableBehavior="single">
                 <item
                     android:id="@+id/activities"
-                    android:title="A">
-                </item>
+                    android:title="@string/activities"/>
                 <item
                     android:id="@+id/broadcasts"
-                    android:title="B">
-                </item>
+                    android:title="@string/broadcast_receivers"/>
                 <item
                     android:id="@+id/services"
-                    android:title="S">
-                </item>
+                    android:title="@string/services"/>
             </group>
         </menu>
     </item>
-    <item android:title="PF">
+    <item
+        android:title="@string/permission_filter"
+        android:id="@+id/simple_filter_permission">
         <menu>
             <group
                 android:id="@+id/xg2"
-                android:checkableBehavior="single" >
+                android:checkableBehavior="single">
                 <item
                     android:id="@+id/permission_filter_all"
-                    android:title="ALL"/>
+                    android:title="@string/permission_filter_show_all"/>
                 <item
                     android:id="@+id/permission_filter_exported"
-                    android:title="EXPORTED"/>
+                    android:title="@string/permission_filter_show_exported"/>
                 <item
-                    android:id="@+id/permission_filter_obtaiable"
-                    android:title="OBTAIABLE"/>
+                    android:id="@+id/permission_filter_obtainable"
+                    android:title="@string/permission_filter_show_obtainable"/>
                 <item
                     android:id="@+id/permission_filter_world_accessible"
-                    android:title="WORLD ACCESSIBLE"/>
+                    android:title="@string/permission_filter_world_accessible"/>
             </group>
         </menu>
     </item>
+    <item
+        android:id="@+id/custom_filter"
+        android:title="@string/custom_filter"
+        android:showAsAction="ifRoom"/>
 
 </menu>

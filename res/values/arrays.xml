@@ -1,32 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Actions and categories to hide by default in recents picker -->
     <string-array name="boring_actions">
-        <item >android.intent.action.MAIN</item>
+        <item>android.intent.action.MAIN</item>
     </string-array>
     <string-array name="boring_categories">
-        <item >android.intent.category.LAUNCHER</item>
+        <item>android.intent.category.LAUNCHER</item>
     </string-array>
-    
+
     <!-- DON'T REORDER -->
+    <!-- Component types and related methods -->
     <string-array name="componenttypes">
         <item>Activity</item>
         <item>Broadcast</item>
         <item>Service</item>
     </string-array>
-    
+
     <string-array name="activitymethods">
-        <item>startActivty</item>
+        <item>startActivity</item>
         <item>startActivityForResult</item>
     </string-array>
-    
+
     <string-array name="broadcastmethods">
         <item>sendBroadcast</item>
         <item>sendOrderedBroadcast</item>
         <item>sendStickyBroadcast</item>
     </string-array>
-    
+
     <string-array name="servicemethods">
         <item>startService</item>
         <item>bindService</item>
+    </string-array>
+
+    <!-- Protection filter spinner [in custom filter] -->
+    <string-array name="protection_filter_value">
+        <item>@string/permission_filter_show_all</item>
+        <item>@string/permission_filter_show_exported</item>
+        <item>@string/permission_filter_show_obtainable</item>
+        <item>@string/permission_filter_world_accessible</item>
+        <item>@string/filter_custom</item>
     </string-array>
 </resources>
