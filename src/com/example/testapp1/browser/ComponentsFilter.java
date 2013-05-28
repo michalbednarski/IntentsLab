@@ -1,6 +1,6 @@
 package com.example.testapp1.browser;
 
-public class AppsBrowserFilter {
+public class ComponentsFilter {
 
     public static final int TYPE_ACTIVITY = 1;
     public static final int TYPE_RECEIVER = 2;

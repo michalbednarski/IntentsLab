@@ -39,7 +39,7 @@
     <string name="menu_hide_boring">Hide boring</string>
 
     <!-- Components browser -->
-    <string name="browse_components">Browse apps</string>
+    <string name="browse_components">Browse components</string>
     <string name="app_type">App type</string>
     <string name="system_apps">System apps</string>
     <string name="user_apps">User apps</string>

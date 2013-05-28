@@ -7,7 +7,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
-import com.example.testapp1.browser.BrowseAppsActivity;
+import com.example.testapp1.browser.BrowseComponentsActivity;
 import com.example.testapp1.browser.ExtendedPackageInfo;
 import com.example.testapp1.editor.IntentEditorActivity;
 import com.example.testapp1.providerlab.ProviderLabActivity;
@@ -54,7 +54,7 @@ public class StartActivity extends Activity {
     }
 
     public void browseApps(View view) {
-    	startActivity(new Intent(this, BrowseAppsActivity.class));
+    	startActivity(new Intent(this, BrowseComponentsActivity.class));
     }
 
     public void catchBroadcast(View view) {

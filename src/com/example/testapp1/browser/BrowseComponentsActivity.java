@@ -28,10 +28,10 @@ import com.example.testapp1.R;
 import com.example.testapp1.Utils;
 import com.example.testapp1.providerlab.ProviderInfoActivity;
 
-public class BrowseAppsActivity extends Activity implements ExpandableListAdapter, OnChildClickListener {
+public class BrowseComponentsActivity extends Activity implements ExpandableListAdapter, OnChildClickListener {
 
     private final static int ITEM_ID_SPLIT_BASE = 1000;
-    private static final String TAG = "BrowseAppsActivity";
+    private static final String TAG = "BrowseComponentsActivity";
 
     ArrayList<DataSetObserver> mDataSetObservers = new ArrayList<DataSetObserver>();
     AppInfo mApps[] = null;
@@ -41,7 +41,7 @@ public class BrowseAppsActivity extends Activity implements ExpandableListAdapte
 
     //private class CachedPackagesInfo {};
 
-    AppsBrowserFilter filter = new AppsBrowserFilter();
+    ComponentsFilter filter = new ComponentsFilter();
     boolean useCustomFilter = false;
 
     private FetchAppsTask mTask = null;
@@ -88,20 +88,20 @@ public class BrowseAppsActivity extends Activity implements ExpandableListAdapte
             menu.findItem(R.id.simple_filter_component_type).setVisible(false).setEnabled(false);
             menu.findItem(R.id.simple_filter_permission).setVisible(false).setEnabled(false);
         } else {
-            boolean selectedSystemApps = filter.appType != AppsBrowserFilter.APP_TYPE_USER;
+            boolean selectedSystemApps = filter.appType != ComponentsFilter.APP_TYPE_USER;
             menu.findItem(R.id.system_apps).setVisible(!selectedSystemApps).setEnabled(!selectedSystemApps);
             menu.findItem(R.id.user_apps).setVisible(selectedSystemApps).setEnabled(selectedSystemApps);
             menu.findItem(
-                    filter.type == AppsBrowserFilter.TYPE_ACTIVITY ? R.id.activities :
-                    filter.type == AppsBrowserFilter.TYPE_RECEIVER ? R.id.broadcasts :
-                    filter.type == AppsBrowserFilter.TYPE_SERVICE ? R.id.services :
-                    filter.type == AppsBrowserFilter.TYPE_CONTENT_PROVIDER ? R.id.content_providers : R.id.activities
+                    filter.type == ComponentsFilter.TYPE_ACTIVITY ? R.id.activities :
+                    filter.type == ComponentsFilter.TYPE_RECEIVER ? R.id.broadcasts :
+                    filter.type == ComponentsFilter.TYPE_SERVICE ? R.id.services :
+                    filter.type == ComponentsFilter.TYPE_CONTENT_PROVIDER ? R.id.content_providers : R.id.activities
             ).setChecked(true); /* this boolean value is ignored for radio buttons - system always thinks it's true */
             menu.findItem(
-                    filter.protection == AppsBrowserFilter.PROTECTION_WORLD_ACCESSIBLE ? R.id.permission_filter_world_accessible :
-                    filter.protection == AppsBrowserFilter.PROTECTION_ANY_OBTAINABLE ? R.id.permission_filter_obtainable :
-                    filter.protection == AppsBrowserFilter.PROTECTION_ANY_EXPORTED ? R.id.permission_filter_exported :
-                    filter.protection == AppsBrowserFilter.PROTECTION_ANY ? R.id.permission_filter_all : 0
+                    filter.protection == ComponentsFilter.PROTECTION_WORLD_ACCESSIBLE ? R.id.permission_filter_world_accessible :
+                    filter.protection == ComponentsFilter.PROTECTION_ANY_OBTAINABLE ? R.id.permission_filter_obtainable :
+                    filter.protection == ComponentsFilter.PROTECTION_ANY_EXPORTED ? R.id.permission_filter_exported :
+                    filter.protection == ComponentsFilter.PROTECTION_ANY ? R.id.permission_filter_all : 0
             ).setChecked(true);
             menu.findItem(R.id.simple_filter_component_type).setVisible(true).setEnabled(true);
             menu.findItem(R.id.simple_filter_permission).setVisible(true).setEnabled(true);
@@ -125,7 +125,7 @@ public class BrowseAppsActivity extends Activity implements ExpandableListAdapte
                 return true;
             case R.id.system_apps:
             case R.id.user_apps:
-                filter.appType = ((itemId == R.id.system_apps) ? AppsBrowserFilter.APP_TYPE_SYSTEM : AppsBrowserFilter.APP_TYPE_USER);
+                filter.appType = ((itemId == R.id.system_apps) ? ComponentsFilter.APP_TYPE_SYSTEM : ComponentsFilter.APP_TYPE_USER);
                 safelyInvalidateOptionsMenu();
                 updateList();
                 return true;
@@ -134,10 +134,10 @@ public class BrowseAppsActivity extends Activity implements ExpandableListAdapte
             case R.id.services:
             case R.id.content_providers:
                 filter.type =
-                        itemId == R.id.activities ? AppsBrowserFilter.TYPE_ACTIVITY :
-                        itemId == R.id.broadcasts ? AppsBrowserFilter.TYPE_RECEIVER :
-                        itemId == R.id.services ? AppsBrowserFilter.TYPE_SERVICE :
-                            AppsBrowserFilter.TYPE_CONTENT_PROVIDER;
+                        itemId == R.id.activities ? ComponentsFilter.TYPE_ACTIVITY :
+                        itemId == R.id.broadcasts ? ComponentsFilter.TYPE_RECEIVER :
+                        itemId == R.id.services ? ComponentsFilter.TYPE_SERVICE :
+                            ComponentsFilter.TYPE_CONTENT_PROVIDER;
                 safelyInvalidateOptionsMenu();
                 updateList();
                 return true;
@@ -146,10 +146,10 @@ public class BrowseAppsActivity extends Activity implements ExpandableListAdapte
             case R.id.permission_filter_obtainable:
             case R.id.permission_filter_world_accessible:
                 filter.protection =
-                        itemId == R.id.permission_filter_all ? AppsBrowserFilter.PROTECTION_ANY :
-                        itemId == R.id.permission_filter_exported ? AppsBrowserFilter.PROTECTION_ANY_EXPORTED :
-                        itemId == R.id.permission_filter_obtainable ? AppsBrowserFilter.PROTECTION_ANY_OBTAINABLE :
-                            AppsBrowserFilter.PROTECTION_WORLD_ACCESSIBLE;
+                        itemId == R.id.permission_filter_all ? ComponentsFilter.PROTECTION_ANY :
+                        itemId == R.id.permission_filter_exported ? ComponentsFilter.PROTECTION_ANY_EXPORTED :
+                        itemId == R.id.permission_filter_obtainable ? ComponentsFilter.PROTECTION_ANY_OBTAINABLE :
+                            ComponentsFilter.PROTECTION_WORLD_ACCESSIBLE;
                 safelyInvalidateOptionsMenu();
                 updateList();
                 return true;
@@ -270,7 +270,7 @@ public class BrowseAppsActivity extends Activity implements ExpandableListAdapte
         return groupId;
     }
 
-    void setCustomFilter(AppsBrowserFilter newFilter) {
+    void setCustomFilter(ComponentsFilter newFilter) {
         filter = newFilter;
         useCustomFilter = true;
         safelyInvalidateOptionsMenu();
@@ -305,7 +305,7 @@ public class BrowseAppsActivity extends Activity implements ExpandableListAdapte
         private boolean checkPermissionFilter(ComponentInfo cmp) {
 
             if (!cmp.exported) {
-                return (filter.protection & AppsBrowserFilter.PROTECTION_UNEXPORTED) != 0;
+                return (filter.protection & ComponentsFilter.PROTECTION_UNEXPORTED) != 0;
             }
 
             String permission =
@@ -319,10 +319,10 @@ public class BrowseAppsActivity extends Activity implements ExpandableListAdapte
                     ;
 
             if (permission == null) {
-                return (filter.protection & AppsBrowserFilter.PROTECTION_WORLD_ACCESSIBLE) != 0;
+                return (filter.protection & ComponentsFilter.PROTECTION_WORLD_ACCESSIBLE) != 0;
             }
 
-            if ((filter.protection & AppsBrowserFilter.PROTECTION_ANY_PERMISSION) == AppsBrowserFilter.PROTECTION_ANY_PERMISSION) {
+            if ((filter.protection & ComponentsFilter.PROTECTION_ANY_PERMISSION) == ComponentsFilter.PROTECTION_ANY_PERMISSION) {
                 return true;
             }
 
@@ -331,24 +331,24 @@ public class BrowseAppsActivity extends Activity implements ExpandableListAdapte
                 permissionInfo = getPackageManager().getPermissionInfo(permission, 0);
             } catch (NameNotFoundException e) {
                 Log.v("PermissionFilter", "Unknown permission " + permission + " for " + cmp.name);
-                return (filter.protection & AppsBrowserFilter.PROTECTION_UNKNOWN) != 0;
+                return (filter.protection & ComponentsFilter.PROTECTION_UNKNOWN) != 0;
             }
 
             int protectionLevel = permissionInfo.protectionLevel;
             int protectionLevelBase = protectionLevel & PermissionInfo.PROTECTION_MASK_BASE;
             int protectionLevelFlags = protectionLevel & PermissionInfo.PROTECTION_MASK_FLAGS;
             return ((
-                protectionLevel == PermissionInfo.PROTECTION_NORMAL ? AppsBrowserFilter.PROTECTION_NORMAL :
-                protectionLevel == PermissionInfo.PROTECTION_DANGEROUS ? AppsBrowserFilter.PROTECTION_DANGEROUS :
+                protectionLevel == PermissionInfo.PROTECTION_NORMAL ? ComponentsFilter.PROTECTION_NORMAL :
+                protectionLevel == PermissionInfo.PROTECTION_DANGEROUS ? ComponentsFilter.PROTECTION_DANGEROUS :
                     (
                         ((protectionLevelBase == PermissionInfo.PROTECTION_SIGNATURE ||
                           protectionLevelBase == PermissionInfo.PROTECTION_SIGNATURE_OR_SYSTEM)
-                            ? AppsBrowserFilter.PROTECTION_SIGNATURE : 0) |
+                            ? ComponentsFilter.PROTECTION_SIGNATURE : 0) |
                         ((protectionLevelBase == PermissionInfo.PROTECTION_SIGNATURE_OR_SYSTEM ||
                          (protectionLevelFlags & PermissionInfo.PROTECTION_FLAG_SYSTEM) != 0)
-                            ? AppsBrowserFilter.PROTECTION_SYSTEM : 0) |
+                            ? ComponentsFilter.PROTECTION_SYSTEM : 0) |
                         (((protectionLevelFlags & PermissionInfo.PROTECTION_FLAG_DEVELOPMENT) != 0)
-                            ? AppsBrowserFilter.PROTECTION_SYSTEM : 0)
+                            ? ComponentsFilter.PROTECTION_SYSTEM : 0)
                     )
             ) & filter.protection) != 0;
         }
@@ -396,10 +396,10 @@ public class BrowseAppsActivity extends Activity implements ExpandableListAdapte
         protected Object doInBackground(Object... params) {
             PackageManager pm = getPackageManager();
             int requestedPackageInfoFlags =
-                    ((filter.type & AppsBrowserFilter.TYPE_ACTIVITY) != 0 ? PackageManager.GET_ACTIVITIES : 0) |
-                    ((filter.type & AppsBrowserFilter.TYPE_RECEIVER) != 0 ? PackageManager.GET_RECEIVERS : 0) |
-                    ((filter.type & AppsBrowserFilter.TYPE_SERVICE) != 0 ? PackageManager.GET_SERVICES : 0) |
-                    ((filter.type & AppsBrowserFilter.TYPE_CONTENT_PROVIDER) != 0 ? PackageManager.GET_PROVIDERS : 0) |
+                    ((filter.type & ComponentsFilter.TYPE_ACTIVITY) != 0 ? PackageManager.GET_ACTIVITIES : 0) |
+                    ((filter.type & ComponentsFilter.TYPE_RECEIVER) != 0 ? PackageManager.GET_RECEIVERS : 0) |
+                    ((filter.type & ComponentsFilter.TYPE_SERVICE) != 0 ? PackageManager.GET_SERVICES : 0) |
+                    ((filter.type & ComponentsFilter.TYPE_CONTENT_PROVIDER) != 0 ? PackageManager.GET_PROVIDERS : 0) |
                     (filter.requireMetaData ? PackageManager.GET_META_DATA : 0);
 
             List<PackageInfo> allPackages = pm.getInstalledPackages(requestedPackageInfoFlags);
@@ -422,8 +422,8 @@ public class BrowseAppsActivity extends Activity implements ExpandableListAdapte
                 // System app filter
                 if (((
                         (pack.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 ?
-                                AppsBrowserFilter.APP_TYPE_SYSTEM :
-                                AppsBrowserFilter.APP_TYPE_USER)
+                                ComponentsFilter.APP_TYPE_SYSTEM :
+                                ComponentsFilter.APP_TYPE_USER)
                         & filter.appType) == 0) {
                     continue;
                 }
@@ -442,16 +442,16 @@ public class BrowseAppsActivity extends Activity implements ExpandableListAdapte
 
                 ArrayList<AppComponentInfo> selectedComponents = new ArrayList<AppComponentInfo>();
 
-                if ((filter.type & AppsBrowserFilter.TYPE_ACTIVITY) != 0) {
+                if ((filter.type & ComponentsFilter.TYPE_ACTIVITY) != 0) {
                     scanComponents(pack.activities, selectedComponents);
                 }
-                if ((filter.type & AppsBrowserFilter.TYPE_RECEIVER) != 0) {
+                if ((filter.type & ComponentsFilter.TYPE_RECEIVER) != 0) {
                     scanComponents(pack.receivers, selectedComponents);
                 }
-                if ((filter.type & AppsBrowserFilter.TYPE_SERVICE) != 0) {
+                if ((filter.type & ComponentsFilter.TYPE_SERVICE) != 0) {
                     scanComponents(pack.services, selectedComponents);
                 }
-                if ((filter.type & AppsBrowserFilter.TYPE_CONTENT_PROVIDER) != 0) {
+                if ((filter.type & ComponentsFilter.TYPE_CONTENT_PROVIDER) != 0) {
                     scanComponents(pack.providers, selectedComponents);
                 }
 
@@ -478,7 +478,7 @@ public class BrowseAppsActivity extends Activity implements ExpandableListAdapte
             }
 
             if (!mListAdapterSet) {
-                mList.setAdapter(BrowseAppsActivity.this);
+                mList.setAdapter(BrowseComponentsActivity.this);
                 mListAdapterSet = true;
             }
 

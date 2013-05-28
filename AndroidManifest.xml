@@ -35,7 +35,7 @@
                 android:value="com.example.testapp1.StartActivity"/>
         </activity>
         <activity
-            android:name=".browser.BrowseAppsActivity"
+            android:name=".browser.BrowseComponentsActivity"
             android:label="@string/browse_components">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

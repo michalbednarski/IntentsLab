@@ -11,16 +11,16 @@ import com.example.testapp1.R;
  *
  */
 class EditFilterDialog implements DialogInterface.OnClickListener {
-    private BrowseAppsActivity mActivity;
+    private BrowseComponentsActivity mActivity;
     private View mView;
     private static final boolean DEVELOPMENT_PERMISSIONS_SUPPORTED =
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN;
     private static final int PERMISSIONS_MASK =
             DEVELOPMENT_PERMISSIONS_SUPPORTED ?
-                    AppsBrowserFilter.PROTECTION_ANY :
-                    (AppsBrowserFilter.PROTECTION_ANY ^ AppsBrowserFilter.PROTECTION_DEVELOPMENT);
+                    ComponentsFilter.PROTECTION_ANY :
+                    (ComponentsFilter.PROTECTION_ANY ^ ComponentsFilter.PROTECTION_DEVELOPMENT);
 
-    EditFilterDialog(BrowseAppsActivity activity) {
+    EditFilterDialog(BrowseComponentsActivity activity) {
         mActivity = activity;
         mView = activity.getLayoutInflater().inflate(R.layout.apps_filter, null);
 
@@ -48,16 +48,16 @@ class EditFilterDialog implements DialogInterface.OnClickListener {
                                     View.GONE);
                     switch (position) {
                         case 0:
-                            updateProtectionFilter(AppsBrowserFilter.PROTECTION_ANY, false);
+                            updateProtectionFilter(ComponentsFilter.PROTECTION_ANY, false);
                             break;
                         case 1:
-                            updateProtectionFilter(AppsBrowserFilter.PROTECTION_ANY_EXPORTED, false);
+                            updateProtectionFilter(ComponentsFilter.PROTECTION_ANY_EXPORTED, false);
                             break;
                         case 2:
-                            updateProtectionFilter(AppsBrowserFilter.PROTECTION_ANY_OBTAINABLE, false);
+                            updateProtectionFilter(ComponentsFilter.PROTECTION_ANY_OBTAINABLE, false);
                             break;
                         case 3:
-                            updateProtectionFilter(AppsBrowserFilter.PROTECTION_WORLD_ACCESSIBLE, false);
+                            updateProtectionFilter(ComponentsFilter.PROTECTION_WORLD_ACCESSIBLE, false);
                             break;
                     }
                 }
@@ -99,38 +99,38 @@ class EditFilterDialog implements DialogInterface.OnClickListener {
 
         if (mayModifySpinner) {
             Spinner spinner = (Spinner) mView.findViewById(R.id.permission_filter_spinner);
-            if (protection == (AppsBrowserFilter.PROTECTION_ANY & PERMISSIONS_MASK)) {
+            if (protection == (ComponentsFilter.PROTECTION_ANY & PERMISSIONS_MASK)) {
                 spinner.setSelection(0);
-            } else if (protection == (AppsBrowserFilter.PROTECTION_ANY_EXPORTED & PERMISSIONS_MASK)) {
+            } else if (protection == (ComponentsFilter.PROTECTION_ANY_EXPORTED & PERMISSIONS_MASK)) {
                 spinner.setSelection(1);
-            } else if (protection == AppsBrowserFilter.PROTECTION_ANY_OBTAINABLE) {
+            } else if (protection == ComponentsFilter.PROTECTION_ANY_OBTAINABLE) {
                 spinner.setSelection(2);
-            } else if (protection == AppsBrowserFilter.PROTECTION_WORLD_ACCESSIBLE) {
+            } else if (protection == ComponentsFilter.PROTECTION_WORLD_ACCESSIBLE) {
                 spinner.setSelection(3);
             } else {
                 spinner.setSelection(4);
             }
         }
 
-        setCheckBoxChecked(R.id.permission_filter_world_accessible, (protection & AppsBrowserFilter.PROTECTION_WORLD_ACCESSIBLE) != 0);
-        setCheckBoxChecked(R.id.permission_filter_normal, (protection & AppsBrowserFilter.PROTECTION_NORMAL) != 0);
-        setCheckBoxChecked(R.id.permission_filter_dangerous, (protection & AppsBrowserFilter.PROTECTION_DANGEROUS) != 0);
-        setCheckBoxChecked(R.id.permission_filter_signature, (protection & AppsBrowserFilter.PROTECTION_SIGNATURE) != 0);
-        setCheckBoxChecked(R.id.permission_filter_system, (protection & AppsBrowserFilter.PROTECTION_SYSTEM) != 0);
-        setCheckBoxChecked(R.id.permission_filter_development, (protection & AppsBrowserFilter.PROTECTION_DEVELOPMENT) != 0);
-        setCheckBoxChecked(R.id.permission_filter_unexported, (protection & AppsBrowserFilter.PROTECTION_UNEXPORTED) != 0);
-        setCheckBoxChecked(R.id.permission_filter_unknown, (protection & AppsBrowserFilter.PROTECTION_UNKNOWN) != 0);
+        setCheckBoxChecked(R.id.permission_filter_world_accessible, (protection & ComponentsFilter.PROTECTION_WORLD_ACCESSIBLE) != 0);
+        setCheckBoxChecked(R.id.permission_filter_normal, (protection & ComponentsFilter.PROTECTION_NORMAL) != 0);
+        setCheckBoxChecked(R.id.permission_filter_dangerous, (protection & ComponentsFilter.PROTECTION_DANGEROUS) != 0);
+        setCheckBoxChecked(R.id.permission_filter_signature, (protection & ComponentsFilter.PROTECTION_SIGNATURE) != 0);
+        setCheckBoxChecked(R.id.permission_filter_system, (protection & ComponentsFilter.PROTECTION_SYSTEM) != 0);
+        setCheckBoxChecked(R.id.permission_filter_development, (protection & ComponentsFilter.PROTECTION_DEVELOPMENT) != 0);
+        setCheckBoxChecked(R.id.permission_filter_unexported, (protection & ComponentsFilter.PROTECTION_UNEXPORTED) != 0);
+        setCheckBoxChecked(R.id.permission_filter_unknown, (protection & ComponentsFilter.PROTECTION_UNKNOWN) != 0);
     }
 
     private void updateCheckboxesFromFilter() {
-        AppsBrowserFilter filter = mActivity.filter;
-        setCheckBoxChecked(R.id.system_apps, (filter.appType & AppsBrowserFilter.APP_TYPE_SYSTEM) != 0);
-        setCheckBoxChecked(R.id.user_apps, (filter.appType & AppsBrowserFilter.APP_TYPE_USER) != 0);
+        ComponentsFilter filter = mActivity.filter;
+        setCheckBoxChecked(R.id.system_apps, (filter.appType & ComponentsFilter.APP_TYPE_SYSTEM) != 0);
+        setCheckBoxChecked(R.id.user_apps, (filter.appType & ComponentsFilter.APP_TYPE_USER) != 0);
 
-        setCheckBoxChecked(R.id.activities, (filter.type & AppsBrowserFilter.TYPE_ACTIVITY) != 0);
-        setCheckBoxChecked(R.id.receivers, (filter.type & AppsBrowserFilter.TYPE_RECEIVER) != 0);
-        setCheckBoxChecked(R.id.services, (filter.type & AppsBrowserFilter.TYPE_SERVICE) != 0);
-        setCheckBoxChecked(R.id.content_providers, (filter.type & AppsBrowserFilter.TYPE_CONTENT_PROVIDER) != 0);
+        setCheckBoxChecked(R.id.activities, (filter.type & ComponentsFilter.TYPE_ACTIVITY) != 0);
+        setCheckBoxChecked(R.id.receivers, (filter.type & ComponentsFilter.TYPE_RECEIVER) != 0);
+        setCheckBoxChecked(R.id.services, (filter.type & ComponentsFilter.TYPE_SERVICE) != 0);
+        setCheckBoxChecked(R.id.content_providers, (filter.type & ComponentsFilter.TYPE_CONTENT_PROVIDER) != 0);
 
         updateProtectionFilter(filter.protection, true);
 
@@ -142,26 +142,26 @@ class EditFilterDialog implements DialogInterface.OnClickListener {
 
     @Override
     public void onClick(DialogInterface dialogInterface, int i) {
-        AppsBrowserFilter filter = new AppsBrowserFilter();
+        ComponentsFilter filter = new ComponentsFilter();
         filter.appType =
-                (isCheckBoxChecked(R.id.system_apps) ? AppsBrowserFilter.APP_TYPE_SYSTEM : 0) |
-                        (isCheckBoxChecked(R.id.user_apps) ? AppsBrowserFilter.APP_TYPE_USER : 0);
+                (isCheckBoxChecked(R.id.system_apps) ? ComponentsFilter.APP_TYPE_SYSTEM : 0) |
+                        (isCheckBoxChecked(R.id.user_apps) ? ComponentsFilter.APP_TYPE_USER : 0);
 
         filter.type =
-                (isCheckBoxChecked(R.id.activities) ? AppsBrowserFilter.TYPE_ACTIVITY : 0) |
-                (isCheckBoxChecked(R.id.receivers) ? AppsBrowserFilter.TYPE_RECEIVER : 0) |
-                (isCheckBoxChecked(R.id.services) ? AppsBrowserFilter.TYPE_SERVICE : 0) |
-                (isCheckBoxChecked(R.id.content_providers) ? AppsBrowserFilter.TYPE_CONTENT_PROVIDER : 0);
+                (isCheckBoxChecked(R.id.activities) ? ComponentsFilter.TYPE_ACTIVITY : 0) |
+                (isCheckBoxChecked(R.id.receivers) ? ComponentsFilter.TYPE_RECEIVER : 0) |
+                (isCheckBoxChecked(R.id.services) ? ComponentsFilter.TYPE_SERVICE : 0) |
+                (isCheckBoxChecked(R.id.content_providers) ? ComponentsFilter.TYPE_CONTENT_PROVIDER : 0);
 
         filter.protection =
-                (isCheckBoxChecked(R.id.permission_filter_world_accessible) ? AppsBrowserFilter.PROTECTION_WORLD_ACCESSIBLE : 0) |
-                (isCheckBoxChecked(R.id.permission_filter_normal) ? AppsBrowserFilter.PROTECTION_NORMAL : 0) |
-                (isCheckBoxChecked(R.id.permission_filter_dangerous) ? AppsBrowserFilter.PROTECTION_DANGEROUS : 0) |
-                (isCheckBoxChecked(R.id.permission_filter_signature) ? AppsBrowserFilter.PROTECTION_SIGNATURE : 0) |
-                (isCheckBoxChecked(R.id.permission_filter_system) ? AppsBrowserFilter.PROTECTION_SYSTEM : 0) |
-                (isCheckBoxChecked(R.id.permission_filter_development) ? AppsBrowserFilter.PROTECTION_DEVELOPMENT : 0) |
-                (isCheckBoxChecked(R.id.permission_filter_unexported) ? AppsBrowserFilter.PROTECTION_UNEXPORTED : 0) |
-                (isCheckBoxChecked(R.id.permission_filter_unknown) ? AppsBrowserFilter.PROTECTION_UNKNOWN : 0);
+                (isCheckBoxChecked(R.id.permission_filter_world_accessible) ? ComponentsFilter.PROTECTION_WORLD_ACCESSIBLE : 0) |
+                (isCheckBoxChecked(R.id.permission_filter_normal) ? ComponentsFilter.PROTECTION_NORMAL : 0) |
+                (isCheckBoxChecked(R.id.permission_filter_dangerous) ? ComponentsFilter.PROTECTION_DANGEROUS : 0) |
+                (isCheckBoxChecked(R.id.permission_filter_signature) ? ComponentsFilter.PROTECTION_SIGNATURE : 0) |
+                (isCheckBoxChecked(R.id.permission_filter_system) ? ComponentsFilter.PROTECTION_SYSTEM : 0) |
+                (isCheckBoxChecked(R.id.permission_filter_development) ? ComponentsFilter.PROTECTION_DEVELOPMENT : 0) |
+                (isCheckBoxChecked(R.id.permission_filter_unexported) ? ComponentsFilter.PROTECTION_UNEXPORTED : 0) |
+                (isCheckBoxChecked(R.id.permission_filter_unknown) ? ComponentsFilter.PROTECTION_UNKNOWN : 0);
 
         filter.requireMetaData = isCheckBoxChecked(R.id.metadata);
         filter.requireMetaDataSubstring =
