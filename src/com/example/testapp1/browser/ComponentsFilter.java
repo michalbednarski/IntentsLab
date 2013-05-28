@@ -43,4 +43,6 @@ public class ComponentsFilter {
 
     public boolean requireMetaData = false;
     public String requireMetaDataSubstring = null;
+
+    public boolean testWritePermissionForProviders = false; // TODO: UI
 }

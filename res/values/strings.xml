@@ -97,6 +97,8 @@
     <string name="broadcast_autoedit">Autoedit broadcast</string>
     <string name="broadcast_autoedit_on">Open editor immediately after catching broadcast</string>
     <string name="broadcast_autoedit_off">Wait for notification click to edit non-sticky caught broadcast</string>
+
+    <!-- Content providers -->
     <string name="provider_rw_world_accessible">Provider read/write world accessible</string>
     <string name="provider_w_only_permission">World readable, write permission</string>
     <string name="provider_rw_permission">Read/write permission</string>
@@ -104,6 +106,9 @@
     <string name="provider_no_w_permission">No write permission, <i>probably</i> read-only</string>
     <string name="provider_w_permission">Write permission</string>
     <string name="a_returned_b" formatted="false">%s returned %s</string>
+    <string name="content_providers_permission_type">For content providers check</string>
+    <string name="filter_read_permission">Read permission</string>
+    <string name="filter_write_permission">Write permission</string>
 
 
     <!-- Uncategorized -->

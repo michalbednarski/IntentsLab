@@ -298,7 +298,9 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
         }
 
         private String getProviderPermissionName(ProviderInfo providerInfo) {
-            return providerInfo.readPermission;
+            return filter.testWritePermissionForProviders ?
+                    providerInfo.writePermission :
+                    providerInfo.readPermission;
         }
 
         @SuppressLint("InlinedApi")
