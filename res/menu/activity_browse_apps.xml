@@ -24,6 +24,9 @@
                 <item
                     android:id="@+id/services"
                     android:title="@string/services"/>
+                <item
+                    android:id="@+id/content_providers"
+                    android:title="@string/content_providers"/>
             </group>
         </menu>
     </item>

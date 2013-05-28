@@ -29,10 +29,15 @@ public class FormattedTextBuilder {
         ssb.append(" " + value);
     }
 
-    public void appendValueNoNewLine(String key, String value) {
+    public void appendValueNoNewLine(CharSequence key, String value) {
         ssb.append("\n");
-        appendSpan(key + ":", new StyleSpan(Typeface.BOLD));
-        ssb.append(" " + value);
+        if (value != null) {
+            key += ":";
+        }
+        appendSpan(key, new StyleSpan(Typeface.BOLD));
+        if (value != null) {
+            ssb.append(" " + value);
+        }
     }
 
     public void appendText(String text) {

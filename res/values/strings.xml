@@ -46,6 +46,7 @@
     <string name="component_type">Component type</string>
     <string name="activities">Activities</string>
     <string name="broadcast_receivers">BroadcastReceivers</string>
+    <string name="content_providers">Content providers</string>
     <string name="services">Services</string>
     <string name="loading_apps_list">Loading apps list&#8230;</string>
     <string name="no_matching_apps_found">No apps matching to given criteria</string>
@@ -70,7 +71,7 @@
 
     <!-- Component Info -->
     <string name="component_info">Component info</string>
-    <string name="component_not_found_in_manifest">Component not found in manifest</string>
+    <string name="component_not_found">Component not found</string>
     <string name="component_not_exported">Component not exported</string>
     <string name="permission_required_title">Permission</string>
     <!-- [[Permission]]: [permission attribute value] -->
@@ -96,6 +97,14 @@
     <string name="broadcast_autoedit">Autoedit broadcast</string>
     <string name="broadcast_autoedit_on">Open editor immediately after catching broadcast</string>
     <string name="broadcast_autoedit_off">Wait for notification click to edit non-sticky caught broadcast</string>
+    <string name="provider_rw_world_accessible">Provider read/write world accessible</string>
+    <string name="provider_w_only_permission">World readable, write permission</string>
+    <string name="provider_rw_permission">Read/write permission</string>
+    <string name="provider_r_permission">Read permission</string>
+    <string name="provider_no_w_permission">No write permission, <i>probably</i> read-only</string>
+    <string name="provider_w_permission">Write permission</string>
+    <string name="a_returned_b" formatted="false">%s returned %s</string>
 
 
+    <!-- Uncategorized -->
 </resources>

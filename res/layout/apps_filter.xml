@@ -51,6 +51,12 @@
             android:text="@string/services"
             android:id="@+id/services"/>
 
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/content_providers"
+            android:id="@+id/content_providers"/>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

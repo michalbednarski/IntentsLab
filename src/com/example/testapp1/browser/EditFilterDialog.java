@@ -99,9 +99,9 @@ class EditFilterDialog implements DialogInterface.OnClickListener {
 
         if (mayModifySpinner) {
             Spinner spinner = (Spinner) mView.findViewById(R.id.permission_filter_spinner);
-            if (protection == AppsBrowserFilter.PROTECTION_ANY) {
+            if (protection == (AppsBrowserFilter.PROTECTION_ANY & PERMISSIONS_MASK)) {
                 spinner.setSelection(0);
-            } else if (protection == AppsBrowserFilter.PROTECTION_ANY_EXPORTED) {
+            } else if (protection == (AppsBrowserFilter.PROTECTION_ANY_EXPORTED & PERMISSIONS_MASK)) {
                 spinner.setSelection(1);
             } else if (protection == AppsBrowserFilter.PROTECTION_ANY_OBTAINABLE) {
                 spinner.setSelection(2);
@@ -130,6 +130,7 @@ class EditFilterDialog implements DialogInterface.OnClickListener {
         setCheckBoxChecked(R.id.activities, (filter.type & AppsBrowserFilter.TYPE_ACTIVITY) != 0);
         setCheckBoxChecked(R.id.receivers, (filter.type & AppsBrowserFilter.TYPE_RECEIVER) != 0);
         setCheckBoxChecked(R.id.services, (filter.type & AppsBrowserFilter.TYPE_SERVICE) != 0);
+        setCheckBoxChecked(R.id.content_providers, (filter.type & AppsBrowserFilter.TYPE_CONTENT_PROVIDER) != 0);
 
         updateProtectionFilter(filter.protection, true);
 
@@ -148,18 +149,19 @@ class EditFilterDialog implements DialogInterface.OnClickListener {
 
         filter.type =
                 (isCheckBoxChecked(R.id.activities) ? AppsBrowserFilter.TYPE_ACTIVITY : 0) |
-                        (isCheckBoxChecked(R.id.receivers) ? AppsBrowserFilter.TYPE_RECEIVER : 0) |
-                        (isCheckBoxChecked(R.id.services) ? AppsBrowserFilter.TYPE_SERVICE : 0);
+                (isCheckBoxChecked(R.id.receivers) ? AppsBrowserFilter.TYPE_RECEIVER : 0) |
+                (isCheckBoxChecked(R.id.services) ? AppsBrowserFilter.TYPE_SERVICE : 0) |
+                (isCheckBoxChecked(R.id.content_providers) ? AppsBrowserFilter.TYPE_CONTENT_PROVIDER : 0);
 
         filter.protection =
                 (isCheckBoxChecked(R.id.permission_filter_world_accessible) ? AppsBrowserFilter.PROTECTION_WORLD_ACCESSIBLE : 0) |
-                        (isCheckBoxChecked(R.id.permission_filter_normal) ? AppsBrowserFilter.PROTECTION_NORMAL : 0) |
-                        (isCheckBoxChecked(R.id.permission_filter_dangerous) ? AppsBrowserFilter.PROTECTION_DANGEROUS : 0) |
-                        (isCheckBoxChecked(R.id.permission_filter_signature) ? AppsBrowserFilter.PROTECTION_SIGNATURE : 0) |
-                        (isCheckBoxChecked(R.id.permission_filter_system) ? AppsBrowserFilter.PROTECTION_SYSTEM : 0) |
-                        (isCheckBoxChecked(R.id.permission_filter_development) ? AppsBrowserFilter.PROTECTION_DEVELOPMENT : 0) |
-                        (isCheckBoxChecked(R.id.permission_filter_unexported) ? AppsBrowserFilter.PROTECTION_UNEXPORTED : 0) |
-                        (isCheckBoxChecked(R.id.permission_filter_unknown) ? AppsBrowserFilter.PROTECTION_UNKNOWN : 0);
+                (isCheckBoxChecked(R.id.permission_filter_normal) ? AppsBrowserFilter.PROTECTION_NORMAL : 0) |
+                (isCheckBoxChecked(R.id.permission_filter_dangerous) ? AppsBrowserFilter.PROTECTION_DANGEROUS : 0) |
+                (isCheckBoxChecked(R.id.permission_filter_signature) ? AppsBrowserFilter.PROTECTION_SIGNATURE : 0) |
+                (isCheckBoxChecked(R.id.permission_filter_system) ? AppsBrowserFilter.PROTECTION_SYSTEM : 0) |
+                (isCheckBoxChecked(R.id.permission_filter_development) ? AppsBrowserFilter.PROTECTION_DEVELOPMENT : 0) |
+                (isCheckBoxChecked(R.id.permission_filter_unexported) ? AppsBrowserFilter.PROTECTION_UNEXPORTED : 0) |
+                (isCheckBoxChecked(R.id.permission_filter_unknown) ? AppsBrowserFilter.PROTECTION_UNKNOWN : 0);
 
         filter.requireMetaData = isCheckBoxChecked(R.id.metadata);
         filter.requireMetaDataSubstring =

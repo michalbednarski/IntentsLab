@@ -52,6 +52,9 @@
             android:name=".browser.ComponentInfoActivity"
             android:label="@string/component_info"/>
         <activity android:name=".XMLViewerActivity"/>
+        <activity android:name=".providerlab.ProviderInfoActivity"/>
+        <activity android:name=".providerlab.QueryResultActivity"/>
+        <activity android:name=".providerlab.ProviderLabActivity"/>
     </application>
 
 </manifest>

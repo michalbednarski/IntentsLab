@@ -10,6 +10,7 @@ import android.view.View;
 import com.example.testapp1.browser.BrowseAppsActivity;
 import com.example.testapp1.browser.ExtendedPackageInfo;
 import com.example.testapp1.editor.IntentEditorActivity;
+import com.example.testapp1.providerlab.ProviderLabActivity;
 
 public class StartActivity extends Activity {
 
@@ -17,11 +18,19 @@ public class StartActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start);
+
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.activity_start, menu);
+        menu.add("EXPERIMENTAL").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                startActivity(new Intent(StartActivity.this, ProviderLabActivity.class));
+                return true;
+            }
+        });
         return true;
     }
 

@@ -5,6 +5,7 @@ public class AppsBrowserFilter {
     public static final int TYPE_ACTIVITY = 1;
     public static final int TYPE_RECEIVER = 2;
     public static final int TYPE_SERVICE = 4;
+    public static final int TYPE_CONTENT_PROVIDER = 8;
     public int type = TYPE_ACTIVITY;
 
 

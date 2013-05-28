@@ -101,6 +101,58 @@ public class ComponentInfoActivity extends Activity {
         return ftb.getText();
     }
 
+    public static CharSequence dumpMetaData(final Context context, final String packageName, Bundle metaData) {
+        FormattedTextBuilder text = new FormattedTextBuilder();
+        Context foreignContext = null;
+        try {
+            foreignContext = context.createPackageContext(packageName, 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        if (metaData != null && !metaData.isEmpty()) {
+            text.appendHeader(context.getString(R.string.metadata_header));
+            for (String key : metaData.keySet()) {
+                Object value = metaData.get(key);
+                if (value instanceof Integer) {
+                    // TODO resource?
+                    if (foreignContext != null) {
+                        text.appendValueNoNewLine(key, value.toString());
+                        // Integers can point to resources
+                        final int resId = (Integer) value;
+                        if (resId == 0) {
+                            continue;
+                        }
+
+                        // [View as XML] link
+                        try {
+                            foreignContext.getResources().getXml(resId);
+                            text.appendClickable(context.getString(R.string.view_as_xml_resource), new ClickableSpan() {
+                                @Override
+                                public void onClick(View widget) {
+                                    context.startActivity(
+                                            new Intent(context, XMLViewerActivity.class)
+                                                    .putExtra(XMLViewerActivity.EXTRA_PACKAGE_NAME, packageName)
+                                                    .putExtra(XMLViewerActivity.EXTRA_RESOURCE_ID, resId)
+                                    );
+                                }
+                            });
+                        } catch (Resources.NotFoundException ignored) {
+                        }
+                    }
+                    // Other types
+                } else if (value instanceof Float) {
+                    text.appendValueNoNewLine(key, value.toString() + (((Float) value) % 1f == 0f ? "" : " (float)"));
+                } else if (value instanceof Boolean) {
+                    text.appendValueNoNewLine(key, value.toString());
+                } else if (value instanceof String) {
+                    text.appendValueNoNewLine(key, "\"" + value + "\"");
+                }
+            }
+        }
+        return text.getText();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -126,7 +178,7 @@ public class ComponentInfoActivity extends Activity {
                     Log.e(TAG, "component not found in manifest");
                     Log.e(TAG, "packageName=" + mPackageName);
                     Log.e(TAG, "componentName=" + mComponentName);
-                    Toast.makeText(ComponentInfoActivity.this, R.string.component_not_found_in_manifest, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ComponentInfoActivity.this, R.string.component_not_found, Toast.LENGTH_SHORT).show();
                     finish();
                     return;
                 }
@@ -173,58 +225,9 @@ public class ComponentInfoActivity extends Activity {
                     }
                 }
 
-                Bundle metaData = mExtendedComponentInfo.systemComponentInfo.metaData;
-                Context foreignContext = null;
-                try {
-                    foreignContext = createPackageContext(mPackageName, 0);
-                } catch (PackageManager.NameNotFoundException e) {
-                    e.printStackTrace();
-                }
+                text.appendFormattedText(dumpMetaData(ComponentInfoActivity.this, mPackageName, mExtendedComponentInfo.systemComponentInfo.metaData));
 
-                // <meta-data>
-                if (metaData != null && !metaData.isEmpty()) {
-                    text.appendHeader(getString(R.string.metadata_header));
-                    for (String key : metaData.keySet()) {
-                        Object value = metaData.get(key);
-                        if (value instanceof Integer) {
-                            // TODO resource?
-                            if (foreignContext != null) {
-                                text.appendValueNoNewLine(key, value.toString());
-                                // Integers can point to resources
-                                final int resId = (Integer) value;
-                                if (resId == 0) {
-                                    continue;
-                                }
-
-                                // [View as XML] link
-                                try {
-                                    foreignContext.getResources().getXml(resId);
-                                    text.appendClickable(getString(R.string.view_as_xml_resource), new ClickableSpan() {
-                                        @Override
-                                        public void onClick(View widget) {
-                                            startActivity(
-                                                    new Intent(ComponentInfoActivity.this, XMLViewerActivity.class)
-                                                            .putExtra(XMLViewerActivity.EXTRA_PACKAGE_NAME, mPackageName)
-                                                            .putExtra(XMLViewerActivity.EXTRA_RESOURCE_ID, resId)
-                                            );
-                                        }
-                                    });
-                                } catch (Resources.NotFoundException ignored) {
-                                }
-                            }
-                            // Other types
-                        } else if (value instanceof Float) {
-                            text.appendValueNoNewLine(key, value.toString() + (((Float) value) % 1f == 0f ? "" : " (float)"));
-                        } else if (value instanceof Boolean) {
-                            text.appendValueNoNewLine(key, value.toString());
-                        } else if (value instanceof String) {
-                            text.appendValueNoNewLine(key, "\"" + value + "\"");
-                        }
-                    }
-                }
-
-                // Put text in textview
-
+                // Put text in TextView
                 TextView textView = (TextView) findViewById(R.id.description);
                 textView.setMovementMethod(LinkMovementMethod.getInstance());
                 textView.setText(text.getText());
