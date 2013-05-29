@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import android.annotation.TargetApi;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -18,28 +17,24 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
+import android.widget.*;
 import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.Spinner;
-import android.widget.TextView;
 
 import com.example.testapp1.R;
+import com.example.testapp1.providerlab.UriAutocompleteAdapter;
 
 public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSelectedListener {
 
-    private TextView mDataText;
+    private AutoCompleteTextView mDataText;
     private TextView mComponentText;
     private Spinner mComponentTypeSpinner;
     private Spinner mMethodSpinner;
     private Intent mEditedIntent;
+    private UriAutocompleteAdapter mUriAutocompleteAdapter;
 
 
     public IntentGeneralFragment() {
@@ -56,7 +51,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         // Prepare form
         mActionText = (TextView) v.findViewById(R.id.action);
         mActionsSpinner = (Spinner) v.findViewById(R.id.action_spinner);
-        mDataText = (TextView) v.findViewById(R.id.data);
+        mDataText = (AutoCompleteTextView) v.findViewById(R.id.data);
         mComponentText = (TextView) v.findViewById(R.id.component);
 
         mComponentTypeSpinner = (Spinner) v.findViewById(R.id.componenttype);
@@ -92,6 +87,11 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
                 mComponentText.setText("");
             }
         });
+
+        // Set up autocomplete
+        mUriAutocompleteAdapter = new UriAutocompleteAdapter(getActivity());
+        mDataText.setAdapter(mUriAutocompleteAdapter);
+        mUriAutocompleteAdapter.setIntentFilters(getIntentEditor().getAttachedIntentFilters());
 
         // Get edited intent for form filling
         mEditedIntent = getEditedIntent();
@@ -405,6 +405,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         updateEditedIntent(mEditedIntent);
         setupActionSpinnerOrField();
         updateCategoriesList();
+        mUriAutocompleteAdapter.setIntentFilters(newIntentFilters);
     }
 
     @Override

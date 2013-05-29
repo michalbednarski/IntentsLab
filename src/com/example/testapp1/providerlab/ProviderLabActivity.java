@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.example.testapp1.R;
@@ -16,6 +18,12 @@ public class ProviderLabActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_provider_lab);
+        ((AutoCompleteTextView) findViewById(R.id.uri)).setAdapter(new UriAutocompleteAdapter(this));
+        /*((AutoCompleteTextView) findViewById(R.id.uri)).setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, new String[] {
+                "option1",
+                "option2"
+
+        }));*/
     }
 
     public void queryProvider(View view) {
