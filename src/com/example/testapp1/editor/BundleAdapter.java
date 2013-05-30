@@ -162,15 +162,8 @@ class BundleAdapter extends BaseAdapter implements OnClickListener,
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		boolean isNewButtonRequested = position == mKeysCount;
-		boolean isNewButtonConverted = (convertView instanceof Button);
-
-		if (convertView != null && isNewButtonRequested != isNewButtonConverted) {
-			Log.w(TAG, "isNewButton: requested!=converted");
-		}
-
-		if (isNewButtonRequested) {
-			if (isNewButtonConverted) {
+		if (position == mKeysCount) { // 'New' button
+			if (convertView != null) {
 				return convertView;
 			}
 			Button btn = new Button(mActivity);
@@ -180,7 +173,7 @@ class BundleAdapter extends BaseAdapter implements OnClickListener,
 		}
 
 		View view = convertView;
-		if (view == null || isNewButtonConverted) {
+		if (view == null) {
 			view = mInflater.inflate(android.R.layout.simple_list_item_2,
 					parent, false);
 		}
