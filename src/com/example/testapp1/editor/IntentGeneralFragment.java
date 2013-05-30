@@ -30,6 +30,7 @@ import com.example.testapp1.providerlab.UriAutocompleteAdapter;
 public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSelectedListener {
 
     private AutoCompleteTextView mDataText;
+    private AutoCompleteTextView mDataTypeText;
     private TextView mComponentText;
     private Spinner mComponentTypeSpinner;
     private Spinner mMethodSpinner;
@@ -52,6 +53,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         mActionText = (TextView) v.findViewById(R.id.action);
         mActionsSpinner = (Spinner) v.findViewById(R.id.action_spinner);
         mDataText = (AutoCompleteTextView) v.findViewById(R.id.data);
+        mDataTypeText = (AutoCompleteTextView) v.findViewById(R.id.data_type);
         mComponentText = (TextView) v.findViewById(R.id.component);
 
         mComponentTypeSpinner = (Spinner) v.findViewById(R.id.componenttype);
@@ -91,7 +93,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         // Set up autocomplete
         mUriAutocompleteAdapter = new UriAutocompleteAdapter(getActivity());
         mDataText.setAdapter(mUriAutocompleteAdapter);
-        mUriAutocompleteAdapter.setIntentFilters(getIntentEditor().getAttachedIntentFilters());
+        setUpAutocomplete(getIntentEditor().getAttachedIntentFilters());
 
         // Get edited intent for form filling
         mEditedIntent = getEditedIntent();
@@ -390,14 +392,43 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
             }
         }
 
-        // Intent data (Uri)
+        // Intent data (Uri) and type (MIME)
         String data = mDataText.getText().toString();
-        if (!data.equals("")) {
-            editedIntent.setData(Uri.parse(data));
-        }
+        String dataType = mDataTypeText.getText().toString();
+        editedIntent.setDataAndType(
+                data.equals("") ? null : Uri.parse(data),
+                dataType.equals("") ? null : dataType
+        );
 
         // Set component for explicit intent
         updateIntentComponent();
+    }
+
+    /**
+     * Set autocomplete for data and data type fields
+     */
+    private void setUpAutocomplete(IntentFilter[] newIntentFilters) {
+        // Set intent filters for data uri completion
+        mUriAutocompleteAdapter.setIntentFilters(newIntentFilters);
+
+        // Scan intent filters for data types
+        if (newIntentFilters == null || newIntentFilters.length == 0) {
+            mDataTypeText.setAdapter(null);
+        } else {
+            HashSet<String> types = new HashSet<String>();
+            for (IntentFilter filter : newIntentFilters) {
+                for (int i = 0, j = filter.countDataTypes(); i < j; i++) {
+                    types.add(filter.getDataType(i));
+                }
+            }
+            mDataTypeText.setAdapter(
+                    new ArrayAdapter<String>(
+                            getActivity(),
+                            android.R.layout.simple_list_item_1,
+                            types.toArray(new String[types.size()])
+                    )
+            );
+        }
     }
 
     @Override
@@ -405,7 +436,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         updateEditedIntent(mEditedIntent);
         setupActionSpinnerOrField();
         updateCategoriesList();
-        mUriAutocompleteAdapter.setIntentFilters(newIntentFilters);
+        setUpAutocomplete(newIntentFilters);
     }
 
     @Override
