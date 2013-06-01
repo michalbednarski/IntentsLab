@@ -38,6 +38,12 @@
     <string name="pick_recent_task">Pick running task</string>
     <string name="menu_show_boring">Show all</string>
     <string name="menu_hide_boring">Hide boring</string>
+    <string name="exclude_item_from_list">Re-include into list</string>
+    <string name="restore_item_onto_list">Exclude from list</string>
+    <string name="item_excluded_from_list">
+        Item excluded from list, use \'show all\' and long press it again to restore it
+    </string>
+    <string name="item_restored_onto_list">Item re-included</string>
 
     <!-- Components browser -->
     <string name="browse_components">Browse components</string>

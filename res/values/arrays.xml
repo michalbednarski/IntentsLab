@@ -1,13 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Actions and categories to hide by default in recents picker -->
-    <string-array name="boring_actions">
-        <item>android.intent.action.MAIN</item>
-    </string-array>
-    <string-array name="boring_categories">
-        <item>android.intent.category.LAUNCHER</item>
-    </string-array>
-
     <!-- DON'T REORDER -->
     <!-- Component types and related methods -->
     <string-array name="componenttypes">

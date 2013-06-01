@@ -1,9 +1,5 @@
 package com.example.testapp1;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -16,26 +12,24 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
+import android.view.*;
+import android.widget.*;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
-
 import com.example.testapp1.editor.IntentEditorActivity;
 
-public class PickRecentlyRunningActivity extends Activity implements OnItemClickListener {
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-    private static final Set<String> boringCategories = new HashSet<String>();
-    private static final Set<String> boringActions = new HashSet<String>();
+import static android.preference.PreferenceManager.getDefaultSharedPreferences;
+
+public class PickRecentlyRunningActivity extends Activity implements OnItemClickListener, AdapterView.OnItemLongClickListener {
+
     private ListView mListView;
     private RecentsAdapter mAdapter;
+
+    private static final String PREF_EXCLUDED_COMPONENTS = "excluded_components";
+    private Set<String> mExcludedComponents;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -45,16 +39,17 @@ public class PickRecentlyRunningActivity extends Activity implements OnItemClick
         if (Build.VERSION.SDK_INT >= 11) {
             prepareActionBar();
         }
-        if (boringActions.isEmpty()) {
-            for (String boring : getResources().getStringArray(R.array.boring_actions)) {
-                boringActions.add(boring);
-            }
-            for (String boring : getResources().getStringArray(R.array.boring_categories)) {
-                boringCategories.add(boring);
+
+        mExcludedComponents = new HashSet<String>();
+        for (String s : getDefaultSharedPreferences(this).getString(PREF_EXCLUDED_COMPONENTS, "").split("//")) {
+            if (!s.equals("")) {
+                mExcludedComponents.add(s);
             }
         }
+
         mListView = (ListView) findViewById(R.id.listView1);
         mListView.setOnItemClickListener(this);
+        mListView.setOnItemLongClickListener(this);
         mAdapter = new RecentsAdapter(this);
         mListView.setAdapter(mAdapter);
     }
@@ -105,19 +100,66 @@ public class PickRecentlyRunningActivity extends Activity implements OnItemClick
         return super.onPrepareOptionsMenu(menu);
     }
 
+    private boolean isLauncherIntent(Intent intent) {
+        String action = intent.getAction();
+        Set<String> categories = intent.getCategories();
+        Uri data = intent.getData();
+        Bundle extras = intent.getExtras();
+        return ((action != null && action.equals(Intent.ACTION_MAIN)) &&
+                (categories != null && categories.size() == 1 && categories.contains(Intent.CATEGORY_LAUNCHER)) &&
+                data == null &&
+                (extras == null || extras.isEmpty()));
+    }
+
     public void onItemClick(AdapterView<?> parent, View view, int position,
                             long id) {
         Intent baseIntent = mAdapter.getItem(position).baseIntent;
         Intent i = new Intent(this, IntentEditorActivity.class);
         i.putExtra("intent", baseIntent);
-        /*i.putExtra(IntentEditorActivity.EXTRA_ACTION, baseIntent.getAction());
-		if (baseIntent.getCategories() != null) {
-			i.putExtra(IntentEditorActivity.EXTRA_CATEGOTIES, baseIntent.getCategories().toArray());
-		}
-		i.putExtra(IntentEditorActivity.EXTRA_DATA, baseIntent.getData());
-		i.putExtra(IntentEditorActivity.EXTRA_EXTRAS, baseIntent.getExtras());
-		i.putExtra(IntentEditorActivity.EXTRA_COMPONENT, baseIntent.getComponent().flattenToShortString());*/
         startActivity(i);
+    }
+
+    @Override
+    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        Intent intent = mAdapter.getItem(position).baseIntent;
+        if (isLauncherIntent(intent)) {
+            return false;
+        }
+        final String componentName = intent.getComponent().flattenToShortString();
+        mListView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+            @Override
+            public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+                mListView.setOnCreateContextMenuListener(null);
+                final boolean nowExcluded = mExcludedComponents.contains(componentName);
+                menu.add(nowExcluded ? R.string.exclude_item_from_list : R.string.restore_item_onto_list).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        if (nowExcluded) {
+                            mExcludedComponents.remove(componentName);
+                        } else {
+                            mExcludedComponents.add(componentName);
+                        }
+                        String excludedComponentsString = "";
+                        if (!mExcludedComponents.isEmpty()) {
+                            for (String component : mExcludedComponents) {
+                                excludedComponentsString += "//" + component;
+                            }
+                            excludedComponentsString = excludedComponentsString.substring(2);
+                        }
+                        Utils.applyOrCommitPrefs(
+                                getDefaultSharedPreferences(PickRecentlyRunningActivity.this)
+                                        .edit()
+                                        .putString(PREF_EXCLUDED_COMPONENTS, excludedComponentsString));
+                        mAdapter.refresh();
+                        mAdapter.notifyDataSetChanged();
+                        Toast.makeText(PickRecentlyRunningActivity.this, nowExcluded ? R.string.item_restored_onto_list : R.string.item_excluded_from_list, Toast.LENGTH_SHORT).show();
+                        return true;
+                    }
+                });
+            }
+        });
+        openContextMenu(mListView);
+        return true;
     }
 
     private class RecentsAdapter extends ArrayAdapter<ActivityManager.RecentTaskInfo> {
@@ -138,16 +180,9 @@ public class PickRecentlyRunningActivity extends Activity implements OnItemClick
             List<RecentTaskInfo> tasks = mAm.getRecentTasks(30, ActivityManager.RECENT_WITH_EXCLUDED);
             for (RecentTaskInfo task : tasks) {
                 Intent baseIntent = task.baseIntent;
-                String action = baseIntent.getAction();
-                Uri data = baseIntent.getData();
-                Set<String> categories = baseIntent.getCategories();
-                Bundle extras = baseIntent.getExtras();
                 if (excludeBoringIntents &&
-                        (action != null && boringActions.contains(action)) &&
-                        (categories == null || boringCategories.containsAll(categories)) &&
-                        data == null &&
-                        (extras == null || extras.isEmpty())
-                        ) {
+                        (mExcludedComponents.contains(baseIntent.getComponent().flattenToShortString()) ||
+                                isLauncherIntent(baseIntent))) {
                     continue;
                 }
                 add(task);
