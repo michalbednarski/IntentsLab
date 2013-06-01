@@ -44,6 +44,7 @@
         Item excluded from list, use \'show all\' and long press it again to restore it
     </string>
     <string name="item_restored_onto_list">Item re-included</string>
+    <string name="all_recent_tasks_excluded">All items has been excluded, use \'show all\' option</string>
 
     <!-- Components browser -->
     <string name="browse_components">Browse components</string>

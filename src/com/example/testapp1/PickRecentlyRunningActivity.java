@@ -1,9 +1,9 @@
 package com.example.testapp1;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RecentTaskInfo;
+import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -14,7 +14,6 @@ import android.os.Bundle;
 import android.support.v4.app.NavUtils;
 import android.view.*;
 import android.widget.*;
-import android.widget.AdapterView.OnItemClickListener;
 import com.example.testapp1.editor.IntentEditorActivity;
 
 import java.util.HashSet;
@@ -23,7 +22,7 @@ import java.util.Set;
 
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 
-public class PickRecentlyRunningActivity extends Activity implements OnItemClickListener, AdapterView.OnItemLongClickListener {
+public class PickRecentlyRunningActivity extends ListActivity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
 
     private ListView mListView;
     private RecentsAdapter mAdapter;
@@ -47,11 +46,11 @@ public class PickRecentlyRunningActivity extends Activity implements OnItemClick
             }
         }
 
-        mListView = (ListView) findViewById(R.id.listView1);
+        mListView = getListView();
         mListView.setOnItemClickListener(this);
         mListView.setOnItemLongClickListener(this);
         mAdapter = new RecentsAdapter(this);
-        mListView.setAdapter(mAdapter);
+        setListAdapter(mAdapter);
     }
 
     @TargetApi(11)
@@ -151,7 +150,6 @@ public class PickRecentlyRunningActivity extends Activity implements OnItemClick
                                         .edit()
                                         .putString(PREF_EXCLUDED_COMPONENTS, excludedComponentsString));
                         mAdapter.refresh();
-                        mAdapter.notifyDataSetChanged();
                         Toast.makeText(PickRecentlyRunningActivity.this, nowExcluded ? R.string.item_restored_onto_list : R.string.item_excluded_from_list, Toast.LENGTH_SHORT).show();
                         return true;
                     }
@@ -162,7 +160,7 @@ public class PickRecentlyRunningActivity extends Activity implements OnItemClick
         return true;
     }
 
-    private class RecentsAdapter extends ArrayAdapter<ActivityManager.RecentTaskInfo> {
+    private class RecentsAdapter extends ArrayAdapter<RecentTaskInfo> {
         private ActivityManager mAm;
         private LayoutInflater mInflater;
         private PackageManager mPm;
@@ -176,6 +174,7 @@ public class PickRecentlyRunningActivity extends Activity implements OnItemClick
         }
 
         void refresh() {
+            setNotifyOnChange(false);
             clear();
             List<RecentTaskInfo> tasks = mAm.getRecentTasks(30, ActivityManager.RECENT_WITH_EXCLUDED);
             for (RecentTaskInfo task : tasks) {
@@ -187,6 +186,8 @@ public class PickRecentlyRunningActivity extends Activity implements OnItemClick
                 }
                 add(task);
             }
+            setNotifyOnChange(true);
+            notifyDataSetChanged();
         }
 
         @Override
