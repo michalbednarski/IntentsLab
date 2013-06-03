@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.widget.*;
 import com.example.testapp1.R;
+import com.example.testapp1.Utils;
 
 /**
  *
@@ -26,7 +27,7 @@ public class QueryResultActivity extends Activity {
             cursor = getContentResolver().query(uri, null, null, new String[0], null);
         } catch (Exception e) {
             e.printStackTrace();
-            Toast.makeText(this, e.getClass().getName() + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Utils.toastException(this, e);
             finish();
             return;
         }

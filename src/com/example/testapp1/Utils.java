@@ -1,8 +1,10 @@
 package com.example.testapp1;
 
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.widget.Toast;
 
 public class Utils {
     private Utils() {
@@ -27,5 +29,11 @@ public class Utils {
         } catch (NoSuchMethodError error) {
             return "".equals(str);
         }
+    }
+
+    public static void toastException(Context context, Exception exception) {
+        String exceptionName = exception.getClass().getName();
+        exceptionName = exceptionName.substring(exceptionName.lastIndexOf('.') + 1);
+        Toast.makeText(context, exceptionName + ": " + exception.getMessage(), Toast.LENGTH_LONG).show();
     }
 }

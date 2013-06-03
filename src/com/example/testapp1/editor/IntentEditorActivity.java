@@ -11,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 import com.example.testapp1.R;
+import com.example.testapp1.Utils;
 import com.example.testapp1.browser.ComponentInfoActivity;
 
 import java.util.ArrayList;
@@ -216,7 +217,6 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                                     new BroadcastReceiver() { // resultReceiver
                                         @Override
                                         public void onReceive(Context context, Intent intent) {
-                                            // TODO Auto-generated method stub
                                             Bundle resultExtras = getResultExtras(false);
                                             new AlertDialog.Builder(IntentEditorActivity.this)
                                                 .setMessage(
@@ -251,9 +251,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                     break;
             }
         } catch (Exception exception) {
-            String exceptionName = exception.getClass().getName();
-            exceptionName = exceptionName.substring(exceptionName.lastIndexOf('.') + 1);
-            Toast.makeText(this, exceptionName + ": " + exception.getMessage(), Toast.LENGTH_LONG).show();
+            Utils.toastException(this, exception);
         }
     }
 
