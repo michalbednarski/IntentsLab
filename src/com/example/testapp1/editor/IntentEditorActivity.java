@@ -1,13 +1,8 @@
 package com.example.testapp1.editor;
 
-import java.util.ArrayList;
-
 import android.annotation.TargetApi;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+import android.app.AlertDialog;
+import android.content.*;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -15,9 +10,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
-
 import com.example.testapp1.R;
 import com.example.testapp1.browser.ComponentInfoActivity;
+
+import java.util.ArrayList;
 
 /**
  * Intent editor activity
@@ -105,11 +101,15 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
-        try {
-            menu.findItem(R.id.menu_run_intent)
+        {
+            MenuItem runIntentOption = menu.findItem(R.id.menu_run_intent);
+            if (mComponentType == IntentEditorConstants.RESULT) {
+                runIntentOption.setVisible(false);
+            } else {
+                runIntentOption
+                    .setVisible(true)
                     .setTitle(IntentGeneralFragment.getMethodNamesArray(getResources(), mComponentType)[mMethodId]);
-        } catch (ArrayIndexOutOfBoundsException e) {
-            e.printStackTrace();
+            }
         }
         menu.findItem(R.id.detach_intent_filter)
                 .setVisible(mAttachedIntentFilters != null);
@@ -250,9 +250,25 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
     // RESULT
     @Override
     protected void onActivityResult(int requestCode, int resultCode,
-                                    Intent intent) {
+                                    final Intent resultIntent) {
         if (requestCode == REQUEST_CODE_TEST_STARTACTIVITYFORRESULT) {
-            Toast.makeText(this, "GOT ACTIVITY RESULT", Toast.LENGTH_SHORT).show();
+            if (resultIntent == null) {
+                Toast.makeText(this, getString(R.string.startactivityforresult_no_result), Toast.LENGTH_SHORT).show();
+            } else {
+                new AlertDialog.Builder(this)
+                    .setMessage(getString(R.string.startactivityforresult_got_result)) // TODO
+                    .setPositiveButton(getString(R.string.startactivityforresult_view_result), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startActivity(
+                                new Intent(IntentEditorActivity.this, IntentEditorActivity.class)
+                                    .putExtra("intent", resultIntent)
+                                    .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, IntentEditorConstants.RESULT));
+                        }
+                    })
+                    .setNegativeButton(getString(R.string.cancel), null)
+                    .show();
+            }
         }
         // TODO Auto-generated method stub
     }

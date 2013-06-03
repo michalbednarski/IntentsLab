@@ -1,11 +1,5 @@
 package com.example.testapp1.editor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -23,9 +17,10 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.*;
 import android.widget.AdapterView.OnItemSelectedListener;
-
 import com.example.testapp1.R;
 import com.example.testapp1.providerlab.UriAutocompleteAdapter;
+
+import java.util.*;
 
 public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSelectedListener {
 
@@ -122,23 +117,25 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         }
 
         // Fill the form
+        setupActionSpinnerOrField();
+        updateCategoriesList();
+        mDataText.setText(mEditedIntent.getDataString());
+
+        showOrHideFieldsForResultIntent(v);
+        if (getComponentType() != IntentEditorConstants.RESULT) {
+            initComponentAndMethodSpinners();
+        }
+
+        return v;
+    }
+
+    private void initComponentAndMethodSpinners() {
         int componentType = getComponentType();
         initMethodSpinner(componentType);
         mComponentTypeSpinner.setSelection(componentType);
         mMethodSpinner.setSelection(getIntentEditor().getMethodId());
-
-
-        mDataText.setText(mEditedIntent.getDataString());
-
-
-        setupActionSpinnerOrField();
-        updateCategoriesList();
-
-        // Set spinner listeners
         mComponentTypeSpinner.setOnItemSelectedListener(this);
         mMethodSpinner.setOnItemSelectedListener(this);
-
-        return v;
     }
 
     @Override
@@ -429,6 +426,14 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
                     )
             );
         }
+    }
+
+    private void showOrHideFieldsForResultIntent(View v) {
+        boolean isResultIntent = getComponentType() == IntentEditorConstants.RESULT;
+        v.findViewById(R.id.component_and_method_spinners).setVisibility(isResultIntent ? View.GONE : View.VISIBLE);
+        v.findViewById(R.id.component_header).setVisibility(isResultIntent ? View.GONE : View.VISIBLE);
+        v.findViewById(R.id.component_field_with_buttons).setVisibility(isResultIntent ? View.GONE : View.VISIBLE);
+        v.findViewById(R.id.result_intent_text).setVisibility(isResultIntent ? View.VISIBLE : View.GONE);
     }
 
     @Override

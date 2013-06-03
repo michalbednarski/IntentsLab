@@ -30,6 +30,9 @@
     <string name="item_value">Value:</string>
     <!-- <string name="title_activity_start">StartActivity</string> -->
 
+    <string name="startactivityforresult_no_result">Activity finished without result</string>
+    <string name="startactivityforresult_got_result">Got activity result</string>
+    <string name="startactivityforresult_view_result">View result intent</string>
 
     <!-- Unused -->
     <!--<string name="hello_world">Hello world!</string>-->
@@ -120,4 +123,6 @@
 
 
     <!-- Uncategorized -->
+    <string name="cancel">Cancel</string>
+    <string name="result_intent">Result intent</string>
 </resources>

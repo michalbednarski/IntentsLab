@@ -10,7 +10,8 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
+            android:layout_height="wrap_content"
+            android:id="@+id/component_and_method_spinners">
 
             <Spinner
                 android:id="@+id/componenttype"
@@ -22,8 +23,19 @@
                 android:id="@+id/method"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:textAlignment="center"/>
         </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/result_intent"
+            android:id="@+id/result_intent_text"
+            android:textAlignment="center"
+            android:textStyle="italic"
+            android:textSize="18sp"
+            android:padding="3dp"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -86,12 +98,14 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/intent_component" />
+            android:text="@string/intent_component"
+            android:id="@+id/component_header"/>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal" >
+            android:layout_gravity="center_horizontal"
+            android:id="@+id/component_field_with_buttons">
 
             <EditText
                 android:id="@+id/component"
