@@ -34,6 +34,9 @@
     <string name="startactivityforresult_got_result">Got activity result</string>
     <string name="startactivityforresult_view_result">View result intent</string>
 
+    <string name="result_intent">Result intent</string>
+    <string name="received_broadcast_result">Received broadcast result</string>
+
     <!-- Unused -->
     <!--<string name="hello_world">Hello world!</string>-->
 
@@ -124,5 +127,4 @@
 
     <!-- Uncategorized -->
     <string name="cancel">Cancel</string>
-    <string name="result_intent">Result intent</string>
 </resources>

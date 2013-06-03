@@ -217,7 +217,18 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                                         @Override
                                         public void onReceive(Context context, Intent intent) {
                                             // TODO Auto-generated method stub
-                                            Toast.makeText(IntentEditorActivity.this, "Received result", Toast.LENGTH_SHORT).show();
+                                            Bundle resultExtras = getResultExtras(false);
+                                            new AlertDialog.Builder(IntentEditorActivity.this)
+                                                .setMessage(
+                                                        getString(R.string.received_broadcast_result) +
+                                                        "\ngetResultCode() = " + getResultCode() +
+                                                        "\ngetResultData() = " + getResultData() +
+                                                        "\ngetResultExtras() = " +
+                                                                (resultExtras == null ? "null" :
+                                                                 resultExtras.isEmpty() ? "[Empty Bundle]" : "[Bundle]")
+
+                                                ).setPositiveButton("OK", null)
+                                                .show();
                                         }
                                     },
                                     null, // scheduler

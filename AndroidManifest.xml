@@ -55,6 +55,21 @@
         <activity android:name=".providerlab.ProviderInfoActivity"/>
         <activity android:name=".providerlab.QueryResultActivity"/>
         <activity android:name=".providerlab.ProviderLabActivity"/>
+
+        <receiver
+            android:name=".samplecomponents.AbortBroadcastReceiver"
+            android:label="Sample abortBroadcast()">
+            <intent-filter>
+                <action android:name="sample.abortbroadcast" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name=".samplecomponents.SetResultReceiver"
+            android:label="Sample setResult()">
+            <intent-filter>
+                <action android:name="sample.setresult" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
