@@ -20,11 +20,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.testapp1.CatchBroadcastService;
 import com.example.testapp1.FormattedTextBuilder;
 import com.example.testapp1.R;
 import com.example.testapp1.XMLViewerActivity;
 import com.example.testapp1.browser.ExtendedPackageInfo.ExtendedComponentInfo;
 import com.example.testapp1.editor.IntentEditorActivity;
+import com.example.testapp1.editor.IntentEditorConstants;
 
 public class ComponentInfoActivity extends Activity {
     public static final String EXTRA_PACKAGE_NAME = "package";
@@ -231,6 +233,17 @@ public class ComponentInfoActivity extends Activity {
                 TextView textView = (TextView) findViewById(R.id.description);
                 textView.setMovementMethod(LinkMovementMethod.getInstance());
                 textView.setText(text.getText());
+
+                // Show or hide "Receive broadcast" button
+                {
+                    final boolean showReceiveBroadcast =
+                            mExtendedComponentInfo.componentType == IntentEditorConstants.BROADCAST &&
+                            mExtendedComponentInfo.intentFilters != null &&
+                            mExtendedComponentInfo.intentFilters.length != 0;
+                    View receiveBroadcastButton = findViewById(R.id.receive_broadcast);
+                    receiveBroadcastButton.setVisibility(showReceiveBroadcast ? View.VISIBLE : View.GONE);
+                    receiveBroadcastButton.setEnabled(showReceiveBroadcast);
+                }
             }
         });
     }
@@ -260,6 +273,13 @@ public class ComponentInfoActivity extends Activity {
                         .putExtra("intent", new Intent().setClassName(mPackageName, mComponentName))
                         .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, mExtendedComponentInfo.componentType)
                         .putExtra(IntentEditorActivity.EXTRA_INTENT_FILTERS, mExtendedComponentInfo.intentFilters)
+        );
+    }
+
+    public void receiveBroadcast(View view) {
+        startService(
+                new Intent(this, CatchBroadcastService.class)
+                        .putExtra("intentFilters", mExtendedComponentInfo.intentFilters)
         );
     }
 }

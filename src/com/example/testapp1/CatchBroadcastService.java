@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 
 import com.example.testapp1.editor.IntentEditorActivity;
@@ -21,27 +22,43 @@ public class CatchBroadcastService extends Service {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-
-		// Get action
-		String action = intent.getStringExtra("action");
-		if (action == null) {
-			stopSelf();
-			return START_NOT_STICKY;
-		}
-
 		// Flag us as running
 		sIsRunning = true;
 
-		// Setup receiver
+		// Prepare receiver and unregister old one if exist
 		if (mReceiver != null) {
 			// We were already started, clear old receiver
 			unregisterReceiver(mReceiver);
 		} else {
 			mReceiver = new CatchBroadcastReceiver();
 		}
-		IntentFilter filter = new IntentFilter();
-		filter.addAction(action);
-		registerReceiver(mReceiver, filter);
+
+		// Get IntentFilter and register receiver
+        String action = intent.getStringExtra("action");
+        if (action != null) {
+            // Single filter by action
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(action);
+            registerReceiver(mReceiver, filter);
+        } else {
+            // Multiple custom intent filters
+            Parcelable[] filters = intent.getParcelableArrayExtra("intentFilters");
+            if (filters == null || filters.length == 0) {
+                stopSelf();
+                return START_NOT_STICKY;
+            }
+            action = "";
+            for (Parcelable uncastedFilter : filters) {
+                IntentFilter filter = (IntentFilter) uncastedFilter;
+                registerReceiver(mReceiver, filter);
+                if (filters.length == 1) {
+                    if (filter.countActions() == 1) {
+                        action = filter.getAction(0);
+                    }
+                }
+            }
+
+        }
 
 		// Show notification
 		showWaitingNotification(action);
