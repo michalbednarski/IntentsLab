@@ -80,10 +80,7 @@ public class CatchBroadcastDialog implements OnClickListener, OnCancelListener {
                         .edit()
                         .putString("lastcatchbroadcastaction", action)
         );
-        Intent intent = new Intent(mContext, CatchBroadcastService.class);
-        intent.putExtra("action", action);
-        intent.putExtra("multiple", mMultipleCheckBox.isChecked());
-        mContext.startService(intent);
+        CatchBroadcastService.startReceiving(mContext, action, mMultipleCheckBox.isChecked());
     }
 
     void stopCatcher() {

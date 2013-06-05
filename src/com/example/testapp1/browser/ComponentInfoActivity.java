@@ -243,6 +243,15 @@ public class ComponentInfoActivity extends Activity {
                     View receiveBroadcastButton = findViewById(R.id.receive_broadcast);
                     receiveBroadcastButton.setVisibility(showReceiveBroadcast ? View.VISIBLE : View.GONE);
                     receiveBroadcastButton.setEnabled(showReceiveBroadcast);
+                    if (showReceiveBroadcast) {
+                        receiveBroadcastButton.setOnLongClickListener(new View.OnLongClickListener() {
+                            @Override
+                            public boolean onLongClick(View v) {
+                                CatchBroadcastService.startReceiving(ComponentInfoActivity.this, mExtendedComponentInfo.intentFilters, true);
+                                return true;
+                            }
+                        });
+                    }
                 }
             }
         });
@@ -277,9 +286,6 @@ public class ComponentInfoActivity extends Activity {
     }
 
     public void receiveBroadcast(View view) {
-        startService(
-                new Intent(this, CatchBroadcastService.class)
-                        .putExtra("intentFilters", mExtendedComponentInfo.intentFilters)
-        );
+        CatchBroadcastService.startReceiving(this, mExtendedComponentInfo.intentFilters, false);
     }
 }

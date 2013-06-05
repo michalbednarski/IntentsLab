@@ -17,6 +17,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 import com.example.testapp1.editor.IntentEditorActivity;
 import com.example.testapp1.editor.IntentEditorConstants;
 
@@ -34,6 +35,33 @@ public class CatchBroadcastService extends Service {
         Intent intent;
     };
     private static ArrayList<ReceivedBroadcast> sReceivedBroadcasts = null;
+
+    public static void startReceiving(Context context, IntentFilter[] filters, boolean multiple) {
+        if (!multiple) {
+            for (IntentFilter filter : filters) {
+                Intent stickyBroadcastIntent = context.registerReceiver(null, filter);
+                if (stickyBroadcastIntent != null) {
+                    context.startActivity(
+                            new Intent(context, IntentEditorActivity.class)
+                                    .putExtra("intent", stickyBroadcastIntent)
+                                    .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, IntentEditorConstants.BROADCAST)
+                    );
+                    Toast.makeText(context, R.string.received_sticky_broadcast, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+        }
+
+        context.startService(
+                new Intent(context, CatchBroadcastService.class)
+                        .putExtra("intentFilters", filters)
+                        .putExtra("multiple", multiple)
+        );
+    }
+    public static void startReceiving(Context context, String action, boolean multiple) {
+        IntentFilter[] filters = { new IntentFilter(action) };
+        startReceiving(context, filters, multiple);
+    }
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -55,31 +83,22 @@ public class CatchBroadcastService extends Service {
         }
 
 		// Get IntentFilter and register receiver
-        String action = intent.getStringExtra("action");
-        if (action != null) {
-            // Single filter by action
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(action);
+        String action = "";
+        Parcelable[] filters = intent.getParcelableArrayExtra("intentFilters");
+        if (filters == null || filters.length == 0) {
+            stopSelf();
+            return START_NOT_STICKY;
+        }
+        for (Parcelable uncastedFilter : filters) {
+            IntentFilter filter = (IntentFilter) uncastedFilter;
             registerReceiver(mReceiver, filter);
-        } else {
-            // Multiple custom intent filters
-            Parcelable[] filters = intent.getParcelableArrayExtra("intentFilters");
-            if (filters == null || filters.length == 0) {
-                stopSelf();
-                return START_NOT_STICKY;
-            }
-            action = "";
-            for (Parcelable uncastedFilter : filters) {
-                IntentFilter filter = (IntentFilter) uncastedFilter;
-                registerReceiver(mReceiver, filter);
-                if (filters.length == 1) {
-                    if (filter.countActions() == 1) {
-                        action = filter.getAction(0);
-                    }
+            if (filters.length == 1) {
+                if (filter.countActions() == 1) {
+                    action = filter.getAction(0);
                 }
             }
-
         }
+
 
 		// Show notification
         if (sReceivedBroadcasts != null) {

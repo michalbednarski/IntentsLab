@@ -107,6 +107,7 @@
     <string name="title_activity_catch_broadcast">Catch broadcast</string>
     <string name="waiting_for_broadcast">Waiting for broadcast&#8230;</string>
     <string name="got_broadcast">Got broadcast</string>
+    <string name="received_sticky_broadcast">Received sticky broadcast</string>
 
     <string name="broadcast_autoedit">Autoedit broadcast</string>
     <string name="broadcast_autoedit_on">Open editor immediately after catching broadcast</string>
