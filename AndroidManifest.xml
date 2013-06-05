@@ -47,6 +47,10 @@
 
         <service android:name=".CatchBroadcastService"/>
 
+        <activity
+            android:name=".CatchBroadcastService$BroadcastsListActivity"
+            android:label="@string/received_broadcasts"/>
+
         <activity android:name=".PrefsActivity"/>
         <activity
             android:name=".browser.ComponentInfoActivity"
@@ -60,14 +64,14 @@
             android:name=".samplecomponents.AbortBroadcastReceiver"
             android:label="Sample abortBroadcast()">
             <intent-filter>
-                <action android:name="sample.abortbroadcast" />
+                <action android:name="sample.abortbroadcast"/>
             </intent-filter>
         </receiver>
         <receiver
             android:name=".samplecomponents.SetResultReceiver"
             android:label="Sample setResult()">
             <intent-filter>
-                <action android:name="sample.setresult" />
+                <action android:name="sample.setresult"/>
             </intent-filter>
         </receiver>
     </application>

@@ -112,6 +112,15 @@
     <string name="broadcast_autoedit_on">Open editor immediately after catching broadcast</string>
     <string name="broadcast_autoedit_off">Wait for notification click to edit non-sticky caught broadcast</string>
 
+    <string name="listening_for_multiple_broadcasts">Listening for multiple broadcasts</string>
+    <string name="nothing_received_so_far">Nothing received so far</string>
+    <string name="received_broadcasts">Received broadcasts</string>
+    <plurals name="n_broadcasts_received_so_far">
+        <item quantity="one">1 broadcast received so far</item>
+        <item quantity="other">%d broadcasts received so far</item>
+    </plurals>
+    <string name="stop_listening_for_broadcasts">Stop listening for broadcasts</string>
+
     <!-- Content providers -->
     <string name="provider_rw_world_accessible">Provider read/write world accessible</string>
     <string name="provider_w_only_permission">World readable, write permission</string>

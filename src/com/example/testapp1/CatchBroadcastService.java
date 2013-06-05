@@ -1,24 +1,39 @@
 package com.example.testapp1;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.app.Service;
+import android.app.*;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
-
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.TextView;
 import com.example.testapp1.editor.IntentEditorActivity;
 import com.example.testapp1.editor.IntentEditorConstants;
 
+import java.util.ArrayList;
+
 public class CatchBroadcastService extends Service {
+    private static final String TAG = "CatchBroadcast";
+
 	static boolean sIsRunning = false;
 	private CatchBroadcastReceiver mReceiver = null;
 	private boolean mGotBroadcast = false;
+    private static class ReceivedBroadcast {
+        long time;
+        boolean initialSticky;
+        Intent intent;
+    };
+    private static ArrayList<ReceivedBroadcast> sReceivedBroadcasts = null;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -32,6 +47,12 @@ public class CatchBroadcastService extends Service {
 		} else {
 			mReceiver = new CatchBroadcastReceiver();
 		}
+
+        if (intent.getBooleanExtra("multiple", false)) {
+            sReceivedBroadcasts = new ArrayList<ReceivedBroadcast>();
+        } else {
+            sReceivedBroadcasts = null;
+        }
 
 		// Get IntentFilter and register receiver
         String action = intent.getStringExtra("action");
@@ -61,7 +82,11 @@ public class CatchBroadcastService extends Service {
         }
 
 		// Show notification
-		showWaitingNotification(action);
+        if (sReceivedBroadcasts != null) {
+            showListeningMultipleNotification();
+        } else {
+		    showWaitingNotification(action);
+        }
 		return START_NOT_STICKY;
 	}
 
@@ -117,6 +142,30 @@ public class CatchBroadcastService extends Service {
 		}
 	}
 
+    void showListeningMultipleNotification() {
+		mGotBroadcast = true;
+
+		Intent viewBroadcastsListIntent = new Intent(this, BroadcastsListActivity.class);
+		viewBroadcastsListIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+					viewBroadcastsListIntent, 0);
+
+        String title = getString(R.string.listening_for_multiple_broadcasts);
+        int receivedSoFar = sReceivedBroadcasts.size();
+        String message =
+            receivedSoFar == 0 ?
+                getString(R.string.nothing_received_so_far) :
+                getResources().getQuantityString(R.plurals.n_broadcasts_received_so_far, receivedSoFar, receivedSoFar);
+
+        Notification notif = new Notification();
+        notif.icon = R.drawable.ic_action_send;
+        notif.flags = Notification.FLAG_ONGOING_EVENT;
+        notif.tickerText = title;
+        notif.setLatestEventInfo(this, title, message, contentIntent);
+
+        getNotificationManager().notify(1, notif);
+	}
+
 	void removeNotification() {
 		getNotificationManager().cancel(1);
 	}
@@ -125,7 +174,7 @@ public class CatchBroadcastService extends Service {
 	public void onDestroy() {
 		sIsRunning = false;
 		unregisterReceiver(mReceiver);
-		if (!mGotBroadcast) {
+		if (!mGotBroadcast || sReceivedBroadcasts != null) {
 			removeNotification();
 		}
 		super.onDestroy();
@@ -139,8 +188,86 @@ public class CatchBroadcastService extends Service {
 	private class CatchBroadcastReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			showCaughtNotification(intent, isInitialStickyBroadcast());
-			stopSelf(); // Stop my service, unregister receiver
+            if (sReceivedBroadcasts != null) {
+                ReceivedBroadcast receivedBroadcast = new ReceivedBroadcast();
+                receivedBroadcast.time = System.currentTimeMillis();
+                receivedBroadcast.initialSticky = isInitialStickyBroadcast();
+                receivedBroadcast.intent = intent;
+                sReceivedBroadcasts.add(receivedBroadcast);
+                for (BroadcastsListActivity listActivity : sListActivities) {
+                    listActivity.mAdapter.notifyDataSetChanged();
+                }
+                showListeningMultipleNotification();
+            } else {
+                showCaughtNotification(intent, isInitialStickyBroadcast());
+                stopSelf(); // Stop my service, unregister receiver
+			}
 		}
 	}
+
+    // Activity for viewing multiple broadcasts
+    private static ArrayList<BroadcastsListActivity> sListActivities = new ArrayList<BroadcastsListActivity>();
+    public static class BroadcastsListActivity extends ListActivity implements AdapterView.OnItemClickListener {
+        ArrayAdapter<ReceivedBroadcast> mAdapter;
+
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            if (sReceivedBroadcasts == null) {
+                Log.e(TAG, "Unexpected start of BroadcastsListActivity");
+                finish();
+                return;
+            }
+
+            mAdapter = new ArrayAdapter<ReceivedBroadcast>(this, 0, sReceivedBroadcasts) {
+                @Override
+                public View getView(int position, View convertView, ViewGroup parent) {
+                    if (convertView == null) {
+                        convertView = getLayoutInflater().inflate(android.R.layout.simple_list_item_1, parent, false);
+                    }
+                    ((TextView) convertView.findViewById(android.R.id.text1)).setText("[Intent]"); // TODO: distinctive descriptions
+                    return convertView;
+                }
+            };
+            setListAdapter(mAdapter);
+            getListView().setOnItemClickListener(this);
+            sListActivities.add(this);
+        }
+
+        @Override
+        protected void onDestroy() {
+            sListActivities.remove(this);
+            super.onDestroy();
+        }
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            startActivity(
+                    new Intent(this, IntentEditorActivity.class)
+                            .putExtra("intent", mAdapter.getItem(position).intent)
+            );
+        }
+
+        @Override
+        public boolean onCreateOptionsMenu(Menu menu) {
+            getMenuInflater().inflate(R.menu.received_broadcasts, menu);
+            return true;
+        }
+
+        @Override
+        public boolean onPrepareOptionsMenu(Menu menu) {
+            menu.findItem(R.id.stop_listening_for_broadcasts).setVisible(sIsRunning).setEnabled(sIsRunning);
+            return true;
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            if (item.getItemId() == R.id.stop_listening_for_broadcasts) {
+                stopService(new Intent(this, CatchBroadcastService.class));
+                return true;
+            }
+            return super.onOptionsItemSelected(item);
+        }
+    }
 }

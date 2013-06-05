@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/stop_listening_for_broadcasts"
+        android:title="@string/stop_listening_for_broadcasts"
+        android:showAsAction="ifRoom"/>
+</menu>
