@@ -1,10 +1,12 @@
 package com.example.testapp1;
 
+import android.annotation.TargetApi;
 import android.app.*;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
@@ -280,10 +282,15 @@ public class CatchBroadcastService extends Service {
             return true;
         }
 
+        @TargetApi(Build.VERSION_CODES.HONEYCOMB)
         @Override
         public boolean onOptionsItemSelected(MenuItem item) {
             if (item.getItemId() == R.id.stop_listening_for_broadcasts) {
                 stopService(new Intent(this, CatchBroadcastService.class));
+                sIsRunning = false;
+                try {
+                    invalidateOptionsMenu();
+                } catch (NoSuchMethodError ignored) {}
                 return true;
             }
             return super.onOptionsItemSelected(item);
