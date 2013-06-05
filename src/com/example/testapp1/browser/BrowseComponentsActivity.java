@@ -1,8 +1,5 @@
 package com.example.testapp1.browser;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -23,10 +20,12 @@ import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.TextView;
-
 import com.example.testapp1.R;
 import com.example.testapp1.Utils;
 import com.example.testapp1.providerlab.ProviderInfoActivity;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class BrowseComponentsActivity extends Activity implements ExpandableListAdapter, OnChildClickListener {
 
@@ -54,6 +53,11 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
             onCreateAndroidSDK11AndUp();
         }
 
+        if (savedInstanceState != null) {
+            useCustomFilter = savedInstanceState.getBoolean("usingCustomFilter");
+            filter = savedInstanceState.getParcelable("filter");
+        }
+
         mList = (ExpandableListView) findViewById(R.id.listView1);
         mMessage = (TextView) findViewById(R.id.message);
         mList.setOnChildClickListener(this);
@@ -63,6 +67,13 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
     @TargetApi(11)
     public void onCreateAndroidSDK11AndUp() {
         getActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean("usingCustomFilter", useCustomFilter);
+        outState.putParcelable("filter", filter);
     }
 
     public void updateList() {

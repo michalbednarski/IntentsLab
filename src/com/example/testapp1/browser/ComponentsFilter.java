@@ -1,6 +1,9 @@
 package com.example.testapp1.browser;
 
-public class ComponentsFilter {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class ComponentsFilter implements Parcelable {
 
     public static final int TYPE_ACTIVITY = 1;
     public static final int TYPE_RECEIVER = 2;
@@ -44,5 +47,47 @@ public class ComponentsFilter {
     public boolean requireMetaData = false;
     public String requireMetaDataSubstring = null;
 
-    public boolean testWritePermissionForProviders = false; // TODO: UI
+    public boolean testWritePermissionForProviders = false;
+
+    // Serializing to parcel
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(
+                (requireMetaData ? 1 : 0) |
+                (testWritePermissionForProviders ? 2 : 0)
+        );
+        dest.writeInt(type);
+        dest.writeInt(appType);
+        dest.writeInt(protection);
+        if (requireMetaData) {
+            dest.writeString(requireMetaDataSubstring);
+        }
+    }
+
+    public static final Creator<ComponentsFilter> CREATOR = new Creator<ComponentsFilter>() {
+        @Override
+        public ComponentsFilter createFromParcel(Parcel source) {
+            int flags = source.readInt();
+            ComponentsFilter componentsFilter = new ComponentsFilter();
+            componentsFilter.type = source.readInt();
+            componentsFilter.appType = source.readInt();
+            componentsFilter.protection = source.readInt();
+            componentsFilter.requireMetaData = (flags & 1) != 0;
+            if (componentsFilter.requireMetaData) {
+                componentsFilter.requireMetaDataSubstring = source.readString();
+            }
+            componentsFilter.testWritePermissionForProviders = (flags & 2) != 0;
+            return componentsFilter;
+        }
+
+        @Override
+        public ComponentsFilter[] newArray(int size) {
+            return new ComponentsFilter[size];
+        }
+    };
 }
