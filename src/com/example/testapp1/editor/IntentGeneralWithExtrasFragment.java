@@ -2,11 +2,9 @@ package com.example.testapp1.editor;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
 import com.example.testapp1.R;
 
 public class IntentGeneralWithExtrasFragment extends Fragment {
@@ -28,9 +26,13 @@ public class IntentGeneralWithExtrasFragment extends Fragment {
         // NOTE: why split onCreateView and onCreate?:
         // http://stackoverflow.com/a/15421835
 
-        getChildFragmentManager().beginTransaction()
-                .add(R.id.general, new IntentGeneralFragment())
-                .add(R.id.extras, new IntentExtrasFragment())
-                .commit();
+        if (savedInstanceState == null) {
+            // And wrap in if:
+            // http://stackoverflow.com/a/15421835
+            getChildFragmentManager().beginTransaction()
+                    .add(R.id.general, new IntentGeneralFragment())
+                    .add(R.id.extras, new IntentExtrasFragment())
+                    .commit();
+        }
     }
 }
