@@ -122,6 +122,12 @@
     </plurals>
     <string name="stop_listening_for_broadcasts">Stop listening for broadcasts</string>
 
+    <string name="s_after_previous_broadcast">%ds after previous broadcast</string>
+    <string name="initial_sticky">Initial sticky</string>
+    <string name="flags_changed">Flags changed</string>
+    <string name="no_extras">No extras</string>
+    <string name="added_extra">Added extra: %s</string>
+
     <!-- Content providers -->
     <string name="provider_rw_world_accessible">Provider read/write world accessible</string>
     <string name="provider_w_only_permission">World readable, write permission</string>

@@ -33,7 +33,25 @@ public class Utils {
 
     public static void toastException(Context context, Exception exception) {
         String exceptionName = exception.getClass().getName();
-        exceptionName = exceptionName.substring(exceptionName.lastIndexOf('.') + 1);
+        exceptionName = afterLastDot(exceptionName);
         Toast.makeText(context, exceptionName + ": " + exception.getMessage(), Toast.LENGTH_LONG).show();
+    }
+
+    public static String afterLastDot(String s) {
+        if (s == null) {
+            return "null";
+        }
+        return s.substring(s.lastIndexOf('.') + 1);
+    }
+
+    /**
+     * Check if object has overridden equals(Object) method
+     */
+    public static boolean hasOverriddenEqualsMethod(Object o) {
+        try {
+            return o.getClass().getMethod("equals", Object.class).getDeclaringClass() != Object.class;
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException("Something is really wrong with type hierarchy, equals method not found", e);
+        }
     }
 }

@@ -33,8 +33,8 @@ public class CatchBroadcastService extends Service {
 	private boolean mGotBroadcast = false;
     private static class ReceivedBroadcast {
         long time;
-        boolean initialSticky;
         Intent intent;
+        String description = "";
     };
     private static ArrayList<ReceivedBroadcast> sReceivedBroadcasts = null;
 
@@ -210,10 +210,66 @@ public class CatchBroadcastService extends Service {
 		@Override
 		public void onReceive(Context context, Intent intent) {
             if (sReceivedBroadcasts != null) {
+                // Running in catch multiple mode, add broadcast to list
                 ReceivedBroadcast receivedBroadcast = new ReceivedBroadcast();
                 receivedBroadcast.time = System.currentTimeMillis();
-                receivedBroadcast.initialSticky = isInitialStickyBroadcast();
                 receivedBroadcast.intent = intent;
+
+                // Find last broadcast with same action
+                Intent previousBroadcastIntent = null;
+                ReceivedBroadcast previousBroadcast = null;
+                for (int i = sReceivedBroadcasts.size() - 1; i >= 0; i--) {
+                    previousBroadcast = sReceivedBroadcasts.get(i);
+                    previousBroadcastIntent = previousBroadcast.intent;
+                    if (previousBroadcastIntent.getAction().equals(intent.getAction())) {
+                        break;
+                    } else if (i == 0) {
+                        previousBroadcastIntent = null;
+                    }
+                }
+
+                // Generate description
+                String description = "";
+                if (previousBroadcastIntent == null) {
+                    if (isInitialStickyBroadcast()) {
+                        description = context.getString(R.string.initial_sticky);
+                    }
+                } else {
+
+                    if (intent.getData() != null) {
+                        description = intent.getDataString();
+                    } else {
+                        description = context.getString(R.string.s_after_previous_broadcast, (receivedBroadcast.time - previousBroadcast.time) / 1000);
+                    }
+
+                    if (previousBroadcastIntent.getFlags() != intent.getFlags()) {
+                        description += "\n" + context.getString(R.string.flags_changed);
+                    }
+
+                    // Extras changes
+                    Bundle extras = intent.getExtras();
+                    Bundle previousExtras = previousBroadcastIntent.getExtras();
+                    if (extras == null || extras.size() == 0) {
+                        receivedBroadcast.description += "\n" + context.getString(R.string.no_extras);
+                    } else if (previousExtras != null && previousExtras.size() != 0) {
+                        // Both have extras, compare them
+                        for (String extraName : extras.keySet()) {
+                            Object oldValue = previousExtras.get(extraName);
+                            Object newValue = extras.get(extraName);
+                            if (oldValue == null) {
+                                description += "\n" + getString(R.string.added_extra, extraName);
+                            } else if (Utils.hasOverriddenEqualsMethod(newValue) && !newValue.equals(oldValue)) {
+                                description += "\n" + extraName + ": " + oldValue + " -> " + newValue;
+                            }
+                            if (description.length() > 500) {
+                                description += "\n[...]";
+                                break;
+                            }
+                        }
+                    }
+                }
+                receivedBroadcast.description = description;
+
                 sReceivedBroadcasts.add(receivedBroadcast);
                 for (BroadcastsListActivity listActivity : sListActivities) {
                     listActivity.mAdapter.notifyDataSetChanged();
@@ -245,9 +301,11 @@ public class CatchBroadcastService extends Service {
                 @Override
                 public View getView(int position, View convertView, ViewGroup parent) {
                     if (convertView == null) {
-                        convertView = getLayoutInflater().inflate(android.R.layout.simple_list_item_1, parent, false);
+                        convertView = getLayoutInflater().inflate(android.R.layout.simple_list_item_2, parent, false);
                     }
-                    ((TextView) convertView.findViewById(android.R.id.text1)).setText("[Intent]"); // TODO: distinctive descriptions
+                    ReceivedBroadcast receivedBroadcast = mAdapter.getItem(position);
+                    ((TextView) convertView.findViewById(android.R.id.text1)).setText(Utils.afterLastDot(receivedBroadcast.intent.getAction()));
+                    ((TextView) convertView.findViewById(android.R.id.text2)).setText(receivedBroadcast.description);
                     return convertView;
                 }
             };
