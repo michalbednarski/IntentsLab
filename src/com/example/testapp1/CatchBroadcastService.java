@@ -318,6 +318,7 @@ public class CatchBroadcastService extends Service {
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
             startActivity(
                     new Intent(this, IntentEditorActivity.class)
+                            .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, IntentEditorConstants.BROADCAST)
                             .putExtra("intent", mAdapter.getItem(position).intent)
             );
         }
