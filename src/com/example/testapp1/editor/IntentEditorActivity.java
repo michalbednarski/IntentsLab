@@ -246,8 +246,14 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
 
 
                 case IntentEditorConstants.SERVICE:
-                    Toast.makeText(this, "Not implemented", Toast.LENGTH_SHORT).show();
-                    // TODO runIntent services
+                    switch (getMethodId()) {
+                        case IntentEditorConstants.SERVICE_METHOD_STARTSERVICE:
+                            startService(mEditedIntent);
+                            break;
+                        default:
+                            // TODO runIntent bindService
+                            Toast.makeText(this, "Not implemented", Toast.LENGTH_SHORT).show();
+                    }
                     break;
             }
         } catch (Exception exception) {
