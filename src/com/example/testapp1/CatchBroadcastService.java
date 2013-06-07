@@ -27,6 +27,8 @@ import java.util.ArrayList;
 
 public class CatchBroadcastService extends Service {
     private static final String TAG = "CatchBroadcast";
+    private static final int SERVICE_NOTIFICATION_ID = 1;
+    private static final int RESULT_NOTIFICATION_ID = 2;
 
 	static boolean sIsRunning = false;
 	private CatchBroadcastReceiver mReceiver = null;
@@ -133,10 +135,10 @@ public class CatchBroadcastService extends Service {
 		notif.flags = Notification.FLAG_ONGOING_EVENT;
 		notif.tickerText = title;
 		notif.setLatestEventInfo(this, title, action, contentIntent);
-		getNotificationManager().notify(1, notif);
+        startForeground(SERVICE_NOTIFICATION_ID, notif);
 	}
 
-	void showCaughtNotification(Intent receivedBroadcast, boolean isSticky) {
+	void showCaughtNotification(Intent receivedBroadcast) {
 		mGotBroadcast = true;
 
 		Intent runEditor = new Intent(this, IntentEditorActivity.class);
@@ -146,8 +148,7 @@ public class CatchBroadcastService extends Service {
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 					runEditor, 0);
 
-		if (isSticky || isAutoEditEnabled()) {
-			removeNotification();
+		if (isAutoEditEnabled()) {
 			startActivity(runEditor);
 		} else {
 			String title = getResources().getString(R.string.got_broadcast);
@@ -159,7 +160,7 @@ public class CatchBroadcastService extends Service {
 			notif.setLatestEventInfo(this, title, receivedBroadcast.getAction(),
 					contentIntent);
 
-			getNotificationManager().notify(1, notif);
+			getNotificationManager().notify(RESULT_NOTIFICATION_ID, notif);
 		}
 	}
 
@@ -184,20 +185,13 @@ public class CatchBroadcastService extends Service {
         notif.tickerText = title;
         notif.setLatestEventInfo(this, title, message, contentIntent);
 
-        getNotificationManager().notify(1, notif);
-	}
-
-	void removeNotification() {
-		getNotificationManager().cancel(1);
+        startForeground(SERVICE_NOTIFICATION_ID, notif);
 	}
 
 	@Override
 	public void onDestroy() {
 		sIsRunning = false;
 		unregisterReceiver(mReceiver);
-		if (!mGotBroadcast || sReceivedBroadcasts != null) {
-			removeNotification();
-		}
 		super.onDestroy();
 	}
 
@@ -276,7 +270,7 @@ public class CatchBroadcastService extends Service {
                 }
                 showListeningMultipleNotification();
             } else {
-                showCaughtNotification(intent, isInitialStickyBroadcast());
+                showCaughtNotification(intent);
                 stopSelf(); // Stop my service, unregister receiver
 			}
 		}
