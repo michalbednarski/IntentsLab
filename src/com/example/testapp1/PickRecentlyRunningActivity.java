@@ -22,7 +22,7 @@ import java.util.Set;
 
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 
-public class PickRecentlyRunningActivity extends ListActivity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
+public class PickRecentlyRunningActivity extends ListActivity implements AdapterView.OnItemClickListener {
 
     private ListView mListView;
     private RecentsAdapter mAdapter;
@@ -48,7 +48,7 @@ public class PickRecentlyRunningActivity extends ListActivity implements Adapter
 
         mListView = getListView();
         mListView.setOnItemClickListener(this);
-        mListView.setOnItemLongClickListener(this);
+        registerForContextMenu(mListView);
         mAdapter = new RecentsAdapter(this);
         setListAdapter(mAdapter);
     }
@@ -119,45 +119,43 @@ public class PickRecentlyRunningActivity extends ListActivity implements Adapter
     }
 
     @Override
-    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        Intent intent = mAdapter.getItem(position).baseIntent;
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        Intent intent;
+        try {
+            AdapterView.AdapterContextMenuInfo aMenuInfo = (AdapterView.AdapterContextMenuInfo) menuInfo;
+            intent = mAdapter.getItem(aMenuInfo.position).baseIntent;
+        } catch (ClassCastException e) {
+            return;
+        }
         if (isLauncherIntent(intent)) {
-            return false;
+            return;
         }
         final String componentName = intent.getComponent().flattenToShortString();
-        mListView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+        final boolean nowExcluded = mExcludedComponents.contains(componentName);
+        menu.add(nowExcluded ? R.string.exclude_item_from_list : R.string.restore_item_onto_list).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
-            public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-                mListView.setOnCreateContextMenuListener(null);
-                final boolean nowExcluded = mExcludedComponents.contains(componentName);
-                menu.add(nowExcluded ? R.string.exclude_item_from_list : R.string.restore_item_onto_list).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem item) {
-                        if (nowExcluded) {
-                            mExcludedComponents.remove(componentName);
-                        } else {
-                            mExcludedComponents.add(componentName);
-                        }
-                        String excludedComponentsString = "";
-                        if (!mExcludedComponents.isEmpty()) {
-                            for (String component : mExcludedComponents) {
-                                excludedComponentsString += "//" + component;
-                            }
-                            excludedComponentsString = excludedComponentsString.substring(2);
-                        }
-                        Utils.applyOrCommitPrefs(
-                                getDefaultSharedPreferences(PickRecentlyRunningActivity.this)
-                                        .edit()
-                                        .putString(PREF_EXCLUDED_COMPONENTS, excludedComponentsString));
-                        mAdapter.refresh();
-                        Toast.makeText(PickRecentlyRunningActivity.this, nowExcluded ? R.string.item_restored_onto_list : R.string.item_excluded_from_list, Toast.LENGTH_SHORT).show();
-                        return true;
+            public boolean onMenuItemClick(MenuItem item) {
+                if (nowExcluded) {
+                    mExcludedComponents.remove(componentName);
+                } else {
+                    mExcludedComponents.add(componentName);
+                }
+                String excludedComponentsString = "";
+                if (!mExcludedComponents.isEmpty()) {
+                    for (String component : mExcludedComponents) {
+                        excludedComponentsString += "//" + component;
                     }
-                });
+                    excludedComponentsString = excludedComponentsString.substring(2);
+                }
+                Utils.applyOrCommitPrefs(
+                        getDefaultSharedPreferences(PickRecentlyRunningActivity.this)
+                                .edit()
+                                .putString(PREF_EXCLUDED_COMPONENTS, excludedComponentsString));
+                mAdapter.refresh();
+                Toast.makeText(PickRecentlyRunningActivity.this, nowExcluded ? R.string.item_restored_onto_list : R.string.item_excluded_from_list, Toast.LENGTH_SHORT).show();
+                return true;
             }
         });
-        openContextMenu(mListView);
-        return true;
     }
 
     private class RecentsAdapter extends ArrayAdapter<RecentTaskInfo> {
