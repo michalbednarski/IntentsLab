@@ -40,10 +40,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/intent_action" >
-
-            <requestFocus />
-        </TextView>
+            android:text="@string/intent_action" />
 
         <EditText
             android:id="@+id/action"
