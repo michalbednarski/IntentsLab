@@ -5,24 +5,14 @@ import android.app.AlertDialog;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
+import android.view.*;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
+import android.widget.*;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemLongClickListener;
-import android.widget.BaseAdapter;
-import android.widget.Button;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
-
 import com.example.testapp1.R;
 
 class BundleAdapter extends BaseAdapter implements OnClickListener,
-		OnItemClickListener, OnItemLongClickListener, EditorCallback {
+		OnItemClickListener, EditorCallback, View.OnCreateContextMenuListener {
 	private static final String TAG = "BundleAdapter";
 	private Activity mActivity;
 	private LayoutInflater mInflater;
@@ -219,20 +209,10 @@ class BundleAdapter extends BaseAdapter implements OnClickListener,
 		}
 	}
 
-	@Override
-	public boolean onItemLongClick(AdapterView<?> parent, View view,
-			int position, long id) {
-		// TODO Auto-generated method stub
-		if (position != mKeysCount) {
-			return true;
-		}
-		return false;
-	}
-
 	void settleOnList(ListView listView) {
 		listView.setAdapter(this);
 		listView.setOnItemClickListener(this);
-		listView.setOnItemLongClickListener(this);
+        listView.setOnCreateContextMenuListener(this);
 	}
 
 	@Override
@@ -242,4 +222,21 @@ class BundleAdapter extends BaseAdapter implements OnClickListener,
 		}
 		notifyDataSetChanged();
 	}
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        final AdapterView.AdapterContextMenuInfo aMenuInfo = (AdapterView.AdapterContextMenuInfo) menuInfo;
+        if (aMenuInfo.position == mKeysCount) {
+            return;
+        }
+        menu.add(mActivity.getString(R.string.delete)).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                mBundle.remove(mKeys[aMenuInfo.position]);
+                updateKeySet();
+                notifyDataSetChanged();
+                return true;
+            }
+        });
+    }
 }

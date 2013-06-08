@@ -143,4 +143,5 @@
 
     <!-- Uncategorized -->
     <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
 </resources>
