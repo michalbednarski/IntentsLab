@@ -46,7 +46,8 @@
             android:id="@+id/action"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ems="10" />
+            android:ems="10"
+            android:inputType="text"/>
 
         <Spinner
             android:id="@+id/action_spinner"
@@ -80,7 +81,8 @@
             android:id="@+id/data"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ems="10" />
+            android:ems="10"
+            android:inputType="text"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -90,7 +92,8 @@
         <AutoCompleteTextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/data_type"/>
+            android:id="@+id/data_type"
+            android:inputType="text"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -110,7 +113,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:layout_weight="1"
-                android:ems="10" />
+                android:ems="10"
+                android:inputType="text"/>
 
             <Button
                 android:id="@+id/component_pick"
