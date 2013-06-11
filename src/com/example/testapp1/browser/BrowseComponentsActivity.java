@@ -45,6 +45,8 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
 
     private FetchAppsTask mTask = null;
 
+    ArrayList<Integer> mExpandedApps = new ArrayList<Integer>();
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,6 +58,7 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
         if (savedInstanceState != null) {
             useCustomFilter = savedInstanceState.getBoolean("usingCustomFilter");
             filter = savedInstanceState.getParcelable("filter");
+            mExpandedApps = savedInstanceState.getIntegerArrayList("expandedApps");
         }
 
         mList = (ExpandableListView) findViewById(R.id.listView1);
@@ -74,6 +77,7 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
         super.onSaveInstanceState(outState);
         outState.putBoolean("usingCustomFilter", useCustomFilter);
         outState.putParcelable("filter", filter);
+        outState.putIntegerArrayList("expandedApps", mExpandedApps);
     }
 
     public void updateList() {
@@ -261,14 +265,12 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
 
     @Override
     public void onGroupExpanded(int groupPosition) {
-        // TODO Auto-generated method stub
-
+        mExpandedApps.add(mApps[groupPosition].appId);
     }
 
     @Override
     public void onGroupCollapsed(int groupPosition) {
-        // TODO Auto-generated method stub
-
+        mExpandedApps.remove(Integer.valueOf(mApps[groupPosition].appId));
     }
 
     @Override
@@ -292,6 +294,7 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
         String appName;
         String packageName;
         AppComponentInfo components[];
+        int appId;
     }
 
     static class AppComponentInfo {
@@ -478,6 +481,7 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
                 app.appName = pack.applicationInfo.loadLabel(pm).toString();
                 app.packageName = pack.packageName;
                 app.components = selectedComponents.toArray(new AppComponentInfo[selectedComponents.size()]);
+                app.appId = pack.applicationInfo.uid * 997 + (pack.packageName.hashCode() % 997);
                 selectedApps.add(app);
             }
             mApps = selectedApps.toArray(new AppInfo[selectedApps.size()]);
@@ -493,6 +497,14 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
             if (!mListAdapterSet) {
                 mList.setAdapter(BrowseComponentsActivity.this);
                 mListAdapterSet = true;
+            }
+
+            for (int i = 0, j = mApps.length; i < j; i++) {
+                if (mExpandedApps.contains(mApps[i].appId)) {
+                    mList.expandGroup(i);
+                } else {
+                    mList.collapseGroup(i);
+                }
             }
 
             mMessage.setVisibility(View.GONE);
