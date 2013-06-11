@@ -10,6 +10,6 @@ public class SavedItemsActivity extends ListActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.saved_items);
-        new SavedItemsDatabase(this).lazyAttachListAdapter(getListView());
+        SavedItemsDatabase.getInstance(this).lazyAttachListAdapter(getListView());
     }
 }

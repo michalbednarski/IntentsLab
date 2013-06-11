@@ -25,9 +25,10 @@ import java.net.URISyntaxException;
  */
 public class SavedItemsDatabase {
     private static final int DB_VERSION = 1;
+    private static SavedItemsDatabase sInstance = null;
     private SQLiteDatabase mDatabase;
 
-    public SavedItemsDatabase(Context context) {
+    private SavedItemsDatabase(Context context) {
         mDatabase = context.openOrCreateDatabase("saved_items", Context.MODE_PRIVATE, null);
         int oldVersion = mDatabase.getVersion();
         if (oldVersion < DB_VERSION) {
@@ -41,6 +42,13 @@ public class SavedItemsDatabase {
             );
             mDatabase.setVersion(DB_VERSION);
         }
+    }
+
+    public static SavedItemsDatabase getInstance(Context context) {
+        if (sInstance == null) {
+            sInstance = new SavedItemsDatabase(context);
+        }
+        return sInstance;
     }
 
     public void lazyAttachListAdapter(final ListView listView) {

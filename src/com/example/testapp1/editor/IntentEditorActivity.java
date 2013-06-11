@@ -141,7 +141,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
             return true;
             case R.id.save:{
                 updateIntent();
-                new SavedItemsDatabase(this).saveIntent(this, mEditedIntent);
+                SavedItemsDatabase.getInstance(this).saveIntent(this, mEditedIntent);
             }
             return true;
             default:
