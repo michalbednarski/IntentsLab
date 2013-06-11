@@ -59,6 +59,9 @@
         <activity android:name=".providerlab.ProviderInfoActivity"/>
         <activity android:name=".providerlab.QueryResultActivity"/>
         <activity android:name=".providerlab.ProviderLabActivity"/>
+        <activity
+            android:name=".SavedItemsActivity"
+            android:label="Saved items"/>
 
         <receiver
             android:name=".samplecomponents.AbortBroadcastReceiver"

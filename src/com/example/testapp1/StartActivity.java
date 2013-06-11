@@ -66,4 +66,8 @@ public class StartActivity extends Activity {
     	//new IntentFilterScanner(this, "com.android.phone");
     	new ExtendedPackageInfo(this, "com.example.testapp1");
     }
+
+    public void viewSavedItems(View view) {
+        startActivity(new Intent(this, SavedItemsActivity.class));
+    }
 }

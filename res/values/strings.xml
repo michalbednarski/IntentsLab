@@ -144,4 +144,9 @@
     <!-- Uncategorized -->
     <string name="cancel">Cancel</string>
     <string name="delete">Delete</string>
+    <string name="save">Save</string>
+    <string name="save_as_name">Name:</string>
+    <string name="saved">Saved</string>
+    <string name="no_saved_items">No saved items</string>
+
 </resources>

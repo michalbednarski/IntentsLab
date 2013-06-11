@@ -11,6 +11,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 import com.example.testapp1.R;
+import com.example.testapp1.SavedItemsDatabase;
 import com.example.testapp1.Utils;
 import com.example.testapp1.browser.ComponentInfoActivity;
 
@@ -136,6 +137,11 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                                 .putExtra(ComponentInfoActivity.EXTRA_PACKAGE_NAME, component.getPackageName())
                                 .putExtra(ComponentInfoActivity.EXTRA_COMPONENT_NAME, component.getClassName())
                 );
+            }
+            return true;
+            case R.id.save:{
+                updateIntent();
+                new SavedItemsDatabase(this).saveIntent(this, mEditedIntent);
             }
             return true;
             default:

@@ -33,4 +33,10 @@
         android:layout_height="wrap_content"
         android:onClick="startAppScanner"
         android:text="Scan apps" />-->
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="viewSavedItems"
+        android:text="Saved items"/>
 </LinearLayout>
