@@ -2,7 +2,7 @@ package com.example.testapp1.browser;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.Activity;
+import android.app.ExpandableListActivity;
 import android.content.Intent;
 import android.content.pm.*;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -27,7 +27,7 @@ import com.example.testapp1.providerlab.ProviderInfoActivity;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BrowseComponentsActivity extends Activity implements ExpandableListAdapter, OnChildClickListener {
+public class BrowseComponentsActivity extends ExpandableListActivity implements ExpandableListAdapter, OnChildClickListener {
 
     private final static int ITEM_ID_SPLIT_BASE = 1000;
     private static final String TAG = "BrowseComponentsActivity";
@@ -35,7 +35,6 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
     ArrayList<DataSetObserver> mDataSetObservers = new ArrayList<DataSetObserver>();
     AppInfo mApps[] = null;
     ExpandableListView mList;
-    boolean mListAdapterSet = false;
     TextView mMessage;
 
     //private class CachedPackagesInfo {};
@@ -61,8 +60,8 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
             mExpandedApps = savedInstanceState.getIntegerArrayList("expandedApps");
         }
 
-        mList = (ExpandableListView) findViewById(R.id.listView1);
-        mMessage = (TextView) findViewById(R.id.message);
+        mList = getExpandableListView();
+        mMessage = (TextView) findViewById(android.R.id.empty);
         mList.setOnChildClickListener(this);
         updateList();
     }
@@ -265,7 +264,9 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
 
     @Override
     public void onGroupExpanded(int groupPosition) {
-        mExpandedApps.add(mApps[groupPosition].appId);
+        if (!mExpandedApps.contains(mApps[groupPosition].appId)) {
+            mExpandedApps.add(mApps[groupPosition].appId);
+        }
     }
 
     @Override
@@ -306,8 +307,7 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
 
         @Override
         protected void onPreExecute() {
-            mList.setVisibility(View.GONE);
-            mMessage.setVisibility(View.VISIBLE);
+            setListAdapter(null);
             mMessage.setText(R.string.loading_apps_list);
         }
 
@@ -490,14 +490,11 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
 
         @Override
         protected void onPostExecute(Object result) {
-            for (DataSetObserver observer : mDataSetObservers) {
-                observer.onChanged();
-            }
-
-            if (!mListAdapterSet) {
-                mList.setAdapter(BrowseComponentsActivity.this);
-                mListAdapterSet = true;
-            }
+            setListAdapter(BrowseComponentsActivity.this);
+            mMessage.setText(
+                filter.isExcludingEverything() ?
+                    getString(R.string.filter_excludes_all_possible_components) :
+                    getString(R.string.no_matching_components));
 
             for (int i = 0, j = mApps.length; i < j; i++) {
                 if (mExpandedApps.contains(mApps[i].appId)) {
@@ -506,9 +503,6 @@ public class BrowseComponentsActivity extends Activity implements ExpandableList
                     mList.collapseGroup(i);
                 }
             }
-
-            mMessage.setVisibility(View.GONE);
-            mList.setVisibility(View.VISIBLE);
         }
     }
 

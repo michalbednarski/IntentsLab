@@ -49,6 +49,14 @@ public class ComponentsFilter implements Parcelable {
 
     public boolean testWritePermissionForProviders = false;
 
+
+    public boolean isExcludingEverything() {
+        return
+            appType == 0 ||
+            type == 0 ||
+            protection == 0;
+    }
+
     // Serializing to parcel
     @Override
     public int describeContents() {

@@ -63,7 +63,8 @@
     <string name="content_providers">Content providers</string>
     <string name="services">Services</string>
     <string name="loading_apps_list">Loading apps list&#8230;</string>
-    <string name="no_matching_apps_found">No apps matching to given criteria</string>
+    <string name="filter_excludes_all_possible_components">Filter is excluding all possible components</string>
+    <string name="no_matching_components">There are no components matching to given filter</string>
 
     <string name="permission_filter">Protection</string>
     <string name="permission_filter_show_all">All</string>
