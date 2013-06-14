@@ -1,9 +1,11 @@
 package com.example.testapp1.providerlab;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.os.Build;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -21,14 +23,26 @@ import java.util.ArrayList;
  */
 public class DataGridView extends LinearLayout {
 
+    // Row sizes
     private static final int BORDER_SIZE = 1;
+
+    // Text paddings
     private static final int PADDING_LEFT = 2;
+    private static final int HORIZONTAL_PADDING = PADDING_LEFT + 6;
 
-    private static final int MIN_COLUMN_WIDTH = 50;
+    // Minimal and maximal column widths
+    private static final int MIN_COLUMN_WIDTH = 50; // enforced
+    private static final int MAX_COLUMN_WIDTH = 500; // for automatic detection, user can expand further
 
+    // More = further flings
     private static final int HORIZONTAL_FLING_SPEED_FACTOR = 1000;
 
+    // Amount of rows scanned for determining default column widths
+    private static final int SCAN_ROW_COUNT_FOR_COLUMN_WIDTH = 5;
+
+    // Special value for RowView#mRowId indicating that this is header row
     private static final int ROW_ID_HEADER = -1;
+
 
     private RowView mHeadersView;
     private ListView mListView;
@@ -98,15 +112,30 @@ public class DataGridView extends LinearLayout {
 
     void setCursor(Cursor cursor) {
         mCursor = cursor;
+
+        // init column names
         int columnCount = cursor.getColumnCount();
         mColumns = new ColumnInfo[columnCount];
         for (int i = 0; i < columnCount; i++) {
             ColumnInfo column = new ColumnInfo();
             column.name = cursor.getColumnName(i);
-            column.width = 120;
+            column.width = measureCellWidth(i, true, MIN_COLUMN_WIDTH); // measure header
             mColumns[i] = column;
         }
+
+        // Measure first SCAN_ROW_COUNT_FOR_COLUMN_WIDTH rows for column widths
+        for (int row = 0, rowCount = Math.min(cursor.getCount(), SCAN_ROW_COUNT_FOR_COLUMN_WIDTH); row < rowCount; row++) {
+            mCursor.moveToPosition(row);
+            for (int i = 0; i < columnCount; i++) {
+                mColumns[i].width = measureCellWidth(i, false, mColumns[i].width);
+            }
+        }
+
+        // Calculate max scroll
         calculateMaxScroll();
+
+        // Update list
+        mHeadersView.invalidate();
         mListAdapter.notifyDataSetChanged();
     }
 
@@ -270,6 +299,41 @@ public class DataGridView extends LinearLayout {
         }
     };
 
+    // Values
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    private Paint getCellTextPaint(int columnId, boolean isHeader) {
+        if (isHeader) {
+            return mHeadersPaint;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            final int type = mCursor.getType(columnId);
+            return type == Cursor.FIELD_TYPE_NULL ? mSpecialValuePaint : mPaint;
+        }
+        return mPaint;
+    }
+
+    private int measureCellWidth(int columnId, boolean isHeader, int previousWidth) {
+        if (previousWidth == MAX_COLUMN_WIDTH) {
+            return MAX_COLUMN_WIDTH;
+        }
+        Paint paint = getCellTextPaint(columnId, isHeader);
+        String text = getCellText(columnId, isHeader);
+        final int textWidth = ((int) paint.measureText(text)) + HORIZONTAL_PADDING;
+        return Math.max(previousWidth, Math.min(textWidth, MAX_COLUMN_WIDTH));
+    }
+
+    private String getCellText(int columnId, boolean isHeader) {
+        if (isHeader) {
+            return mCursor.getColumnName(columnId);
+        } else {
+            String text = mCursor.getString(columnId);
+            if (text == null) {
+                text = "null";
+            }
+            return text;
+        }
+    }
+
     /**
      * View displaying a row or headers, possibly scrolled horizontally
      * (Vertical scrolling is handled by ListView)
@@ -303,9 +367,9 @@ public class DataGridView extends LinearLayout {
             // Draw cells
             int x = -mScroller.getCurrX();
             for (int i = 0, columnsCount = mColumns.length; i < columnsCount; i++) {
-                String text;
-                Paint textPaint = mPaint;
-                if (mRowId == ROW_ID_HEADER) {
+                String text = getCellText(i, mRowId == ROW_ID_HEADER);
+                Paint textPaint = getCellTextPaint(i, mRowId == ROW_ID_HEADER);
+                /*if (mRowId == ROW_ID_HEADER) {
                     text = mCursor.getColumnName(i);
                     textPaint = mHeadersPaint;
                 } else {
@@ -314,7 +378,7 @@ public class DataGridView extends LinearLayout {
                         text = "null";
                         textPaint = mSpecialValuePaint;
                     }
-                }
+                }*/
 
                 ColumnInfo column = mColumns[i];
                 canvas.save();
