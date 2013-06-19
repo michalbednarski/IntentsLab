@@ -62,6 +62,9 @@
         <activity
             android:name=".SavedItemsActivity"
             android:label="Saved items"/>
+        <activity
+            android:name=".providerlab.AdvancedQueryActivity"
+            android:windowSoftInputMode="stateHidden"/>
 
         <receiver
             android:name=".samplecomponents.AbortBroadcastReceiver"

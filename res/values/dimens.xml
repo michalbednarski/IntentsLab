@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="text_size">16sp</dimen>
+    <dimen name="group_indent">10dp</dimen>
+    <dimen name="group_delimiter_space">10dp</dimen>
 </resources>

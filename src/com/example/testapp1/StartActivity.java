@@ -6,11 +6,10 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-
 import com.example.testapp1.browser.BrowseComponentsActivity;
 import com.example.testapp1.browser.ExtendedPackageInfo;
 import com.example.testapp1.editor.IntentEditorActivity;
-import com.example.testapp1.providerlab.ProviderLabActivity;
+import com.example.testapp1.providerlab.AdvancedQueryActivity;
 
 public class StartActivity extends Activity {
 
@@ -27,7 +26,8 @@ public class StartActivity extends Activity {
         menu.add("EXPERIMENTAL").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                startActivity(new Intent(StartActivity.this, ProviderLabActivity.class));
+                //startActivity(new Intent(StartActivity.this, ProviderLabActivity.class));
+                startActivity(new Intent(StartActivity.this, AdvancedQueryActivity.class));
                 return true;
             }
         });

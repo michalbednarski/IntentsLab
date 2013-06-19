@@ -1,10 +1,15 @@
 package com.example.testapp1;
 
 import android.annotation.TargetApi;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.widget.Toast;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class Utils {
     private Utils() {
@@ -32,9 +37,19 @@ public class Utils {
     }
 
     public static void toastException(Context context, Exception exception) {
+        toastException(context, null, exception);
+    }
+
+    public static void toastException(Context context, String methodName, Exception exception) {
         String exceptionName = exception.getClass().getName();
         exceptionName = afterLastDot(exceptionName);
-        Toast.makeText(context, exceptionName + ": " + exception.getMessage(), Toast.LENGTH_LONG).show();
+        Toast.makeText(
+            context,
+                (methodName != null ? methodName + ": " : "") +
+                exceptionName + ": " +
+                exception.getMessage(),
+            Toast.LENGTH_LONG
+        ).show();
     }
 
     public static String afterLastDot(String s) {
@@ -52,6 +67,21 @@ public class Utils {
             return o.getClass().getMethod("equals", Object.class).getDeclaringClass() != Object.class;
         } catch (NoSuchMethodException e) {
             throw new RuntimeException("Something is really wrong with type hierarchy, equals method not found", e);
+        }
+    }
+
+    /**
+     * contentValues.keySet() with fallback for older platform versions
+     */
+    public static Set<String> getKeySet(ContentValues contentValues) {
+        try {
+            return contentValues.keySet();
+        } catch (NoSuchMethodError error) {
+            HashSet<String> set = new HashSet<String>();
+            for (Map.Entry<String, Object> entry : contentValues.valueSet()) {
+                set.add(entry.getKey());
+            }
+            return set;
         }
     }
 }

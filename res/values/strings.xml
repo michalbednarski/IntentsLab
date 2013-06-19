@@ -149,5 +149,15 @@
     <string name="save_as_name">Name:</string>
     <string name="saved">Saved</string>
     <string name="no_saved_items">No saved items</string>
+    <string name="method">Method:</string>
+    <string name="provider_uri">Uri:</string>
+    <string name="specify_projection">Specify projection</string>
+    <string name="add_projection_column">Add projection column</string>
+    <string name="specify_selection">Specify selection (WHERE):</string>
+    <string name="selection_args">Selection args:</string>
+    <string name="new_selection_arg">New selection arg</string>
+    <string name="content_values">Content values</string>
+    <string name="new_content_value_pair">New pair</string>
+    <string name="specify_order">Specify order</string>
 
 </resources>
