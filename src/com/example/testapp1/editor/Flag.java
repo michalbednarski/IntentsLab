@@ -1,5 +1,7 @@
 package com.example.testapp1.editor;
 
+import android.app.AlertDialog;
+import android.view.View;
 import org.xmlpull.v1.XmlPullParser;
 
 import android.app.Activity;
@@ -14,11 +16,27 @@ class Flag {
 	String mFlagName;
 	int mFlagValue;
 
-	Flag(XmlPullParser flagSource, Activity flagsContainer, ViewGroup checkboxesList) throws Exception {
+	Flag(XmlPullParser flagSource, final Activity flagsContainer, ViewGroup checkboxesList) throws Exception {
 		mFlagName = flagSource.getAttributeValue(null, "name");
 		mFlagValue = Intent.class.getField(mFlagName).getInt(null);
 		mCheckbox = new CheckBox(flagsContainer);
 		mCheckbox.setText(mFlagName);
+
+        // Documentation on long-click
+        final String documentation = flagSource.getAttributeValue(null, "desc");
+        mCheckbox.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                new AlertDialog.Builder(flagsContainer)
+                        .setTitle(mFlagName)
+                        .setMessage(documentation)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show();
+                return true;
+            }
+        });
+
+        // Add to list
 		checkboxesList.addView(mCheckbox);
 	}
 
