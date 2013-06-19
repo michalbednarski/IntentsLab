@@ -64,6 +64,7 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Some buttons to do"/>
+        android:text="@string/go_to_provider_lab"
+        android:onClick="goToProviderLab"/>
 
 </LinearLayout>

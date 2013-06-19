@@ -140,15 +140,8 @@
     <string name="content_providers_permission_type">For content providers check</string>
     <string name="filter_read_permission">Read permission</string>
     <string name="filter_write_permission">Write permission</string>
+    <string name="go_to_provider_lab">Go to provider lab</string>
 
-
-    <!-- Uncategorized -->
-    <string name="cancel">Cancel</string>
-    <string name="delete">Delete</string>
-    <string name="save">Save</string>
-    <string name="save_as_name">Name:</string>
-    <string name="saved">Saved</string>
-    <string name="no_saved_items">No saved items</string>
     <string name="method">Method:</string>
     <string name="provider_uri">Uri:</string>
     <string name="specify_projection">Specify projection</string>
@@ -159,5 +152,14 @@
     <string name="content_values">Content values</string>
     <string name="new_content_value_pair">New pair</string>
     <string name="specify_order">Specify order</string>
+
+
+    <!-- Uncategorized -->
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="save">Save</string>
+    <string name="save_as_name">Name:</string>
+    <string name="saved">Saved</string>
+    <string name="no_saved_items">No saved items</string>
 
 </resources>

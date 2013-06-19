@@ -2,13 +2,19 @@ package com.example.testapp1.providerlab;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ComponentName;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,6 +26,8 @@ import com.example.testapp1.browser.ComponentInfoActivity;
  *
  */
 public class ProviderInfoActivity extends Activity {
+    private static final String TAG = "ProviderInfoActivity";
+
     String mPackageName, mComponentName;
     private ProviderInfo mProviderInfo = null;
 
@@ -48,8 +56,6 @@ public class ProviderInfoActivity extends Activity {
 
         PackageManager packageManager = getPackageManager();
 
-        Toast.makeText(this, mProviderInfo.authority, Toast.LENGTH_LONG).show();
-
         // Header icon and text
         ((TextView) findViewById(R.id.title)).setText(
                 mProviderInfo.loadLabel(packageManager)
@@ -62,6 +68,9 @@ public class ProviderInfoActivity extends Activity {
         );
 
         FormattedTextBuilder text = new FormattedTextBuilder();
+
+        // Authority
+        text.appendValue("Authority", mProviderInfo.authority);
 
         // Permissions
         // Description: permission/exported
@@ -116,5 +125,42 @@ public class ProviderInfoActivity extends Activity {
             }
         }
         throw new PackageManager.NameNotFoundException("No such provider (manual search in PackageInfo)");
+    }
+
+    /**
+     * Open provider lab for trying given authority
+     */
+    public void openProviderLab(String authority) {
+        startActivity(
+                new Intent(this, AdvancedQueryActivity.class)
+                .setData(Uri.parse("content://" + authority + "/"))
+        );
+    }
+
+    /**
+     * Open provider lab or prompt user to choose authority if there are multiple
+     *
+     * Triggered by provider lab button
+     */
+    public void goToProviderLab(View view) {
+        String authority = mProviderInfo.authority;
+        if (authority == null) {
+            Log.e(TAG, "Missing authority");
+            return;
+        }
+        final String[] authorities = authority.split(";");
+        if (authorities.length == 1) {
+            openProviderLab(authority);
+        } else {
+            new AlertDialog.Builder(this)
+                    .setTitle("Choose authority")
+                    .setItems(authorities, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            openProviderLab(authorities[which]);
+                        }
+                    })
+                    .show();
+        }
     }
 }
