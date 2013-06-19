@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 import com.example.testapp1.R;
 import com.example.testapp1.Utils;
@@ -15,6 +17,8 @@ import com.example.testapp1.Utils;
  */
 public class QueryResultActivity extends Activity {
     private static final String TAG = "QueryResultActivity";
+
+    private String[] mColumnNames = null;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,8 +53,36 @@ public class QueryResultActivity extends Activity {
             return;
         }
 
+        mColumnNames = cursor.getColumnNames();
+
         DataGridView v = new DataGridView(this);
         v.setCursor(cursor);
         setContentView(v);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.query_result, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.edit_query: {
+                Intent myIntent = getIntent();
+                Intent queryEditorIntent =
+                    new Intent(this, AdvancedQueryActivity.class)
+                        .setData(myIntent.getData())
+                        .putExtras(myIntent);
+                String[] projection = myIntent.getStringArrayExtra(AdvancedQueryActivity.EXTRA_PROJECTION);
+                if ((projection == null || projection.length == 0) && mColumnNames != null) {
+                    queryEditorIntent.putExtra(AdvancedQueryActivity.EXTRA_PROJECTION_AVAILABLE_COLUMNS, mColumnNames);
+                }
+                startActivity(queryEditorIntent);
+                return true;
+            }
+        }
+        return false;
     }
 }

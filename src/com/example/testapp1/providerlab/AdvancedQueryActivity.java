@@ -525,6 +525,7 @@ public class AdvancedQueryActivity extends Activity {
                             new Intent(this, QueryResultActivity.class)
                             .setData(uri)
                             .putExtra(EXTRA_PROJECTION, getProjection())
+                            .putExtra(EXTRA_PROJECTION_AVAILABLE_COLUMNS, getIntent().getStringArrayExtra(EXTRA_PROJECTION_AVAILABLE_COLUMNS))
                             .putExtra(EXTRA_SELECTION, getSelection())
                             .putExtra(EXTRA_SELECTION_ARGS, getSelectionArgs())
                             .putExtra(EXTRA_SORT_ORDER, getSortOrder())
