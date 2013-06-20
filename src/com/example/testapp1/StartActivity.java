@@ -6,8 +6,8 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ListView;
 import com.example.testapp1.browser.BrowseComponentsActivity;
-import com.example.testapp1.browser.ExtendedPackageInfo;
 import com.example.testapp1.editor.IntentEditorActivity;
 import com.example.testapp1.providerlab.AdvancedQueryActivity;
 
@@ -18,6 +18,12 @@ public class StartActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start);
 
+        // Saved items list
+        ListView savedItemsList = (ListView) findViewById(android.R.id.list);
+        if (savedItemsList != null) {
+            savedItemsList.setEmptyView(findViewById(android.R.id.empty));
+            SavedItemsDatabase.getInstance(this).lazyAttachListAdapter(savedItemsList);
+        }
     }
 
     @Override
@@ -59,12 +65,6 @@ public class StartActivity extends Activity {
 
     public void catchBroadcast(View view) {
     	(new CatchBroadcastDialog(this)).show();
-    }
-
-    public void startAppScanner(View view) {
-    	//startService(new Intent(this, ScanService.class));
-    	//new IntentFilterScanner(this, "com.android.phone");
-    	new ExtendedPackageInfo(this, "com.example.testapp1");
     }
 
     public void viewSavedItems(View view) {

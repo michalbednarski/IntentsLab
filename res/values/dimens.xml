@@ -3,4 +3,5 @@
     <dimen name="text_size">16sp</dimen>
     <dimen name="group_indent">10dp</dimen>
     <dimen name="group_delimiter_space">10dp</dimen>
+    <dimen name="button_padding">20dp</dimen>
 </resources>

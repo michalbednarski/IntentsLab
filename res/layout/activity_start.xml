@@ -28,12 +28,6 @@
         android:onClick="catchBroadcast"
         android:text="@string/title_activity_catch_broadcast"/>
 
-    <!--<Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="startAppScanner"
-        android:text="Scan apps" />-->
-
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
