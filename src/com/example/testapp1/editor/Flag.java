@@ -1,6 +1,10 @@
 package com.example.testapp1.editor;
 
 import android.app.AlertDialog;
+import android.graphics.Typeface;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.StyleSpan;
 import android.view.View;
 import org.xmlpull.v1.XmlPullParser;
 
@@ -24,12 +28,18 @@ class Flag {
 
         // Documentation on long-click
         final String documentation = flagSource.getAttributeValue(null, "desc");
+        final String documentationDetails = flagSource.getAttributeValue(null, "details");
         mCheckbox.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
+                SpannableString message = new SpannableString(
+                        documentation +
+                                (documentationDetails != null ? "\n\n" + documentationDetails: "")
+                );
+                message.setSpan(new StyleSpan(Typeface.BOLD), 0, documentation.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 new AlertDialog.Builder(flagsContainer)
                         .setTitle(mFlagName)
-                        .setMessage(documentation)
+                        .setMessage(message)
                         .setPositiveButton(android.R.string.ok, null)
                         .show();
                 return true;
