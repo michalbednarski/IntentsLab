@@ -1,7 +1,9 @@
 package com.example.testapp1.editor;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.*;
 import android.view.View.OnClickListener;
@@ -148,8 +150,29 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
 
 	@Override
 	public void onClick(View v) { // For add new button
-		// TODO Auto-generated method stub
+        View view = mInflater.inflate(R.layout.add_extra, null);
+        final TextView nameTextView = (TextView) view.findViewById(R.id.name);
+        final Spinner typeSpinner = (Spinner) view.findViewById(R.id.typespinner);
+        typeSpinner.setAdapter(new ArrayAdapter<String>(mActivity, android.R.layout.simple_spinner_item, new String[] {
+                "String/Number" // 0
+                // TODO: more types for adding
+        }));
 
+        new AlertDialog.Builder(mActivity)
+                .setTitle(R.string.btn_add)
+                .setView(view)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String name = nameTextView.getText().toString();
+                        switch (typeSpinner.getSelectedItemPosition()) {
+                            case 0: // String/Number
+                                mEditorLauncher.launchEditor(name, "");
+                                break;
+                        }
+                    }
+                })
+                .show();
 	}
 
 	@Override
@@ -165,7 +188,11 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
 
     @Override
     public void onEditorResult(String key, Object newValue) {
+        boolean keySetChange = !mBundle.containsKey(key);
         putInBundle(mBundle, key, newValue);
+        if (keySetChange) {
+            updateKeySet();
+        }
         notifyDataSetChanged();
     }
 
