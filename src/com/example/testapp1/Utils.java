@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.widget.Toast;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -83,5 +84,30 @@ public class Utils {
             }
             return set;
         }
+    }
+
+    /**
+     * Map used by toWrapperClass()
+     */
+    private static HashMap<Class<?>, Class<?>> PRIMITIVE_TO_WRAPPER_CLASS_MAP = new  HashMap<Class<?>, Class<?>>();
+    static {
+        PRIMITIVE_TO_WRAPPER_CLASS_MAP.put(Boolean.TYPE, Boolean.class);
+        PRIMITIVE_TO_WRAPPER_CLASS_MAP.put(Byte.TYPE, Byte.class);
+        PRIMITIVE_TO_WRAPPER_CLASS_MAP.put(Character.TYPE, Character.class);
+        PRIMITIVE_TO_WRAPPER_CLASS_MAP.put(Short.TYPE, Short.class);
+        PRIMITIVE_TO_WRAPPER_CLASS_MAP.put(Integer.TYPE, Integer.class);
+        PRIMITIVE_TO_WRAPPER_CLASS_MAP.put(Long.TYPE, Long.class);
+        PRIMITIVE_TO_WRAPPER_CLASS_MAP.put(Float.TYPE, Float.class);
+        PRIMITIVE_TO_WRAPPER_CLASS_MAP.put(Double.TYPE, Double.class);
+        PRIMITIVE_TO_WRAPPER_CLASS_MAP.put(Void.TYPE, Void.class);
+    }
+
+    /**
+     * Convert primitive class to it's wrapper class
+     * Leaves other classes intact
+     */
+    public static Class<?> toWrapperClass(Class<?> aClass) {
+        Class<?> wrapperClass = PRIMITIVE_TO_WRAPPER_CLASS_MAP.get(aClass);
+        return wrapperClass != null ? wrapperClass : aClass;
     }
 }

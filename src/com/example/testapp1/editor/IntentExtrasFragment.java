@@ -20,7 +20,7 @@ public class IntentExtrasFragment extends IntentEditorPanel {
 		super.onCreateView(inflater, container, savedInstanceState);
 
 		mExtrasList = new ListView(inflater.getContext());
-		mBundleAdapter = new BundleAdapter(getActivity(), getEditedIntent().getExtras());
+		mBundleAdapter = new BundleAdapter(getActivity(), getEditedIntent().getExtras(), getIntentEditor().extrasEditorActivityResultHandler);
 		mBundleAdapter.settleOnList(mExtrasList);
 		return mExtrasList;
 	}

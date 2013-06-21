@@ -14,6 +14,7 @@ import com.example.testapp1.R;
 import com.example.testapp1.SavedItemsDatabase;
 import com.example.testapp1.Utils;
 import com.example.testapp1.browser.ComponentInfoActivity;
+import com.example.testapp1.valueeditors.EditorLauncher;
 
 import java.util.ArrayList;
 
@@ -23,6 +24,7 @@ import java.util.ArrayList;
 public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity*/ {
     private static final String TAG = "IntentEditor";
     private static final int REQUEST_CODE_TEST_STARTACTIVITYFORRESULT = 657;
+    private static final int REQUEST_CODE_EXTRAS_EDITOR = 753;
 
     public static final String EXTRA_COMPONENT_TYPE = "componentType_";
     public static final String EXTRA_INTENT_FILTERS = "intentFilters_";
@@ -36,9 +38,14 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
     private int mMethodId;
     private IntentFilter[] mAttachedIntentFilters = null;
 
+    EditorLauncher.ActivityResultHandler extrasEditorActivityResultHandler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Editor result handling
+        extrasEditorActivityResultHandler = new EditorLauncher.ActivityResultHandler(this, REQUEST_CODE_EXTRAS_EDITOR);
 
         // Load intent
         Parcelable[] uncastedIntentFilters = null;
@@ -277,7 +284,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 Toast.makeText(this, getString(R.string.startactivityforresult_no_result), Toast.LENGTH_SHORT).show();
             } else {
                 new AlertDialog.Builder(this)
-                    .setMessage(getString(R.string.startactivityforresult_got_result)) // TODO
+                    .setMessage(getString(R.string.startactivityforresult_got_result))
                     .setPositiveButton(getString(R.string.startactivityforresult_view_result), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
@@ -290,8 +297,9 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                     .setNegativeButton(getString(R.string.cancel), null)
                     .show();
             }
+        } else if (requestCode == REQUEST_CODE_EXTRAS_EDITOR) {
+            extrasEditorActivityResultHandler.handleActivityResult(resultIntent);
         }
-        // TODO Auto-generated method stub
     }
 
     Intent getEditedIntent() {

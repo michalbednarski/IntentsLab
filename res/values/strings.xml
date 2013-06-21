@@ -161,5 +161,6 @@
     <string name="save_as_name">Name:</string>
     <string name="saved">Saved</string>
     <string name="no_saved_items">No saved items</string>
+    <string name="value_parse_error">Parse error</string>
 
 </resources>

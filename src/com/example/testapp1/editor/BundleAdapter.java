@@ -1,8 +1,6 @@
 package com.example.testapp1.editor;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.*;
@@ -10,9 +8,15 @@ import android.view.View.OnClickListener;
 import android.widget.*;
 import android.widget.AdapterView.OnItemClickListener;
 import com.example.testapp1.R;
+import com.example.testapp1.Utils;
+import com.example.testapp1.valueeditors.EditorLauncher;
 
-class BundleAdapter extends BaseAdapter implements OnClickListener,
-		OnItemClickListener, EditorCallback, View.OnCreateContextMenuListener {
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.regex.Pattern;
+
+public class BundleAdapter extends BaseAdapter implements OnClickListener,
+		OnItemClickListener, View.OnCreateContextMenuListener, EditorLauncher.EditorLauncherCallback {
 	private static final String TAG = "BundleAdapter";
 	private Activity mActivity;
 	private LayoutInflater mInflater;
@@ -29,79 +33,44 @@ class BundleAdapter extends BaseAdapter implements OnClickListener,
 			"CharSequenceArrayList", "Serializable", "BooleanArray",
 			"ByteArray", "ShortArray", "CharArray", "IntArray", "LongArray",
 			"FloatArray", "DoubleArray", "StringArray", "CharSequenceArray",
-			"Bundle", "IBinder" };
+			"Bundle", "IBinder" };*/
 
-	static void putBundleValue(Bundle bundle, String key, Object value) {
-		if (value instanceof Byte) {
-			bundle.putByte(key, (Byte) value);
-			// putChar is putString
-		} else if (value instanceof Short) {
-			bundle.putShort(key, (Short) value);
-		} else if (value instanceof Integer) {
-			bundle.putInt(key, (Integer) value);
-		} else if (value instanceof Long) {
-			bundle.putLong(key, (Long) value);
-		} else if (value instanceof Float) {
-			bundle.putFloat(key, (Float) value);
-		} else if (value instanceof Double) {
-			bundle.putDouble(key, (Double) value);
-		} else if (value instanceof String) {
-			bundle.putString(key, (String) value);
-		} else if (value instanceof CharSequence) {
-			bundle.putCharSequence(key, (CharSequence) value);
-		} else if (value instanceof Parcelable) {
-			bundle.putParcelable(key, (Parcelable) value);
-		} else if (value instanceof Parcelable[]) {
-			bundle.putParcelableArray(key, (Parcelable[]) value);
-		} else if (value instanceof ArrayList<?>) {
-			// } else if (value instanceof ArrayList<Parcelable>) {
-			// bundle.putParcelableArrayList(key, (ArrayList<Parcelable>)
-			// value);
-			// } else if (value instanceof SparseArray<Parcelable>) {
-			// bundle.putSparseParcelableArray(key, (SparseParcelable[]) value);
-			// } else if (value instanceof ArrayList<Integer>) {
-			// bundle.putIntegerArrayList(key, (ArrayList<Integer>) value);
-			// } else if (value instanceof ArrayList<String>) {
-			// bundle.putStringArrayList(key, (ArrayList<String>) value);
-			// } else if (value instanceof ArrayList<CharSequence>) {
-			// bundle.putCharSequenceArrayList(key, (ArrayList<CharSequence>)
-			// value);
-		} else if (value instanceof Serializable) {
-			bundle.putSerializable(key, (Serializable) value);
-		} else if (value instanceof boolean[]) {
-			bundle.putBooleanArray(key, (boolean[]) value);
-		} else if (value instanceof byte[]) {
-			bundle.putByteArray(key, (byte[]) value);
-		} else if (value instanceof short[]) {
-			bundle.putShortArray(key, (short[]) value);
-		} else if (value instanceof char[]) {
-			bundle.putCharArray(key, (char[]) value);
-		} else if (value instanceof int[]) {
-			bundle.putIntArray(key, (int[]) value);
-		} else if (value instanceof long[]) {
-			bundle.putLongArray(key, (long[]) value);
-		} else if (value instanceof float[]) {
-			bundle.putFloatArray(key, (float[]) value);
-		} else if (value instanceof double[]) {
-			bundle.putDoubleArray(key, (double[]) value);
-		} else if (value instanceof String[]) {
-			bundle.putStringArray(key, (String[]) value);
-		} else if (value instanceof CharSequence[]) {
-			//bundle.putCharSequenceArray(key, (CharSequence[]) value);
-		} else if (value instanceof Bundle) {
-			bundle.putBundle(key, (Bundle) value);
-		}
-		// else if (value instanceof IBinder) {
-		// bundle.putIBinder(key, (IBinder) value);
-		// }
-	}*/
 
-	BundleAdapter(Activity activity, Bundle map) {
+    public static void putInBundle(Bundle bundle, String key, Object value) {
+        Pattern putMethodName = Pattern.compile("put[A-Z][A-Za-z]+");
+        for (Method method : Bundle.class.getMethods()) {
+            if (
+                    putMethodName.matcher(method.getName()).matches() &&
+                    !method.isVarArgs()) {
+                final Class<?>[] parameterTypes = method.getParameterTypes();
+                if (
+                        parameterTypes.length == 2 &&
+                        parameterTypes[0] == String.class &&
+                        Utils.toWrapperClass(parameterTypes[1]).isInstance(value)) {
+                    try {
+                        method.invoke(bundle, key, value);
+                        return;
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                        // continue
+                    } catch (InvocationTargetException e) {
+                        throw new RuntimeException("Method " + method.getName() + " of bundle thrown exception", e);
+                    }
+                }
+            }
+        }
+        throw new RuntimeException("No put* method found");
+    }
+
+    private final EditorLauncher mEditorLauncher;
+
+	public BundleAdapter(Activity activity, Bundle map, EditorLauncher.ActivityResultHandler activityResultHandler) {
 		mActivity = activity;
 		mInflater = (LayoutInflater) activity
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		setBundle(map);
-	}
+        mEditorLauncher = new EditorLauncher(activityResultHandler, this);
+    }
 
 	private void updateKeySet() {
 		if (mBundle.keySet() != null) {
@@ -122,7 +91,7 @@ class BundleAdapter extends BaseAdapter implements OnClickListener,
 		updateKeySet();
 	}
 
-	Bundle getBundle() {
+	public Bundle getBundle() {
 		return mBundle;
 	}
 
@@ -189,38 +158,21 @@ class BundleAdapter extends BaseAdapter implements OnClickListener,
 		if (position != mKeysCount) {
 			String key = mKeys[position];
 			Object value = mBundle.get(key);
-			if (value instanceof Boolean) {
-				mBundle.putBoolean(key, !((Boolean) value));
-			} else if(StringLikeItemEditor.editIfCan(mActivity, mBundle, key, value, this)) {
-				// Do nothing, condition starts dialog
-				return;
-			} else if (value instanceof Integer) {
-				TextView tv = new TextView(mActivity);
-				Builder builder = (new AlertDialog.Builder(mActivity))
-						.setMessage("null").setView(tv)
-						.setPositiveButton("text", null);
-				builder.create().show();
-			} else {
-				Toast.makeText(mActivity, R.string.type_unsupported,
-						Toast.LENGTH_SHORT).show();
-				return;
-			}
-			notifyDataSetChanged();
+            mEditorLauncher.launchEditor(key, value);
 		}
 	}
 
-	void settleOnList(ListView listView) {
+
+    @Override
+    public void onEditorResult(String key, Object newValue) {
+        putInBundle(mBundle, key, newValue);
+        notifyDataSetChanged();
+    }
+
+	public void settleOnList(ListView listView) {
 		listView.setAdapter(this);
 		listView.setOnItemClickListener(this);
         listView.setOnCreateContextMenuListener(this);
-	}
-
-	@Override
-	public void afterEdit(boolean rename) {
-		if(rename) {
-			updateKeySet();
-		}
-		notifyDataSetChanged();
 	}
 
     @Override
