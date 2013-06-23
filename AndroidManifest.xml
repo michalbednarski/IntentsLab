@@ -17,7 +17,7 @@
         <activity android:name=".StartActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-
+"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
@@ -36,7 +36,7 @@
         </activity>
         <activity
             android:name=".browser.BrowseComponentsActivity"
-            android:label="@string/browse_components">
+            android:label="@string/browse_components">"/>
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.testapp1.StartActivity"/>
@@ -81,6 +81,62 @@
                 <action android:name="sample.setresult"/>
             </intent-filter>
         </receiver>
+
+
+        <!-- Interception activity -->
+        <activity
+            android:name=".editor.IntentEditorInterceptedActivity"
+            android:label="IntentsLab Intercept">
+
+            <intent-filter>
+                <action android:name="android.intent.action.ALL_APPS"/>
+                <!--<action android:name="android.intent.action.ANSWER"/>-->
+                <action android:name="android.intent.action.APP_ERROR"/>
+                <action android:name="android.intent.action.ASSIST"/>
+                <action android:name="android.intent.action.ATTACH_DATA"/>
+                <action android:name="android.intent.action.BUG_REPORT"/>
+                <action android:name="android.intent.action.CALL"/>
+                <action android:name="android.intent.action.CALL_BUTTON"/>
+                <!--<action android:name="android.intent.action.CHOOSER"/>-->
+                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <action android:name="android.intent.action.DELETE"/>
+                <!--<action android:name="android.intent.action.DIAL"/>-->
+                <action android:name="android.intent.action.EDIT"/>
+                <!--<action android:name="android.intent.action.FACTORY_TEST"/>-->
+                <action android:name="android.intent.action.GET_CONTENT"/>
+                <action android:name="android.intent.action.INSERT"/>
+                <action android:name="android.intent.action.INSERT_OR_EDIT"/>
+                <action android:name="android.intent.action.INSTALL_PACKAGE"/>
+                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.MANAGE_NETWORK_USAGE"/>
+                <action android:name="android.intent.action.MANAGE_PACKAGE_STORAGE"/>
+                <action android:name="android.intent.action.PASTE"/>
+                <action android:name="android.intent.action.PICK"/>
+                <!--<action android:name="android.intent.action.PICK_ACTIVITY"/>-->
+                <action android:name="android.intent.action.POWER_USAGE_SUMMARY"/>
+                <action android:name="android.intent.action.RUN"/>
+                <action android:name="android.intent.action.SEARCH"/>
+                <action android:name="android.intent.action.SEARCH_LONG_PRESS"/>
+                <action android:name="android.intent.action.SEND"/>
+                <action android:name="android.intent.action.SENDTO"/>
+                <action android:name="android.intent.action.SEND_MULTIPLE"/>
+                <action android:name="android.intent.action.SET_WALLPAPER"/>
+                <action android:name="android.intent.action.SYNC"/>
+                <action android:name="android.intent.action.SYSTEM_TUTORIAL"/>
+                <action android:name="android.intent.action.UNINSTALL_PACKAGE"/>
+                <action android:name="android.intent.action.VIEW"/>
+                <action android:name="android.intent.action.VOICE_COMMAND"/>
+                <action android:name="android.intent.action.WEB_SEARCH"/>
+
+                <category android:name="android.intent.category.ALTERNATIVE"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <!--<category android:name="android.intent.category.HOME"/>-->
+                <!--<category android:name="android.intent.category.INFO"/>-->
+                <category android:name="android.intent.category.OPENABLE"/>
+                <category android:name="android.intent.category.SELECTED_ALTERNATIVE"/>
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

@@ -1,17 +1,24 @@
 package com.example.testapp1;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
+import android.widget.Toast;
 import com.example.testapp1.browser.BrowseComponentsActivity;
 import com.example.testapp1.editor.IntentEditorActivity;
+import com.example.testapp1.editor.IntentEditorInterceptedActivity;
 import com.example.testapp1.providerlab.AdvancedQueryActivity;
 
 public class StartActivity extends Activity {
+
+    private ComponentName mInterceptActivityComponentName;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -24,30 +31,54 @@ public class StartActivity extends Activity {
             savedItemsList.setEmptyView(findViewById(android.R.id.empty));
             SavedItemsDatabase.getInstance(this).lazyAttachListAdapter(savedItemsList);
         }
+
+        // Intercept Intent Activity
+        mInterceptActivityComponentName = new ComponentName(this, IntentEditorInterceptedActivity.class);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.activity_start, menu);
-        menu.add("EXPERIMENTAL").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                //startActivity(new Intent(StartActivity.this, ProviderLabActivity.class));
-                startActivity(new Intent(StartActivity.this, AdvancedQueryActivity.class));
-                return true;
-            }
-        });
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.interception).setChecked(
+                getPackageManager().getComponentEnabledSetting(mInterceptActivityComponentName) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+        );
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
-    	case R.id.menu_settings:
-    		startActivity(new Intent(this, PrefsActivity.class));
-    		break;
+            case R.id.menu_settings:
+                startActivity(new Intent(this, PrefsActivity.class));
+                return true;
+            case R.id.interception: {
+                final PackageManager packageManager = getPackageManager();
+                boolean enable =
+                        packageManager.getComponentEnabledSetting(mInterceptActivityComponentName)
+                                != PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+
+                packageManager.setComponentEnabledSetting(
+                        mInterceptActivityComponentName,
+                        enable ?
+                                PackageManager.COMPONENT_ENABLED_STATE_ENABLED :
+                                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP
+                );
+
+                Toast.makeText(this, enable ? getString(R.string.interception_enabled) : getString(R.string.interception_disabled), Toast.LENGTH_SHORT).show();
+                ActivityCompat.invalidateOptionsMenu(this);
+                return true;
+            }
+            case R.id.provider_lab:
+                startActivity(new Intent(StartActivity.this, AdvancedQueryActivity.class));
+                return true;
     	}
-    	return super.onOptionsItemSelected(item);
+    	return false;
     }
 
     // Button actions

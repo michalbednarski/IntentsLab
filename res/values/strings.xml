@@ -130,6 +130,7 @@
     <string name="added_extra">Added extra: %s</string>
 
     <!-- Content providers -->
+    <string name="provider_lab">Provider lab</string>
     <string name="provider_rw_world_accessible">Provider read/write world accessible</string>
     <string name="provider_w_only_permission">World readable, write permission</string>
     <string name="provider_rw_permission">Read/write permission</string>
@@ -153,6 +154,14 @@
     <string name="new_content_value_pair">New pair</string>
     <string name="specify_order">Specify order</string>
 
+    <!-- Activity Intent interception -->
+    <string name="edit_intercepted_result">Edit result</string>
+    <string name="forward_intercepted_result">Forward result</string>
+
+    <string name="interception_enabled">Interception enabled</string>
+    <string name="interception_disabled">Interception disabled</string>
+    <string name="intercept_activity_intents">Intercept activity intents</string>
+    <string name="disable_interception">Disable interception</string>
 
     <!-- Uncategorized -->
     <string name="cancel">Cancel</string>

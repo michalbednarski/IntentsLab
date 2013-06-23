@@ -3,6 +3,7 @@ package com.example.testapp1.editor;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.*;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -25,9 +26,13 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
     private static final String TAG = "IntentEditor";
     private static final int REQUEST_CODE_TEST_STARTACTIVITYFORRESULT = 657;
     private static final int REQUEST_CODE_EXTRAS_EDITOR = 753;
+    private static final int REQUEST_CODE_RESULT_INTENT_EDITOR = 754;
 
     public static final String EXTRA_COMPONENT_TYPE = "componentType_";
     public static final String EXTRA_INTENT_FILTERS = "intentFilters_";
+    private static final String EXTRA_FORWARD_ABLE_RESULT = "intents_lab.intent_editor.internal.forward_result";
+    private static final String EXTRA_FORWARD_RESULT_CODE = "intents_lab.intent_editor.internal.forward_result.code";
+    private static final String EXTRA_FORWARD_RESULT_INTENT = "intents_lab.intent_editor.internal.forward_result.intent";
 
     //private BundleAdapter mExtrasAdapter;
 
@@ -50,11 +55,13 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
         // Load intent
         Parcelable[] uncastedIntentFilters = null;
         if (savedInstanceState != null) {
+            // Saved instance state
             mEditedIntent = savedInstanceState.getParcelable("intent");
             mComponentType = savedInstanceState.getInt("componentType");
             mMethodId = savedInstanceState.getInt("methodId");
             uncastedIntentFilters = savedInstanceState.getParcelableArray("intentFilters");
-        } else {
+        } else if (!isInterceptedIntent()) {
+            // Start of editor
             mEditedIntent = getIntent().getParcelableExtra("intent");
             mComponentType = getIntent().getIntExtra(EXTRA_COMPONENT_TYPE, IntentEditorConstants.ACTIVITY);
             mMethodId = getIntent().getIntExtra("methodId", 0);
@@ -62,7 +69,18 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
             if (mEditedIntent == null) {
                 mEditedIntent = new Intent();
             }
+        } else {
+            // Intercept
+            mEditedIntent = getIntent();
+            mEditedIntent.setComponent(null);
+            mComponentType = IntentEditorConstants.ACTIVITY;
+            mMethodId =
+                    getCallingPackage() != null ?
+                            IntentEditorConstants.ACTIVITY_METHOD_STARTACTIVITYFORRESULT :
+                            IntentEditorConstants.ACTIVITY_METHOD_STARTACTIVITY;
         }
+
+        // Manually cast array of intent filters
         if (uncastedIntentFilters != null) {
             try {
                 mAttachedIntentFilters = new IntentFilter[uncastedIntentFilters.length];
@@ -113,7 +131,13 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
         {
             MenuItem runIntentOption = menu.findItem(R.id.menu_run_intent);
             if (mComponentType == IntentEditorConstants.RESULT) {
-                runIntentOption.setVisible(false);
+                if (getIntent().getBooleanExtra(EXTRA_FORWARD_ABLE_RESULT, false)) {
+                    runIntentOption
+                            .setVisible(true)
+                            .setTitle("setResult(); finish()");
+                } else {
+                    runIntentOption.setVisible(false);
+                }
             } else {
                 runIntentOption
                     .setVisible(true)
@@ -124,6 +148,16 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 .setVisible(mAttachedIntentFilters != null);
         menu.findItem(R.id.component_info)
                 .setVisible(mEditedIntent.getComponent() != null);
+
+        // "Disable interception" option
+        menu.findItem(R.id.disable_interception)
+                .setVisible(isInterceptedIntent())
+                .setEnabled(
+                        isInterceptedIntent() &&
+                        getPackageManager().getComponentEnabledSetting(
+                                new ComponentName(this, IntentEditorInterceptedActivity.class)
+                        ) != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                );
         return true;
     }
 
@@ -151,6 +185,14 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 SavedItemsDatabase.getInstance(this).saveIntent(this, mEditedIntent);
             }
             return true;
+            case R.id.disable_interception:
+                getPackageManager().setComponentEnabledSetting(
+                        new ComponentName(this, IntentEditorInterceptedActivity.class),
+                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP
+                );
+                Toast.makeText(this, R.string.interception_disabled, Toast.LENGTH_SHORT).show();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -268,6 +310,16 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                             Toast.makeText(this, "Not implemented", Toast.LENGTH_SHORT).show();
                     }
                     break;
+
+                case IntentEditorConstants.RESULT:
+                    setResult(
+                            0,
+                            new Intent()
+                            .putExtra(EXTRA_FORWARD_RESULT_CODE, -1) // TODO: resultCode
+                            .putExtra(EXTRA_FORWARD_RESULT_INTENT, mEditedIntent)
+                    );
+                    finish();
+                    break;
             }
         } catch (Exception exception) {
             Utils.toastException(this, exception);
@@ -277,28 +329,68 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
 
     // RESULT
     @Override
-    protected void onActivityResult(int requestCode, int resultCode,
+    protected void onActivityResult(int requestCode, final int resultCode,
                                     final Intent resultIntent) {
         if (requestCode == REQUEST_CODE_TEST_STARTACTIVITYFORRESULT) {
+            // Result of tested startActivityForResult
             if (resultIntent == null) {
                 Toast.makeText(this, getString(R.string.startactivityforresult_no_result), Toast.LENGTH_SHORT).show();
             } else {
-                new AlertDialog.Builder(this)
-                    .setMessage(getString(R.string.startactivityforresult_got_result))
+                AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this)
+                    .setMessage(getString(R.string.startactivityforresult_got_result));
+
+                if (isInterceptedIntent() && (getCallingPackage() != null)) {
+                    alertBuilder
+                    .setPositiveButton(getString(R.string.edit_intercepted_result), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            startActivityForResult(
+                                    new Intent(IntentEditorActivity.this, IntentEditorActivity.class)
+                                            .putExtra("intent", resultIntent)
+                                            .putExtra(EXTRA_COMPONENT_TYPE, IntentEditorConstants.RESULT)
+                                            .putExtra(EXTRA_FORWARD_ABLE_RESULT, true),
+                                    REQUEST_CODE_RESULT_INTENT_EDITOR
+                            );
+                        }
+                    })
+                    .setNeutralButton(getString(R.string.forward_intercepted_result), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            setResult(resultCode, resultIntent);
+                            finish();
+                        }
+                    });
+                } else {
+                    alertBuilder
                     .setPositiveButton(getString(R.string.startactivityforresult_view_result), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             startActivity(
-                                new Intent(IntentEditorActivity.this, IntentEditorActivity.class)
-                                    .putExtra("intent", resultIntent)
-                                    .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, IntentEditorConstants.RESULT));
+                                    new Intent(IntentEditorActivity.this, IntentEditorActivity.class)
+                                            .putExtra("intent", resultIntent)
+                                            .putExtra(EXTRA_COMPONENT_TYPE, IntentEditorConstants.RESULT)
+                            );
                         }
-                    })
+                    });
+                }
+                alertBuilder
                     .setNegativeButton(getString(R.string.cancel), null)
                     .show();
             }
+
         } else if (requestCode == REQUEST_CODE_EXTRAS_EDITOR) {
+            // Intent extra editor result handled by EditorLauncher
             extrasEditorActivityResultHandler.handleActivityResult(resultIntent);
+
+        } else if (requestCode == REQUEST_CODE_RESULT_INTENT_EDITOR) {
+            // Result intent editor requesting forward result
+            if (resultIntent != null && resultIntent.hasExtra(EXTRA_FORWARD_RESULT_INTENT)) {
+                setResult(
+                        resultIntent.getIntExtra(EXTRA_FORWARD_RESULT_CODE, 0),
+                        (Intent) resultIntent.getParcelableExtra(EXTRA_FORWARD_RESULT_INTENT)
+                );
+                finish();
+            }
         }
     }
 
@@ -308,5 +400,9 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
 
     IntentFilter[] getAttachedIntentFilters() {
         return mAttachedIntentFilters;
+    }
+
+    protected boolean isInterceptedIntent() {
+        return false;
     }
 }
