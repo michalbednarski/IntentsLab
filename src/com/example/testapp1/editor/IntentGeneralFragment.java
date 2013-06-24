@@ -360,6 +360,9 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
             editedIntent.setAction((String) mActionsSpinner.getSelectedItem());
         } else {
             String action = mActionText.getText().toString();
+            if ("".equals(action)) {
+                action = null;
+            }
             editedIntent.setAction(action);
         }
 
