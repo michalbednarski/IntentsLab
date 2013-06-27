@@ -51,6 +51,9 @@ public class EditorLauncher {
                 }
             },
 
+            // Enum editor
+            new EnumEditor(),
+
             // Generic Parcelable structure editor
             new ParcelableStructureEditorActivity.LaunchableEditor()
     };

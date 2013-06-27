@@ -182,6 +182,7 @@ public class ParcelableStructureEditorActivity extends Activity implements Edito
         try {
             FieldEdit fieldEdit = mFieldEditHashMap.get(key);
             fieldEdit.mField.set(mObject, newValue);
+            markModified();
             fieldEdit.updateText();
             invokeGetters();
         } catch (Exception e) {
