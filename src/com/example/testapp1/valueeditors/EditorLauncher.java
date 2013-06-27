@@ -49,7 +49,10 @@ public class EditorLauncher {
                 public boolean canEdit(Object value) {
                     return value instanceof Bundle;
                 }
-            }
+            },
+
+            // Generic Parcelable structure editor
+            new ParcelableStructureEditorActivity.LaunchableEditor()
     };
 
     /**

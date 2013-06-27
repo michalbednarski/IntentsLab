@@ -171,5 +171,10 @@
     <string name="saved">Saved</string>
     <string name="no_saved_items">No saved items</string>
     <string name="value_parse_error">Parse error</string>
+    <string name="show_non_public_fields">Show non-public fields</string>
+    <string name="discard_changes">Discard changes</string>
+    <string name="discard_changes_confirm">Discard changes?</string>
+    <string name="set_to_null">Use null</string>
+    <string name="set_to_empty_string">Use empty string</string>
 
 </resources>

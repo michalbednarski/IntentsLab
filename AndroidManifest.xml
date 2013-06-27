@@ -82,6 +82,7 @@
             </intent-filter>
         </receiver>
 
+        <activity android:name=".valueeditors.ParcelableStructureEditorActivity"/>
 
         <!-- Interception activity -->
         <activity
