@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.widget.Toast;
 import com.example.testapp1.R;
 import com.example.testapp1.editor.BundleAdapter;
+import com.example.testapp1.editor.IntentEditorActivity;
 import com.example.testapp1.editor.StringLikeItemEditor;
 
 import java.util.ArrayList;
@@ -50,6 +51,9 @@ public class EditorLauncher {
                     return value instanceof Bundle;
                 }
             },
+
+            // Intent editor
+            new IntentEditorActivity.LaunchableEditor(),
 
             // Enum editor
             new EnumEditor(),

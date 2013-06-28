@@ -15,6 +15,7 @@ import com.example.testapp1.R;
 import com.example.testapp1.SavedItemsDatabase;
 import com.example.testapp1.Utils;
 import com.example.testapp1.browser.ComponentInfoActivity;
+import com.example.testapp1.valueeditors.Editor;
 import com.example.testapp1.valueeditors.EditorLauncher;
 
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
     private IntentFilter[] mAttachedIntentFilters = null;
 
     EditorLauncher.ActivityResultHandler extrasEditorActivityResultHandler;
+    private boolean mGenericEditorMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,16 +62,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
             mComponentType = savedInstanceState.getInt("componentType");
             mMethodId = savedInstanceState.getInt("methodId");
             uncastedIntentFilters = savedInstanceState.getParcelableArray("intentFilters");
-        } else if (!isInterceptedIntent()) {
-            // Start of editor
-            mEditedIntent = getIntent().getParcelableExtra("intent");
-            mComponentType = getIntent().getIntExtra(EXTRA_COMPONENT_TYPE, IntentEditorConstants.ACTIVITY);
-            mMethodId = getIntent().getIntExtra("methodId", 0);
-            uncastedIntentFilters = getIntent().getParcelableArrayExtra(EXTRA_INTENT_FILTERS);
-            if (mEditedIntent == null) {
-                mEditedIntent = new Intent();
-            }
-        } else {
+        } else if (isInterceptedIntent()) {
             // Intercept
             mEditedIntent = getIntent();
             mEditedIntent.setComponent(null);
@@ -78,6 +71,18 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                     getCallingPackage() != null ?
                             IntentEditorConstants.ACTIVITY_METHOD_STARTACTIVITYFORRESULT :
                             IntentEditorConstants.ACTIVITY_METHOD_STARTACTIVITY;
+        } else if (getIntent().hasExtra(Editor.EXTRA_VALUE)) {
+            mEditedIntent = getIntent().getParcelableExtra(Editor.EXTRA_VALUE);
+            mGenericEditorMode = true;
+        } else {
+            // Start of editor
+            mEditedIntent = getIntent().getParcelableExtra("intent");
+            mComponentType = getIntent().getIntExtra(EXTRA_COMPONENT_TYPE, IntentEditorConstants.ACTIVITY);
+            mMethodId = getIntent().getIntExtra("methodId", 0);
+            uncastedIntentFilters = getIntent().getParcelableArrayExtra(EXTRA_INTENT_FILTERS);
+            if (mEditedIntent == null) {
+                mEditedIntent = new Intent();
+            }
         }
 
         // Manually cast array of intent filters
@@ -144,6 +149,8 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                     .setTitle(IntentGeneralFragment.getMethodNamesArray(getResources(), mComponentType)[mMethodId]);
             }
         }
+        menu.findItem(R.id.set_editor_result)
+                .setVisible(mGenericEditorMode);
         menu.findItem(R.id.detach_intent_filter)
                 .setVisible(mAttachedIntentFilters != null);
         menu.findItem(R.id.component_info)
@@ -167,6 +174,16 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
         switch (item.getItemId()) {
             case R.id.menu_run_intent:
                 runIntent();
+                return true;
+            case R.id.set_editor_result:
+                updateIntent();
+                setResult(
+                        0,
+                        new Intent()
+                        .putExtra(Editor.EXTRA_KEY, getIntent().getStringExtra(Editor.EXTRA_KEY))
+                        .putExtra(Editor.EXTRA_VALUE, mEditedIntent)
+                );
+                finish();
                 return true;
             case R.id.detach_intent_filter:
                 clearAttachedIntentFilters();
@@ -404,5 +421,18 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
 
     protected boolean isInterceptedIntent() {
         return false;
+    }
+
+    public static class LaunchableEditor extends Editor.EditorActivity {
+
+        @Override
+        public Intent getEditorIntent(Context context) {
+            return new Intent(context, IntentEditorActivity.class);
+        }
+
+        @Override
+        public boolean canEdit(Object value) {
+            return value instanceof Intent;
+        }
     }
 }

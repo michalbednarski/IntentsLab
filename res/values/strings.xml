@@ -176,5 +176,6 @@
     <string name="discard_changes_confirm">Discard changes?</string>
     <string name="set_to_null">Use null</string>
     <string name="set_to_empty_string">Use empty string</string>
+    <string name="finish_editor_and_set_value">Set value</string>
 
 </resources>
