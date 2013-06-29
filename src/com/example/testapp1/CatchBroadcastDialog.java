@@ -11,14 +11,14 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
-import android.widget.TextView;
 
 
 public class CatchBroadcastDialog implements OnClickListener, OnCancelListener {
 
     Context mContext;
-    TextView mActionTextView;
+    AutoCompleteTextView mActionTextView;
     CheckBox mMultipleCheckBox;
     private Activity mWrapperActivity = null;
     private AlertDialog.Builder mBuilder;
@@ -28,12 +28,13 @@ public class CatchBroadcastDialog implements OnClickListener, OnCancelListener {
         mContext = context;
         mBuilder = new AlertDialog.Builder(mContext);
         View view = ((LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.dialog_catch_broadcast, null);
-        mActionTextView = (TextView) view.findViewById(R.id.action);
+        mActionTextView = (AutoCompleteTextView) view.findViewById(R.id.action);
         mMultipleCheckBox = (CheckBox) view.findViewById(R.id.receive_multiple_broadcasts);
         mActionTextView.setText(PreferenceManager
                 .getDefaultSharedPreferences(mContext)
                 .getString("lastcatchbroadcastaction", "")
         );
+        mActionTextView.setAdapter(new NameAutocompleteAdapter(context, R.raw.broadcast_actions));
         mBuilder.setView(view);
         mBuilder.setTitle(R.string.title_activity_catch_broadcast);
         mBuilder.setPositiveButton(R.string.register_receiver, this);
