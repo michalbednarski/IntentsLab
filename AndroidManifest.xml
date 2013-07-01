@@ -25,8 +25,6 @@
             android:name=".editor.IntentEditorActivity"
             android:windowSoftInputMode="stateHidden">
         </activity>
-        <activity android:name=".editor.EntryEditorActivity">
-        </activity>
         <activity
             android:name=".PickRecentlyRunningActivity"
             android:label="@string/pick_recent_task">
