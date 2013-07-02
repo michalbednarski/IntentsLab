@@ -30,6 +30,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
     private static final int REQUEST_CODE_RESULT_INTENT_EDITOR = 754;
 
     public static final String EXTRA_COMPONENT_TYPE = "componentType_";
+    public static final String EXTRA_METHOD_ID = "intents_lab.intent_editor.methodId";
     public static final String EXTRA_INTENT_FILTERS = "intentFilters_";
     private static final String EXTRA_FORWARD_ABLE_RESULT = "intents_lab.intent_editor.internal.forward_result";
     private static final String EXTRA_FORWARD_RESULT_CODE = "intents_lab.intent_editor.internal.forward_result.code";
@@ -78,7 +79,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
             // Start of editor
             mEditedIntent = getIntent().getParcelableExtra("intent");
             mComponentType = getIntent().getIntExtra(EXTRA_COMPONENT_TYPE, IntentEditorConstants.ACTIVITY);
-            mMethodId = getIntent().getIntExtra("methodId", 0);
+            mMethodId = getIntent().getIntExtra(EXTRA_METHOD_ID, 0);
             uncastedIntentFilters = getIntent().getParcelableArrayExtra(EXTRA_INTENT_FILTERS);
             if (mEditedIntent == null) {
                 mEditedIntent = new Intent();
@@ -199,7 +200,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
             return true;
             case R.id.save:{
                 updateIntent();
-                SavedItemsDatabase.getInstance(this).saveIntent(this, mEditedIntent);
+                SavedItemsDatabase.getInstance(this).saveIntent(this, mEditedIntent, mComponentType, mMethodId);
             }
             return true;
             case R.id.disable_interception:

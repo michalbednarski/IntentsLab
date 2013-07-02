@@ -24,7 +24,7 @@ import java.net.URISyntaxException;
  * Created by mb on 10.06.13.
  */
 public class SavedItemsDatabase {
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
     private static SavedItemsDatabase sInstance = null;
     private SQLiteDatabase mDatabase;
 
@@ -32,14 +32,24 @@ public class SavedItemsDatabase {
         mDatabase = context.openOrCreateDatabase("saved_items", Context.MODE_PRIVATE, null);
         int oldVersion = mDatabase.getVersion();
         if (oldVersion < DB_VERSION) {
-            mDatabase.execSQL(
-                "CREATE TABLE `intents` (" +
-                    "_id INTEGER PRIMARY KEY, " +
-                    "name TEXT, " +
-                    "intent TEXT" +
-                ")",
-                new Object[0]
-            );
+            switch (oldVersion) {
+                case 0:
+                    mDatabase.execSQL(
+                        "CREATE TABLE `intents` (" +
+                            "_id INTEGER PRIMARY KEY, " +
+                            "name TEXT, " +
+                            "intent TEXT" +
+                        ")"
+                    );
+                    // Fall through
+                case 1:
+                    mDatabase.execSQL(
+                        "ALTER TABLE `intents` ADD COLUMN componentType INTEGER"
+                    );
+                    mDatabase.execSQL(
+                        "ALTER TABLE `intents` ADD COLUMN methodId INTEGER"
+                    );
+            }
             mDatabase.setVersion(DB_VERSION);
         }
     }
@@ -56,7 +66,7 @@ public class SavedItemsDatabase {
 
             @Override
             protected Cursor[] doInBackground(Object... params) {
-                return new Cursor[] {mDatabase.query("intents", new String[] {"name", "_id", "intent"}, null, null, null, null, null)};
+                return new Cursor[] {mDatabase.query("intents", new String[] {"name", "_id", "intent", "componentType", "methodId"}, null, null, null, null, null)};
             }
 
             @Override
@@ -71,6 +81,8 @@ public class SavedItemsDatabase {
                                     context.startActivity(
                                         new Intent(context, IntentEditorActivity.class)
                                             .putExtra("intent", Intent.parseUri(cursor.getString(2), 0))
+                                            .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, cursor.getInt(3))
+                                            .putExtra(IntentEditorActivity.EXTRA_METHOD_ID, cursor.getInt(4))
                                     );
                                 } catch (URISyntaxException e) {
                                     Log.e("", "Malformed intent");
@@ -115,13 +127,15 @@ public class SavedItemsDatabase {
             .show();
     }
 
-    public void saveIntent(final Context context, final Intent intent) {
+    public void saveIntent(final Context context, final Intent intent, final int componentType,  final int methodId) {
         promptForName(context, context.getString(R.string.save), new PromptForNameCallback() {
             @Override
             public void onConfirmSave(String name) {
                 ContentValues values = new ContentValues();
                 values.put("name", name);
                 values.put("intent", intent.toUri(0));
+                values.put("componentType", componentType);
+                values.put("methodId", methodId);
                 mDatabase.insert("intents", null, values);
                 Toast.makeText(context, R.string.saved, Toast.LENGTH_SHORT).show();
             }
