@@ -15,6 +15,8 @@
     <string name="intent_categories_add">Add category</string>
     <string name="intent_data">Intent data (URI)</string>
     <string name="intent_data_type">Data type (MIME)</string>
+    <string name="data_type_unspecified">Unspecified</string>
+    <string name="data_type_autodetect">Autodetect (file: or content:)</string>
 
     <string name="intent_component">Component name (for explicit intents)</string>
     <string name="label_pick">Pick</string>

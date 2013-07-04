@@ -75,7 +75,8 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/intent_data" />
+            android:text="@string/intent_data"
+            android:id="@+id/data_header"/>
 
         <AutoCompleteTextView
             android:id="@+id/data"
@@ -87,13 +88,38 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/intent_data_type"/>
+            android:text="@string/intent_data_type"
+            android:id="@+id/data_type_header"/>
 
-        <AutoCompleteTextView
+        <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/data_type"
             android:inputType="text"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/data_type_spinner_wrapper">
+
+            <Spinner
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/data_type_spinner"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="/"
+                android:id="@+id/data_type_slash"/>
+
+            <EditText
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/data_type_after_slash"
+                android:layout_weight="1"/>
+        </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"

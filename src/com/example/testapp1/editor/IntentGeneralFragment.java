@@ -24,8 +24,21 @@ import java.util.*;
 
 public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSelectedListener {
 
+    /**
+     * List of actions for which we don't imply that if there is accepted data type but no scheme then schemes
+     * can be file: or content:.
+     *
+     * System makes such assumption for every IntentFilter, but in case of these we don't think application will expect
+     * such behavior.
+     */
+    private static final HashSet<String> NO_IMPLICIT_URI_ACTIONS = new HashSet<String>(2);
+    static {
+        NO_IMPLICIT_URI_ACTIONS.add(Intent.ACTION_PICK);
+        NO_IMPLICIT_URI_ACTIONS.add(Intent.ACTION_GET_CONTENT);
+    };
+
     private AutoCompleteTextView mDataText;
-    private AutoCompleteTextView mDataTypeText;
+    private View mDataTextHeader;
     private TextView mComponentText;
     private Spinner mComponentTypeSpinner;
     private Spinner mMethodSpinner;
@@ -48,7 +61,13 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         mActionText = (TextView) v.findViewById(R.id.action);
         mActionsSpinner = (Spinner) v.findViewById(R.id.action_spinner);
         mDataText = (AutoCompleteTextView) v.findViewById(R.id.data);
-        mDataTypeText = (AutoCompleteTextView) v.findViewById(R.id.data_type);
+        mDataTextHeader = v.findViewById(R.id.data_header);
+        mDataTypeHeader = v.findViewById(R.id.data_type_header);
+        mDataTypeText = (TextView) v.findViewById(R.id.data_type);
+        mDataTypeSpinner = (Spinner) v.findViewById(R.id.data_type_spinner);
+        mDataTypeSpinnerWrapper = v.findViewById(R.id.data_type_spinner_wrapper);
+        mDataTypeSlash = v.findViewById(R.id.data_type_slash);
+        mDataSubtypeText = (TextView) v.findViewById(R.id.data_type_after_slash);
         mComponentText = (TextView) v.findViewById(R.id.component);
 
         mComponentTypeSpinner = (Spinner) v.findViewById(R.id.componenttype);
@@ -88,7 +107,6 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         // Set up autocomplete
         mUriAutocompleteAdapter = new UriAutocompleteAdapter(getActivity());
         mDataText.setAdapter(mUriAutocompleteAdapter);
-        setUpAutocomplete(getIntentEditor().getAttachedIntentFilters());
 
         // Get edited intent for form filling
         mEditedIntent = getEditedIntent();
@@ -118,7 +136,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
 
         // Fill the form
         setupActionSpinnerOrField();
-        updateCategoriesList();
+        updateNonActionIntentFilter(true);
         mDataText.setText(mEditedIntent.getDataString());
 
         showOrHideFieldsForResultIntent(v);
@@ -167,6 +185,8 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
             if (getIntentEditor().getMethodId() != position) {
                 getIntentEditor().setMethodId(position);
             }
+        } else if (parent == mActionsSpinner) {
+            updateNonActionIntentFilter(false);
         }
     }
 
@@ -228,7 +248,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
             }
             int position = Arrays.binarySearch(mAvailbleActions, action);
             mActionsSpinner.setAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, mAvailbleActions));
-            if (position == -1) {
+            if (position < 0) {
                 position = 0;
             }
             mActionsSpinner.setSelection(position);
@@ -236,6 +256,9 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
             // Show spinner and hide textfield
             mActionText.setVisibility(View.GONE);
             mActionsSpinner.setVisibility(View.VISIBLE);
+
+            // Set listener for action change to refresh intent filter
+            mActionsSpinner.setOnItemSelectedListener(this);
         } else {
             setupActionField();
         }
@@ -243,6 +266,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
 
     private void setupActionField() {
         mAvailbleActions = null;
+        mActionsSpinner.setOnItemSelectedListener(null);
         mActionText.setText(mEditedIntent.getAction());
         mActionText.setVisibility(View.VISIBLE);
         mActionsSpinner.setVisibility(View.GONE);
@@ -254,7 +278,6 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     private ArrayList<TextView> mCategoryTextInputs;
     private CheckBox[] mCategoryCheckBoxes;
     private Button mAddCategoryButton;
-    private boolean mShowSelectableCategories = false;
 
     public void addCategoryTextField(String category) {
         final ViewGroup row = (ViewGroup) getActivity().getLayoutInflater().inflate(R.layout.category_row, mCategoriesContainer, false);
@@ -273,52 +296,45 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     }
 
 
-    private void updateCategoriesList() {
-        IntentFilter[] attachedIntentFilters = getIntentEditor().getAttachedIntentFilters();
 
-        mShowSelectableCategories = attachedIntentFilters != null;
+    private void setupCategoryCheckBoxes(Set<String> availableCategories) {
 
         mCategoriesContainer.removeAllViews();
 
-        if (mShowSelectableCategories) {
-
-            Set<String> availbleCategories = new HashSet<String>();
-            for (IntentFilter filter : attachedIntentFilters) {
-                for (int i = 0, j = filter.countCategories(); i < j; i++) {
-                    availbleCategories.add(filter.getCategory(i));
-                }
-            }
-
-            mCategoryCheckBoxes = new CheckBox[availbleCategories.size()];
-            int i = 0;
-            for (String category : availbleCategories) {
-                CheckBox cb = new CheckBox(getActivity());
-                cb.setText(category);
-                cb.setTag(category);
-                cb.setChecked(mEditedIntent.hasCategory(category));
-                mCategoriesContainer.addView(cb);
-                mCategoryCheckBoxes[i++] = cb;
-            }
-
-            mAddCategoryButton.setVisibility(View.GONE);
-
-            mCategoryTextInputs = null;
-
-        } else {
-
-            mCategoryTextInputs = new ArrayList<TextView>();
-            Set<String> categories = mEditedIntent.getCategories();
-            if (categories != null) {
-                for (String category : categories) {
-                    addCategoryTextField(category);
-                }
-            }
-
-            mAddCategoryButton.setVisibility(View.VISIBLE);
-
-            mCategoryCheckBoxes = null;
+        mCategoryCheckBoxes = new CheckBox[availableCategories.size()];
+        int i = 0;
+        for (String category : availableCategories) {
+            CheckBox cb = new CheckBox(getActivity());
+            cb.setText(category);
+            cb.setTag(category);
+            cb.setChecked(mEditedIntent.hasCategory(category));
+            mCategoriesContainer.addView(cb);
+            mCategoryCheckBoxes[i++] = cb;
         }
 
+        mAddCategoryButton.setVisibility(View.GONE);
+
+        mCategoryTextInputs = null;
+    }
+
+    private void setFreeFormCategoryEditor() {
+        if (mCategoryTextInputs != null) {
+            return; // We are already in free form mode
+        }
+
+        mCategoriesContainer.removeAllViews();
+
+        mCategoryTextInputs = new ArrayList<TextView>();
+        Set<String> categories = mEditedIntent.getCategories();
+        if (categories != null) {
+            for (String category : categories) {
+                addCategoryTextField(category);
+            }
+        }
+
+        mAddCategoryButton.setVisibility(View.VISIBLE);
+
+        mCategoryCheckBoxes = null;
     }
 
     // COMPONENT
@@ -377,7 +393,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
             }
         }
         // Fill categories
-        if (mShowSelectableCategories) {
+        if (mCategoryCheckBoxes != null) {
             // Fill categories from checkboxes
             for (CheckBox cb : mCategoryCheckBoxes) {
                 String category = (String) cb.getTag();
@@ -394,43 +410,190 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
 
         // Intent data (Uri) and type (MIME)
         String data = mDataText.getText().toString();
-        String dataType = mDataTypeText.getText().toString();
         editedIntent.setDataAndType(
                 data.equals("") ? null : Uri.parse(data),
-                dataType.equals("") ? null : dataType
+                getDataType()
         );
 
         // Set component for explicit intent
         updateIntentComponent();
     }
 
-    /**
-     * Set autocomplete for data and data type fields
-     */
-    private void setUpAutocomplete(IntentFilter[] newIntentFilters) {
-        // Set intent filters for data uri completion
-        mUriAutocompleteAdapter.setIntentFilters(newIntentFilters);
 
-        // Scan intent filters for data types
-        if (newIntentFilters == null || newIntentFilters.length == 0) {
-            mDataTypeText.setAdapter(null);
+
+    // DATA TYPE
+    private View mDataTypeHeader;
+    private TextView mDataTypeText;
+    private Spinner mDataTypeSpinner;
+    private View mDataTypeSpinnerWrapper;
+    private View mDataTypeSlash;
+    private TextView mDataSubtypeText;
+
+    private boolean mUseDataType;
+    private boolean mUseDataTypeSpinner;
+    private boolean mDataTypeMayBeNull;
+
+    /**
+     * Switch data type selector to filtered (Spinner) mode and initialize it's value
+     */
+    private void setupFilteredDataTypeFields(boolean mayBeUntyped, boolean mayAutoDetect, Set<String> dataTypes) {
+        mDataTypeMayBeNull = mayBeUntyped;
+
+        if (dataTypes.size() == 0) {
+            // IntentFilter doesn't accept data type
+            mDataTypeHeader.setVisibility(View.GONE);
+            mDataTypeText.setVisibility(View.GONE);
+            mDataTypeSpinnerWrapper.setVisibility(View.GONE);
+
+            mUseDataType = false;
         } else {
-            HashSet<String> types = new HashSet<String>();
-            for (IntentFilter filter : newIntentFilters) {
-                for (int i = 0, j = filter.countDataTypes(); i < j; i++) {
-                    types.add(filter.getDataType(i));
+            // We have set of accepted data types, show them in spinner
+
+            // Build array of items
+            String[] spinnerItems = dataTypes.toArray(new String[dataTypes.size()]);
+
+            // Sort them
+            Arrays.sort(spinnerItems);
+
+            // Find current
+            int currentPosition = -1;
+            int slashPos = -1;
+            if (mEditedIntent.getType() != null) {
+                currentPosition = Arrays.binarySearch(spinnerItems, mEditedIntent.getType());
+                if (currentPosition < 0) {
+                    // Try also partial type matching
+                    slashPos = mEditedIntent.getType().indexOf('/');
+                    if (slashPos != -1) {
+                        currentPosition = Arrays.binarySearch(spinnerItems, mEditedIntent.getType().substring(0, slashPos));
+                    }
                 }
             }
-            mDataTypeText.setAdapter(
-                    new ArrayAdapter<String>(
-                            getActivity(),
-                            android.R.layout.simple_list_item_1,
-                            types.toArray(new String[types.size()])
-                    )
-            );
+
+            // If we also accept untyped variant add that option at first position
+            mDataTypeMayBeNull = mayBeUntyped || mayAutoDetect;
+            if (mDataTypeMayBeNull) {
+                String[] shiftedSpinnerItems = new String[spinnerItems.length + 1];
+                System.arraycopy(spinnerItems, 0, shiftedSpinnerItems, 1, spinnerItems.length);
+
+                currentPosition++;
+                shiftedSpinnerItems[0] = mayBeUntyped ?
+                        getActivity().getString(R.string.data_type_unspecified) :
+                        getActivity().getString(R.string.data_type_autodetect);
+
+                spinnerItems = shiftedSpinnerItems;
+            }
+
+            // Put data in Spinner
+            mDataTypeSpinner.setAdapter(new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, spinnerItems));
+            if (currentPosition < 0) {
+                currentPosition = 0;
+            }
+            mDataTypeSpinner.setSelection(currentPosition);
+
+
+            // Show the Spinner
+            mDataTypeHeader.setVisibility(View.VISIBLE);
+            mDataTypeText.setVisibility(View.GONE);
+            mDataTypeSpinnerWrapper.setVisibility(View.VISIBLE);
+
+            // Prepare subtype field
+            boolean isPartialType = useSpinnerAndTextEditForDataType();
+            if (isPartialType && slashPos != -1) {
+                mDataSubtypeText.setText(mEditedIntent.getType().substring(slashPos + 1));
+            }
+            mDataTypeSlash.setVisibility(isPartialType ? View.VISIBLE : View.GONE);
+            mDataSubtypeText.setVisibility(isPartialType ? View.VISIBLE : View.GONE);
+
+            // Bind event
+            mDataTypeSpinner.setOnItemSelectedListener(mTypeSpinnerListener);
+
+            // Set flags
+            mUseDataType = true;
+            mUseDataTypeSpinner = true;
         }
     }
 
+    /**
+     * Switch data type to unfiltered (TextView) mode and initialize it's value
+     */
+    private void setupUnfilteredDataTypeFields() {
+        // Unbind event
+        mDataTypeSpinner.setOnItemSelectedListener(null);
+
+        // Show field and hide spinner
+        mDataTypeHeader.setVisibility(View.VISIBLE);
+        mDataTypeText.setVisibility(View.VISIBLE);
+        mDataTypeSpinnerWrapper.setVisibility(View.GONE);
+
+        // Show text
+        mDataTypeText.setText(mEditedIntent.getType());
+
+        // Set flags
+        mUseDataType = true;
+        mUseDataTypeSpinner = false;
+    }
+
+    private OnItemSelectedListener mTypeSpinnerListener = new OnItemSelectedListener() {
+        @Override
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            // Show or hide data subtype field
+            boolean isPartialType = useSpinnerAndTextEditForDataType();
+            mDataTypeSlash.setVisibility(isPartialType ? View.VISIBLE : View.GONE);
+            mDataSubtypeText.setVisibility(isPartialType ? View.VISIBLE : View.GONE);
+        }
+
+        @Override
+        public void onNothingSelected(AdapterView<?> parent) {
+            // Spinner won't have nothing selected
+        }
+    };
+
+    /**
+     * Returns true if we should have subtype text field next to data type spinner
+     * If mUseDataTypeSpinner is false the result is not defined and method should not be called
+     */
+    private boolean useSpinnerAndTextEditForDataType() {
+        if (mDataTypeMayBeNull && mDataTypeSpinner.getSelectedItemPosition() == 0) {
+            return false;
+        } else {
+            return  !((String) mDataTypeSpinner.getSelectedItem()).contains("/");
+        }
+    }
+
+    /**
+     * Get usable data type as String or null if user choose to not provide any.
+     */
+    private String getDataType() {
+        if (!mUseDataType) {
+            // Intent filter disallow data type
+            return null;
+        }
+
+        if (mUseDataTypeSpinner) {
+            // We are using spinner for data type
+
+            // Check if this is 'Unspecified' option
+            if (mDataTypeMayBeNull && mDataTypeSpinner.getSelectedItemPosition() == 0) {
+                return null;
+            }
+
+            // Get value from spinner
+            String type = (String) mDataTypeSpinner.getSelectedItem();
+
+            // And add value from subtype field if needed
+            if (useSpinnerAndTextEditForDataType()) {
+                type += "/" + mDataSubtypeText.getText().toString();
+            }
+            return type;
+        } else {
+
+            // Just use value from normal text field
+            String dataType = mDataTypeText.getText().toString();
+            return dataType.equals("") ? null : dataType;
+        }
+    }
+
+    // COMMON
     private void showOrHideFieldsForResultIntent(View v) {
         boolean isResultIntent = getComponentType() == IntentEditorConstants.RESULT;
         v.findViewById(R.id.component_and_method_spinners).setVisibility(isResultIntent ? View.GONE : View.VISIBLE);
@@ -443,8 +606,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     void onIntentFiltersChanged(IntentFilter[] newIntentFilters) {
         updateEditedIntent(mEditedIntent);
         setupActionSpinnerOrField();
-        updateCategoriesList();
-        setUpAutocomplete(newIntentFilters);
+        updateNonActionIntentFilter(false);
     }
 
     @Override
@@ -454,4 +616,117 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         }
     }
 
+    /**
+     * Update IntentFilter of categories and data
+     * @param isInit
+     */
+    private void updateNonActionIntentFilter(boolean isInit) {
+        // If we don't have any IntentFilter use non-filtering editors
+        if (mAvailbleActions == null) {
+            setFreeFormCategoryEditor();
+            mDataText.setVisibility(View.VISIBLE);
+            mDataTextHeader.setVisibility(View.VISIBLE);
+            mUriAutocompleteAdapter.setIntentFilters(null);
+            setupUnfilteredDataTypeFields();
+            return;
+        }
+
+        // Update edited intent
+        if (!isInit) {
+            updateEditedIntent(mEditedIntent);
+        }
+
+        // Get all IntentFilters
+        final IntentFilter[] allIntentFilters = getIntentEditor().getAttachedIntentFilters();
+
+        // Get selected action
+        String action = (String) mActionsSpinner.getSelectedItem();
+
+
+        HashSet<String> availableCategories = new HashSet<String>();
+
+        HashSet<String> availableMimeTypes = new HashSet<String>();
+        boolean acceptsAnyDataType = false;
+        boolean acceptsUntypedData = false;
+        boolean mayAutoDetectType = false;
+
+        boolean acceptsUris = false;
+
+        ArrayList<IntentFilter> selectedIntentFilters = new ArrayList<IntentFilter>();
+
+        // Iterate over intent filters that has selected action
+        for (IntentFilter filter : allIntentFilters) {
+            if (filter.hasAction(action)) {
+                // List categories
+                if (filter.countCategories() != 0) {
+                    for (Iterator<String> iterator = filter.categoriesIterator(); iterator.hasNext();) {
+                        availableCategories.add(iterator.next());
+                    }
+                }
+
+                // List available types or set flag that we don't need them
+                if (filter.countDataTypes() == 0) {
+                    acceptsUntypedData = true;
+                } else {
+                    for (Iterator<String> iterator = filter.typesIterator(); iterator.hasNext();) {
+                        final String type = iterator.next();
+                        if ("*".equals(type)) {
+                            acceptsAnyDataType = true;
+                        } else {
+                            availableMimeTypes.add(type);
+                        }
+                    }
+                }
+
+                // Scan schemes to see if system can auto detect type
+                if (!mayAutoDetectType) {
+                    if(filter.countDataSchemes() != 0) {
+                        for (Iterator<String> iterator = filter.schemesIterator(); iterator.hasNext();) {
+                            String scheme = iterator.next();
+                            if ("content".equals(scheme) || "file".equals(scheme)) {
+                                mayAutoDetectType = true;
+                                break;
+                            }
+                        }
+                    } else if ( // No schemes declared
+                            filter.countDataTypes() != 0 && ( // There's at least one
+                                    !NO_IMPLICIT_URI_ACTIONS.contains(action) || // Action is not on list
+                                            filter.countDataAuthorities() != 0 // There is host specified
+                                    )
+                            ) {
+
+                            // Intent will match empty, content: or file: scheme
+                            acceptsUris = true;
+                            mayAutoDetectType = true;
+                    }
+                }
+
+                // Check if we have data
+                if (filter.countDataSchemes() != 0) {
+                    acceptsUris = true;
+                }
+
+                // Save used IntentFilter to list because UriAutocompleteAdapter scans them on his own
+                selectedIntentFilters.add(filter);
+            }
+        }
+
+        // Setup categories
+        setupCategoryCheckBoxes(availableCategories);
+
+        // Setup data type
+        if (acceptsAnyDataType) {
+            setupUnfilteredDataTypeFields();
+        } else {
+            setupFilteredDataTypeFields(acceptsUntypedData, mayAutoDetectType, availableMimeTypes);
+        }
+
+        // Setup data uri
+        mDataText.setVisibility(acceptsUris ? View.VISIBLE : View.GONE);
+        mDataTextHeader.setVisibility(acceptsUris ? View.VISIBLE : View.GONE);
+        if (!acceptsUris) {
+            mDataText.setText("");
+        }
+        mUriAutocompleteAdapter.setIntentFilters(selectedIntentFilters.toArray(new IntentFilter[selectedIntentFilters.size()]));
+    }
 }
