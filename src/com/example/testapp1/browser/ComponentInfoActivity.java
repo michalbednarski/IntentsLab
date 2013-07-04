@@ -67,6 +67,18 @@ public class ComponentInfoActivity extends Activity {
             ftb.appendColoured(">", tagColor);
         }
 
+        for (int i = 0, j = filter.countDataAuthorities(); i < j; i++) {
+            AuthorityEntry authority = filter.getDataAuthority(i);
+            ftb.appendColoured("\n  <data", tagColor);
+            ftb.appendColoured(" a:host=", attributeNameColor);
+            ftb.appendColoured("\"" + authority.getHost() + "\"", attributeValueColor);
+            if (authority.getPort() != -1) {
+                ftb.appendColoured(" a:port=", attributeNameColor);
+                ftb.appendColoured("\"" + authority.getPort() + "\"", attributeValueColor);
+            }
+            ftb.appendColoured(">", tagColor);
+        }
+
         for (int i = 0, j = filter.countDataPaths(); i < j; i++) {
             PatternMatcher pathMatcher = filter.getDataPath(i);
             int type = pathMatcher.getType();
@@ -91,18 +103,6 @@ public class ComponentInfoActivity extends Activity {
             ftb.appendColoured("\n  <data", tagColor);
             ftb.appendColoured(" a:mimeType=", attributeNameColor);
             ftb.appendColoured("\"" + dataType + "\"", attributeValueColor);
-            ftb.appendColoured(">", tagColor);
-        }
-
-        for (int i = 0, j = filter.countDataAuthorities(); i < j; i++) {
-            AuthorityEntry authority = filter.getDataAuthority(i);
-            ftb.appendColoured("\n  <data", tagColor);
-            ftb.appendColoured(" a:host=", attributeNameColor);
-            ftb.appendColoured("\"" + authority.getHost() + "\"", attributeValueColor);
-            if (authority.getPort() != -1) {
-                ftb.appendColoured(" a:port=", attributeNameColor);
-                ftb.appendColoured("\"" + authority.getPort() + "\"", attributeValueColor);
-            }
             ftb.appendColoured(">", tagColor);
         }
 
