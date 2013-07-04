@@ -57,7 +57,8 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/intent_categories" />
+            android:text="@string/intent_categories"
+            android:id="@+id/categories_header"/>
 
         <LinearLayout
             android:id="@+id/categories"

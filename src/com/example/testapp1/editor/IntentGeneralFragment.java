@@ -79,6 +79,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
 
         mCategoriesContainer = (ViewGroup) v.findViewById(R.id.categories);
         mAddCategoryButton = (Button) v.findViewById(R.id.category_add);
+        mCategoriesHeader = v.findViewById(R.id.categories_header);
 
         // Apparently using android:scrollHorizontally="true" does not work.
         // http://stackoverflow.com/questions/9011944/android-ice-cream-sandwich-edittext-disabling-spell-check-and-word-wrap
@@ -278,6 +279,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     private ArrayList<TextView> mCategoryTextInputs;
     private CheckBox[] mCategoryCheckBoxes;
     private Button mAddCategoryButton;
+    private View mCategoriesHeader;
 
     public void addCategoryTextField(String category) {
         final ViewGroup row = (ViewGroup) getActivity().getLayoutInflater().inflate(R.layout.category_row, mCategoriesContainer, false);
@@ -313,6 +315,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         }
 
         mAddCategoryButton.setVisibility(View.GONE);
+        mCategoriesHeader.setVisibility(availableCategories.size() == 0 ? View.GONE : View.VISIBLE);
 
         mCategoryTextInputs = null;
     }
@@ -333,6 +336,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         }
 
         mAddCategoryButton.setVisibility(View.VISIBLE);
+        mCategoriesHeader.setVisibility(View.VISIBLE);
 
         mCategoryCheckBoxes = null;
     }
