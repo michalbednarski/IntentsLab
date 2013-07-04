@@ -7,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -118,23 +117,21 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
             mComponentText.setText(mEditedIntent.getComponent()
                     .flattenToShortString());
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            mComponentText.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    updateIntentComponent();
-                }
+        mComponentText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updateIntentComponent();
+            }
 
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count,
-                                              int after) {
-                }
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count,
+                                          int after) {
+            }
 
-                @Override
-                public void afterTextChanged(Editable s) {
-                }
-            });
-        }
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
 
         // Fill the form
         setupActionSpinnerOrField();
