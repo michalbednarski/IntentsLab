@@ -17,6 +17,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.*;
 import android.widget.AdapterView.OnItemSelectedListener;
+import com.example.testapp1.NameAutocompleteAdapter;
 import com.example.testapp1.R;
 import com.example.testapp1.providerlab.UriAutocompleteAdapter;
 
@@ -58,7 +59,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         View v = inflater.inflate(R.layout.intent_editor_general, container, false);
 
         // Prepare form
-        mActionText = (TextView) v.findViewById(R.id.action);
+        mActionText = (AutoCompleteTextView) v.findViewById(R.id.action);
         mActionsSpinner = (Spinner) v.findViewById(R.id.action_spinner);
         mDataText = (AutoCompleteTextView) v.findViewById(R.id.data);
         mDataTextHeader = v.findViewById(R.id.data_header);
@@ -145,6 +146,8 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
             initComponentAndMethodSpinners();
         }
 
+        setupActionAutocomplete();
+
         return v;
     }
 
@@ -216,7 +219,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     }
 
     // ACTIONS
-    private TextView mActionText;
+    private AutoCompleteTextView mActionText;
     private Spinner mActionsSpinner;
     private String[] mAvailbleActions;
 
@@ -618,6 +621,17 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         if (mComponentTypeSpinner.getSelectedItemId() != newComponentType) {
             mComponentTypeSpinner.setSelection(newComponentType);
         }
+
+        setupActionAutocomplete();
+    }
+
+    private void setupActionAutocomplete() {
+        final int componentType = getComponentType();
+        mActionText.setAdapter(
+                componentType == IntentEditorConstants.ACTIVITY ? new NameAutocompleteAdapter(getActivity(), R.raw.activity_actions) :
+                componentType == IntentEditorConstants.BROADCAST ? new NameAutocompleteAdapter(getActivity(), R.raw.broadcast_actions) :
+                null
+        );
     }
 
     /**
