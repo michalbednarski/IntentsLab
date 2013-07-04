@@ -81,9 +81,16 @@ public class ComponentInfoActivity extends Activity {
         }
 
         for (int i = 0, j = filter.countDataTypes(); i < j; i++) {
+            String dataType = filter.getDataType(i);
+            if (!dataType.contains("/")) {
+                // IntentFilter for partial types don't store "/*" at end
+                // e.g. "image" instead of "image/*".
+                // We display it in full form here
+                dataType += "/*";
+            }
             ftb.appendColoured("\n  <data", tagColor);
             ftb.appendColoured(" a:mimeType=", attributeNameColor);
-            ftb.appendColoured("\"" + filter.getDataType(i) + "\"", attributeValueColor);
+            ftb.appendColoured("\"" + dataType + "\"", attributeValueColor);
             ftb.appendColoured(">", tagColor);
         }
 
