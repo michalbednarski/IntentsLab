@@ -17,7 +17,7 @@ public class Utils {
     }
 
     @TargetApi(Build.VERSION_CODES.GINGERBREAD)
-    static void applyOrCommitPrefs(SharedPreferences.Editor prefsEditor) {
+    public static void applyOrCommitPrefs(SharedPreferences.Editor prefsEditor) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
             prefsEditor.apply();
         } else {

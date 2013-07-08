@@ -1,12 +1,5 @@
 package com.example.testapp1.browser;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
 import android.content.Context;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
@@ -15,10 +8,16 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.os.AsyncTask;
+import android.os.Looper;
 import android.os.PatternMatcher;
 import android.util.Log;
-
 import com.example.testapp1.editor.IntentEditorConstants;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ExtendedPackageInfo {
     private static final String TAG = "IntentFilterScanner";
@@ -30,11 +29,11 @@ public class ExtendedPackageInfo {
     private int mExtraPackageInfoRequest = 0;
 
     public static class ExtendedComponentInfo {
-        int componentType;
-        IntentFilter intentFilters[];
-        ComponentInfo systemComponentInfo;
+        public int componentType;
+        public IntentFilter intentFilters[];
+        public ComponentInfo systemComponentInfo;
 
-        String getPermission() {
+        public String getPermission() {
             return componentType == IntentEditorConstants.SERVICE ?
                     ((ServiceInfo) systemComponentInfo).permission :
                     ((ActivityInfo) systemComponentInfo).permission;
@@ -98,7 +97,7 @@ public class ExtendedPackageInfo {
             }
 
             ExtendedComponentInfo component = mComponents.get(componentName);
-            if (component.componentType != expectedComponentType) {
+            if (component == null || component.componentType != expectedComponentType) {
                 return null;
             }
             return component;
@@ -254,11 +253,33 @@ public class ExtendedPackageInfo {
         }
     }
 
+    private void executeScan(boolean synchronous) {
+        if (synchronous) {
+            // Disallow synchronous scan on main thread
+            if (Looper.getMainLooper() == Looper.myLooper()) {
+                throw new RuntimeException("Synchronous scan on main thread");
+            }
+
+            // Run synchronous scan
+            (new ScanManifestTask()).doInBackground();
+
+            // Mark scanning as done
+            mRunWhenReadyList = null;
+        } else {
+            // Run asynchronous scan
+            (new ScanManifestTask()).execute();
+        }
+    }
+
     public ExtendedPackageInfo(Context context, PackageInfo basePackageInfo) {
+        this(context, basePackageInfo, false);
+    }
+
+    public ExtendedPackageInfo(Context context, PackageInfo basePackageInfo, boolean synchronous) {
         mContext = context;
         mPackageName = basePackageInfo.packageName;
         mPackageInfo = basePackageInfo;
-        (new ScanManifestTask()).execute();
+        executeScan(synchronous);
     }
 
     public ExtendedPackageInfo(Context context, String packageName) {

@@ -13,6 +13,9 @@
         android:showAsAction="always"
         android:title="@string/finish_editor_and_set_value"/>
     <item
+        android:id="@+id/attach_intent_filter"
+        android:title="@string/attach_intentfilter"/>
+    <item
         android:id="@+id/detach_intent_filter"
         android:title="@string/detach_intentfilter"/>
     <item

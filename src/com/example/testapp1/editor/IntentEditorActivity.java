@@ -15,6 +15,7 @@ import com.example.testapp1.R;
 import com.example.testapp1.SavedItemsDatabase;
 import com.example.testapp1.Utils;
 import com.example.testapp1.browser.ComponentInfoActivity;
+import com.example.testapp1.browser.ExtendedPackageInfo;
 import com.example.testapp1.valueeditors.Editor;
 import com.example.testapp1.valueeditors.EditorLauncher;
 
@@ -186,6 +187,29 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 );
                 finish();
                 return true;
+            case R.id.attach_intent_filter:
+                updateIntent();
+                if (mEditedIntent.getComponent() != null) {
+                    // We have specified component, just find IntentFilters for it
+                    final ComponentName componentName = mEditedIntent.getComponent();
+                    final ExtendedPackageInfo extendedPackageInfo = new ExtendedPackageInfo(this, componentName.getPackageName());
+                    extendedPackageInfo.runWhenReady(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                setAttachedIntentFilters(extendedPackageInfo.getComponentInfo(componentName.getClassName()).intentFilters);
+                                Toast.makeText(IntentEditorActivity.this, R.string.intent_filter_attached, Toast.LENGTH_SHORT).show();
+                            } catch (NullPointerException e) {
+                                Toast.makeText(IntentEditorActivity.this, R.string.no_intent_filters_found, Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                } else {
+                    // Otherwise show dialog for selecting app
+                    (new AttachIntentFilterDialog()).show(getSupportFragmentManager(), "attach_intent_filter_dialog");
+                }
+
+                return true;
             case R.id.detach_intent_filter:
                 clearAttachedIntentFilters();
                 return true;
@@ -253,8 +277,12 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
     }
 
     void clearAttachedIntentFilters() {
+        setAttachedIntentFilters(null);
+    }
+
+    void setAttachedIntentFilters(IntentFilter[] intentFilters) {
         updateIntent();
-        mAttachedIntentFilters = null;
+        mAttachedIntentFilters = intentFilters;
         for (IntentEditorPanel panel : loadedPanels) {
             panel.onIntentFiltersChanged(null);
         }
