@@ -289,6 +289,16 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
         safelyInvalidateOptionsMenu();
     }
 
+    void setComponentName(ComponentName componentName) {
+        mEditedIntent.setComponent(componentName);
+        for (IntentEditorPanel panel : loadedPanels) {
+            if (panel instanceof IntentGeneralFragment) {
+                ((IntentGeneralFragment) panel).updateComponent();
+            }
+            panel.onIntentFiltersChanged(null);
+        }
+    }
+
     public void runIntent() {
         updateIntent();
         try {

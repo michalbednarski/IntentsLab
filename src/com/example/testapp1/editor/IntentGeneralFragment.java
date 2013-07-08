@@ -613,6 +613,15 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         updateNonActionIntentFilter(false);
     }
 
+    void updateComponent() {
+        if (mEditedIntent.getComponent() != null) {
+            mComponentText.setText(mEditedIntent.getComponent()
+                    .flattenToShortString());
+        } else {
+            mComponentText.setText("");
+        }
+    }
+
     @Override
     public void onComponentTypeChanged(int newComponentType) {
         if (mComponentTypeSpinner.getSelectedItemId() != newComponentType) {

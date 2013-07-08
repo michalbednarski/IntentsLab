@@ -279,7 +279,12 @@ public class AttachIntentFilterDialog extends DialogFragment implements AdapterV
         if (position == 0) {
             setFiltersFromAllApps();
         } else {
-            ((IntentEditorActivity) getActivity()).setAttachedIntentFilters(mAppsWithMatchingFilters.get(position - 1).filters);
+            final IntentEditorActivity intentEditorActivity = (IntentEditorActivity) getActivity();
+            final AppWithMatchingFilters app = mAppsWithMatchingFilters.get(position - 1);
+            if (app.componentInfo != null) {
+                intentEditorActivity.setComponentName(new ComponentName(app.packageName, app.componentInfo.name));
+            }
+            intentEditorActivity.setAttachedIntentFilters(app.filters);
             dismiss();
         }
     }
