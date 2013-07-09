@@ -31,6 +31,12 @@ import com.example.testapp1.editor.IntentEditorConstants;
 public class ComponentInfoActivity extends Activity {
     public static final String EXTRA_PACKAGE_NAME = "package";
     public static final String EXTRA_COMPONENT_NAME = "component";
+
+    /**
+     * If this extra is true, "Go to intent editor" button will just finish activity
+     */
+    public static final String EXTRA_LAUNCHED_FROM_INTENT_EDITOR = "componentInfo.launchedFromIntentEditor";
+
     private static final String TAG = "ComponentInfoActivity";
 
     private String mPackageName;
@@ -284,6 +290,10 @@ public class ComponentInfoActivity extends Activity {
     }
 
     public void goToIntentEditor(View view) {
+        if (getIntent().getBooleanExtra(EXTRA_LAUNCHED_FROM_INTENT_EDITOR, false)) {
+            finish();
+            return;
+        }
         startActivity(
                 new Intent(this, IntentEditorActivity.class)
                         .putExtra("intent", new Intent().setClassName(mPackageName, mComponentName))

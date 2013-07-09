@@ -219,6 +219,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                         new Intent(this, ComponentInfoActivity.class)
                                 .putExtra(ComponentInfoActivity.EXTRA_PACKAGE_NAME, component.getPackageName())
                                 .putExtra(ComponentInfoActivity.EXTRA_COMPONENT_NAME, component.getClassName())
+                                .putExtra(ComponentInfoActivity.EXTRA_LAUNCHED_FROM_INTENT_EDITOR, true)
                 );
             }
             return true;
