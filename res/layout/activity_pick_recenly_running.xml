@@ -12,7 +12,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@android:id/empty"
-        android:autoText="false"
         android:text="@string/all_recent_tasks_excluded"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"/>
