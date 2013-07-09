@@ -126,7 +126,7 @@ public class CatchBroadcastService extends Service {
 
 		Intent requeryAction = new Intent(this, CatchBroadcastDialog.WrapperActivity.class);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				requeryAction, Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+				requeryAction, 0);
 
 		String title = getResources().getString(R.string.waiting_for_broadcast);
 
