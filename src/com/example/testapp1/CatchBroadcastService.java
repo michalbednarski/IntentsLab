@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -130,12 +131,15 @@ public class CatchBroadcastService extends Service {
 
 		String title = getResources().getString(R.string.waiting_for_broadcast);
 
-		Notification notif = new Notification();
-		notif.icon = R.drawable.ic_action_send;
-		notif.flags = Notification.FLAG_ONGOING_EVENT;
-		notif.tickerText = title;
-		notif.setLatestEventInfo(this, title, action, contentIntent);
-        startForeground(SERVICE_NOTIFICATION_ID, notif);
+        final Notification notification = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.drawable.ic_action_send)
+                .setOngoing(true)
+                .setTicker(title)
+                .setContentTitle(title)
+                .setContentText(action)
+                .setContentIntent(contentIntent)
+                .build();
+        startForeground(SERVICE_NOTIFICATION_ID, notification);
 	}
 
 	void showCaughtNotification(Intent receivedBroadcast) {
@@ -151,16 +155,19 @@ public class CatchBroadcastService extends Service {
 		if (isAutoEditEnabled()) {
 			startActivity(runEditor);
 		} else {
-			String title = getResources().getString(R.string.got_broadcast);
+			final String title = getResources().getString(R.string.got_broadcast);
+            final String action = receivedBroadcast.getAction();
 
-			Notification notif = new Notification();
-			notif.icon = R.drawable.ic_action_send;
-			notif.flags = Notification.FLAG_AUTO_CANCEL;
-			notif.tickerText = title;
-			notif.setLatestEventInfo(this, title, receivedBroadcast.getAction(),
-					contentIntent);
+            final Notification notification = new NotificationCompat.Builder(this)
+                    .setSmallIcon(R.drawable.ic_action_send)
+                    .setAutoCancel(true)
+                    .setTicker(title)
+                    .setContentTitle(title)
+                    .setContentText(action)
+                    .setContentIntent(contentIntent)
+                    .build();
 
-			getNotificationManager().notify(RESULT_NOTIFICATION_ID, notif);
+			getNotificationManager().notify(RESULT_NOTIFICATION_ID, notification);
 		}
 	}
 
@@ -179,13 +186,16 @@ public class CatchBroadcastService extends Service {
                 getString(R.string.nothing_received_so_far) :
                 getResources().getQuantityString(R.plurals.n_broadcasts_received_so_far, receivedSoFar, receivedSoFar);
 
-        Notification notif = new Notification();
-        notif.icon = R.drawable.ic_action_send;
-        notif.flags = Notification.FLAG_ONGOING_EVENT;
-        notif.tickerText = title;
-        notif.setLatestEventInfo(this, title, message, contentIntent);
+        final Notification notification = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.drawable.ic_action_send)
+                .setOngoing(true)
+                .setTicker(title)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setContentIntent(contentIntent)
+                .build();
 
-        startForeground(SERVICE_NOTIFICATION_ID, notif);
+        startForeground(SERVICE_NOTIFICATION_ID, notification);
 	}
 
 	@Override
