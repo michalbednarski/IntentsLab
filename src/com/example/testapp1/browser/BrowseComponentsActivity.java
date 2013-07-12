@@ -6,7 +6,6 @@ import android.app.ExpandableListActivity;
 import android.content.Intent;
 import android.content.pm.*;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.database.DataSetObserver;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
@@ -27,12 +27,10 @@ import com.example.testapp1.providerlab.ProviderInfoActivity;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BrowseComponentsActivity extends ExpandableListActivity implements ExpandableListAdapter, OnChildClickListener {
+public class BrowseComponentsActivity extends ExpandableListActivity implements OnChildClickListener {
 
-    private final static int ITEM_ID_SPLIT_BASE = 1000;
     private static final String TAG = "BrowseComponentsActivity";
 
-    ArrayList<DataSetObserver> mDataSetObservers = new ArrayList<DataSetObserver>();
     AppInfo mApps[] = null;
     ExpandableListView mList;
     TextView mMessage;
@@ -174,115 +172,83 @@ public class BrowseComponentsActivity extends ExpandableListActivity implements 
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void registerDataSetObserver(DataSetObserver observer) {
-        mDataSetObservers.add(observer);
-    }
-
-    @Override
-    public void unregisterDataSetObserver(DataSetObserver observer) {
-        mDataSetObservers.remove(observer);
-    }
-
-    @Override
-    public int getGroupCount() {
-        return mApps.length;
-    }
-
-    @Override
-    public int getChildrenCount(int groupPosition) {
-        return mApps[groupPosition].components.length;
-    }
-
-    @Override
-    public Object getGroup(int groupPosition) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Object getChild(int groupPosition, int childPosition) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public long getGroupId(int groupPosition) {
-        return groupPosition;
-    }
-
-    @Override
-    public long getChildId(int groupPosition, int childPosition) {
-        return getCombinedChildId(groupPosition, childPosition);
-    }
-
-    @Override
-    public boolean hasStableIds() {
-        return true;
-    }
-
-    @Override
-    public View getGroupView(int groupPosition, boolean isExpanded,
-                             View convertView, ViewGroup parent) {
-        if (convertView == null) {
-            convertView = getLayoutInflater().inflate(android.R.layout.simple_expandable_list_item_2, parent, false);
+    ExpandableListAdapter mListAdapter = new BaseExpandableListAdapter() {
+        @Override
+        public int getGroupCount() {
+            return mApps.length;
         }
-        AppInfo app = mApps[groupPosition];
-        ((TextView) convertView.findViewById(android.R.id.text1))
-                .setText(app.appName);
-        ((TextView) convertView.findViewById(android.R.id.text2))
-                .setText(app.packageName);
-        return convertView;
-    }
 
-    @Override
-    public View getChildView(int groupPosition, int childPosition,
-                             boolean isLastChild, View convertView, ViewGroup parent) {
-        if (convertView == null) {
-            convertView = getLayoutInflater().inflate(android.R.layout.simple_list_item_1, parent, false);
+        @Override
+        public int getChildrenCount(int groupPosition) {
+            return mApps[groupPosition].components.length;
         }
-        AppComponentInfo component = mApps[groupPosition].components[childPosition];
-        ((TextView) convertView.findViewById(android.R.id.text1))
-                .setText(component.name);
-        return convertView;
-    }
 
-    @Override
-    public boolean isChildSelectable(int groupPosition, int childPosition) {
-        return true;
-    }
-
-    @Override
-    public boolean areAllItemsEnabled() {
-        return true;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return mApps.length == 0;
-    }
-
-    @Override
-    public void onGroupExpanded(int groupPosition) {
-        if (!mExpandedApps.contains(mApps[groupPosition].appId)) {
-            mExpandedApps.add(mApps[groupPosition].appId);
+        @Override
+        public Object getGroup(int groupPosition) {
+            return null;
         }
-    }
 
-    @Override
-    public void onGroupCollapsed(int groupPosition) {
-        mExpandedApps.remove(Integer.valueOf(mApps[groupPosition].appId));
-    }
+        @Override
+        public Object getChild(int groupPosition, int childPosition) {
+            return null;
+        }
 
-    @Override
-    public long getCombinedChildId(long groupId, long childId) {
-        return groupId * ITEM_ID_SPLIT_BASE + childId;
-    }
+        @Override
+        public long getGroupId(int groupPosition) {
+            return getCombinedGroupId(groupPosition);
+        }
 
-    @Override
-    public long getCombinedGroupId(long groupId) {
-        return groupId;
-    }
+        @Override
+        public long getChildId(int groupPosition, int childPosition) {
+            return getCombinedChildId(groupPosition, childPosition);
+        }
+
+        @Override
+        public boolean hasStableIds() {
+            return true;
+        }
+
+        @Override
+        public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = getLayoutInflater().inflate(android.R.layout.simple_expandable_list_item_2, parent, false);
+            }
+            AppInfo app = mApps[groupPosition];
+            ((TextView) convertView.findViewById(android.R.id.text1))
+                    .setText(app.appName);
+            ((TextView) convertView.findViewById(android.R.id.text2))
+                    .setText(app.packageName);
+            return convertView;
+        }
+
+        @Override
+        public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = getLayoutInflater().inflate(android.R.layout.simple_list_item_1, parent, false);
+            }
+            AppComponentInfo component = mApps[groupPosition].components[childPosition];
+            ((TextView) convertView.findViewById(android.R.id.text1))
+                    .setText(component.name);
+            return convertView;
+        }
+
+        @Override
+        public boolean isChildSelectable(int groupPosition, int childPosition) {
+            return true;
+        }
+
+        @Override
+        public void onGroupExpanded(int groupPosition) {
+            if (!mExpandedApps.contains(mApps[groupPosition].appId)) {
+                mExpandedApps.add(mApps[groupPosition].appId);
+            }
+        }
+
+        @Override
+        public void onGroupCollapsed(int groupPosition) {
+            mExpandedApps.remove(Integer.valueOf(mApps[groupPosition].appId));
+        }
+    };
 
     void setCustomFilter(ComponentsFilter newFilter) {
         filter = newFilter;
@@ -490,7 +456,7 @@ public class BrowseComponentsActivity extends ExpandableListActivity implements 
 
         @Override
         protected void onPostExecute(Object result) {
-            setListAdapter(BrowseComponentsActivity.this);
+            setListAdapter(mListAdapter);
             mMessage.setText(
                 filter.isExcludingEverything() ?
                     getString(R.string.filter_excludes_all_possible_components) :
