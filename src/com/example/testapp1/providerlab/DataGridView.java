@@ -123,6 +123,10 @@ public class DataGridView extends LinearLayout {
             mColumns[i] = column;
         }
 
+        // Shouldn't do anything but apparently moveToPosition below sometimes doesn't work
+        // e.g. with TalkBack StatusProvider (content://com.google.android.marvin.talkback.StatusProvider/)
+        mCursor.moveToFirst();
+
         // Measure first SCAN_ROW_COUNT_FOR_COLUMN_WIDTH rows for column widths
         for (int row = 0, rowCount = Math.min(cursor.getCount(), SCAN_ROW_COUNT_FOR_COLUMN_WIDTH); row < rowCount; row++) {
             mCursor.moveToPosition(row);
@@ -300,16 +304,12 @@ public class DataGridView extends LinearLayout {
     };
 
     // Values
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     private Paint getCellTextPaint(int columnId, boolean isHeader) {
         if (isHeader) {
             return mHeadersPaint;
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            final int type = mCursor.getType(columnId);
-            return type == Cursor.FIELD_TYPE_NULL ? mSpecialValuePaint : mPaint;
-        }
-        return mPaint;
+        final int type = getTypeOfCellValue(columnId);
+        return (type == Cursor.FIELD_TYPE_NULL || type == Cursor.FIELD_TYPE_BLOB) ? mSpecialValuePaint : mPaint;
     }
 
     private int measureCellWidth(int columnId, boolean isHeader, int previousWidth) {
@@ -322,11 +322,34 @@ public class DataGridView extends LinearLayout {
         return Math.max(previousWidth, Math.min(textWidth, MAX_COLUMN_WIDTH));
     }
 
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    private int getTypeOfCellValue(int columnId) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            return mCursor.getType(columnId);
+        } else if (mCursor.isNull(columnId)) {
+            return Cursor.FIELD_TYPE_NULL;
+        } else {
+            return -1; // Unknown, not any of Cursor.FIELD_TYPE_* values
+        }
+    }
+
     private String getCellText(int columnId, boolean isHeader) {
         if (isHeader) {
             return mCursor.getColumnName(columnId);
+        } else if (getTypeOfCellValue(columnId) == Cursor.FIELD_TYPE_BLOB) {
+            return "BLOB";
         } else {
-            String text = mCursor.getString(columnId);
+            String text;
+            try {
+                text = mCursor.getString(columnId);
+            } catch (Exception e) {
+                if (e != null && e.getMessage() != null && e.getMessage().contains("Unable to convert BLOB to string")) {
+                    text = "BLOB";
+                } else {
+                    text = "Unknown";
+                }
+            }
+
             if (text == null) {
                 text = "null";
             }
