@@ -18,6 +18,7 @@ import android.widget.*;
 import android.widget.AdapterView.OnItemSelectedListener;
 import com.example.testapp1.NameAutocompleteAdapter;
 import com.example.testapp1.R;
+import com.example.testapp1.providerlab.AdvancedQueryActivity;
 import com.example.testapp1.providerlab.UriAutocompleteAdapter;
 
 import java.util.*;
@@ -38,6 +39,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     };
 
     private AutoCompleteTextView mDataText;
+    private View mDataTextWrapper;
     private View mDataTextHeader;
     private TextView mComponentText;
     private Spinner mComponentTypeSpinner;
@@ -61,6 +63,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         mActionText = (AutoCompleteTextView) v.findViewById(R.id.action);
         mActionsSpinner = (Spinner) v.findViewById(R.id.action_spinner);
         mDataText = (AutoCompleteTextView) v.findViewById(R.id.data);
+        mDataTextWrapper = v.findViewById(R.id.data_wrapper);
         mDataTextHeader = v.findViewById(R.id.data_header);
         mDataTypeHeader = v.findViewById(R.id.data_type_header);
         mDataTypeText = (TextView) v.findViewById(R.id.data_type);
@@ -102,6 +105,12 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
             @Override
             public void onClick(View v) {
                 mComponentText.setText("");
+            }
+        });
+        v.findViewById(R.id.data_query_button).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getActivity(), AdvancedQueryActivity.class).setData(mEditedIntent.getData()));
             }
         });
 
@@ -648,7 +657,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         // If we don't have any IntentFilter use non-filtering editors
         if (mAvailbleActions == null) {
             setFreeFormCategoryEditor();
-            mDataText.setVisibility(View.VISIBLE);
+            mDataTextWrapper.setVisibility(View.VISIBLE);
             mDataTextHeader.setVisibility(View.VISIBLE);
             mUriAutocompleteAdapter.setIntentFilters(null);
             setupUnfilteredDataTypeFields();
@@ -746,7 +755,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         }
 
         // Setup data uri
-        mDataText.setVisibility(acceptsUris ? View.VISIBLE : View.GONE);
+        mDataTextWrapper.setVisibility(acceptsUris ? View.VISIBLE : View.GONE);
         mDataTextHeader.setVisibility(acceptsUris ? View.VISIBLE : View.GONE);
         if (!acceptsUris) {
             mDataText.setText("");
