@@ -1,5 +1,7 @@
 package com.example.testapp1;
 
+import android.content.Intent;
+import android.text.method.LinkMovementMethod;
 import org.xmlpull.v1.XmlPullParser;
 
 import android.app.Activity;
@@ -78,9 +80,26 @@ public class XMLViewerActivity extends Activity {
                                         attrDelimiter +
                                                 parser.getAttributeName(i) + "=",
                                         attributeNameColor);
-                                ftb.appendColoured(
-                                        "\"" + parser.getAttributeValue(i) + "\"",
-                                        attributeValueColor);
+                                if (("uses-permission".equals(parser.getName()) || "permission".equals(parser.getName())) && "name".equals(parser.getAttributeName(i))) {
+                                    final String permissionName = parser.getAttributeValue(i);
+                                    ftb.appendColouredAndLinked(
+                                            "\"" + parser.getAttributeValue(i) + "\"",
+                                            attributeValueColor,
+                                            new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    startActivity(
+                                                            new Intent(XMLViewerActivity.this, PermissionInfoActivity.class)
+                                                            .putExtra(PermissionInfoActivity.EXTRA_PERMISSION_NAME, permissionName)
+                                                    );
+                                                }
+                                            }
+                                    );
+                                } else {
+                                    ftb.appendColoured(
+                                            "\"" + parser.getAttributeValue(i) + "\"",
+                                            attributeValueColor);
+                                }
                             }
                         }
                         haveTagOpen = true;
@@ -112,6 +131,7 @@ public class XMLViewerActivity extends Activity {
             TextView textView = new TextView(XMLViewerActivity.this);
             ScrollView scrollView = new ScrollView(XMLViewerActivity.this);
             textView.setText(text);
+            textView.setMovementMethod(LinkMovementMethod.getInstance());
             scrollView.addView(textView);
             setContentView(scrollView);
         }

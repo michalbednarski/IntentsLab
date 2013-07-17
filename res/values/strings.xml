@@ -190,5 +190,15 @@
     <string name="set_to_empty_string">Use empty string</string>
     <string name="finish_editor_and_set_value">Set value</string>
     <string name="wait">Wait</string>
+    <string name="description">Description</string>
+    <string name="permission_group_name">Group name</string>
+    <string name="permission_group_label">Group label</string>
+    <string name="permission_group_description">Group description</string>
+    <string name="permission_protection_level">Protection level</string>
+    <string name="permission_defined_by">Defined by</string>
+    <string name="permission_granted_to">Granted to</string>
+    <string name="permission_implicitly_granted_to">Implicitly granted to</string>
+    <string name="permission_denied_to">Denied to</string>
+    <string name="permission_enforcing_components">Components declaratively enforcing this permission</string>
 
 </resources>

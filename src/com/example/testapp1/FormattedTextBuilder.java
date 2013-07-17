@@ -1,12 +1,12 @@
 package com.example.testapp1;
 
+import android.content.Intent;
 import android.graphics.Typeface;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
-import android.text.style.BulletSpan;
-import android.text.style.ClickableSpan;
-import android.text.style.ForegroundColorSpan;
-import android.text.style.StyleSpan;
+import android.text.TextPaint;
+import android.text.style.*;
+import android.view.View;
 
 public class FormattedTextBuilder {
     private SpannableStringBuilder ssb = new SpannableStringBuilder();
@@ -21,6 +21,13 @@ public class FormattedTextBuilder {
     public void appendHeader(String text) {
         ssb.append("\n\n");
         appendSpan(text, new StyleSpan(Typeface.BOLD));
+    }
+
+    public void appendGlobalHeader(String text) {
+        if (ssb.length() != 0) {
+            ssb.append("\n");
+        }
+        appendSpan(text, new RelativeSizeSpan(1.5f));
     }
 
     public void appendValue(String key, String value) {
@@ -58,6 +65,21 @@ public class FormattedTextBuilder {
 
     public void appendColoured(String string, int color) {
         appendSpan(string, new ForegroundColorSpan(color));
+    }
+
+    public void appendColouredAndLinked(String string, final int color, final Runnable action) {
+        appendSpan(string, new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+                action.run();
+            }
+
+            @Override
+            public void updateDrawState(TextPaint ds) {
+                ds.setColor(color);
+                ds.setUnderlineText(true);
+            }
+        });
     }
 
     public void appendClickable(String text, ClickableSpan clickableSpan) {
