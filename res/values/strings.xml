@@ -200,5 +200,6 @@
     <string name="permission_implicitly_granted_to">Implicitly granted to</string>
     <string name="permission_denied_to">Denied to</string>
     <string name="permission_enforcing_components">Components declaratively enforcing this permission</string>
+    <string name="preparing_xml">Parsing and rebuilding XML...</string>
 
 </resources>
