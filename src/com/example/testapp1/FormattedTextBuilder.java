@@ -1,6 +1,8 @@
 package com.example.testapp1;
 
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -31,20 +33,54 @@ public class FormattedTextBuilder {
     }
 
     public void appendValue(String key, String value) {
-        ssb.append("\n\n");
-        appendSpan(key + ":", new StyleSpan(Typeface.BOLD));
-        ssb.append(" " + value);
+        appendValue(key, value, true, ValueSemantic.NONE);
     }
 
-    public void appendValueNoNewLine(CharSequence key, String value) {
-        ssb.append("\n");
-        if (value != null) {
-            key += ":";
-        }
+    public void appendValueNoNewLine(String key, String value) {
+        appendValue(key, value, false, ValueSemantic.NONE);
+    }
+
+    public void appendValuelessKeyContinuingGroup(CharSequence key) {
         appendSpan(key, new StyleSpan(Typeface.BOLD));
-        if (value != null) {
-            ssb.append(" " + value);
+    }
+
+    public enum ValueSemantic {
+        NONE,
+        ERROR,
+        PERMISSION
+    }
+
+    public void appendValue(String key, String value, boolean startGroup, ValueSemantic valueSemantic) {
+        final String originalValue = value;
+        Object span = null;
+        switch (valueSemantic) {
+            case ERROR:
+                span = new ForegroundColorSpan(Color.RED);
+                value = "[" + value + "]";
+                break;
+            case PERMISSION:
+                span = new ClickableSpan() {
+                    @Override
+                    public void onClick(View widget) {
+                        Context context = widget.getContext();
+                        context.startActivity(
+                                new Intent(context, PermissionInfoActivity.class)
+                                .putExtra(PermissionInfoActivity.EXTRA_PERMISSION_NAME, originalValue)
+                        );
+                    }
+                };
+                break;
         }
+
+        ssb.append(startGroup ? "\n\n" : "\n");
+        appendSpan(key + ":", new StyleSpan(Typeface.BOLD));
+        ssb.append(" ");
+        if (span != null) {
+            appendSpan(value, span);
+        } else {
+            ssb.append(value);
+        }
+
     }
 
     public void appendText(String text) {

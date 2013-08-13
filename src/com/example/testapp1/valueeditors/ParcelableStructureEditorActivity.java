@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
+import static com.example.testapp1.FormattedTextBuilder.ValueSemantic;
+
 /**
  * Activity for editing general parcelable class
  */
@@ -426,6 +428,7 @@ public class ParcelableStructureEditorActivity extends Activity implements Edito
     private void invokeGetters() {
         FormattedTextBuilder ftb = new FormattedTextBuilder();
         for (Method method : mGetterMethods) {
+            ValueSemantic valueSemantic = ValueSemantic.NONE;
             String value;
             try {
 
@@ -440,13 +443,14 @@ public class ParcelableStructureEditorActivity extends Activity implements Edito
                 // Unwrap it and display as method result
                 final Throwable targetException = wrappedException.getTargetException();
                 assert targetException != null;
-                value = "[" + Utils.afterLastDot(targetException.getClass().getName()) + ": " + targetException.getMessage() + "]";
+                value = Utils.describeException(targetException);
+                valueSemantic = ValueSemantic.ERROR;
 
             } catch (IllegalAccessException e) {
                 // Shouldn't happen, non-public methods are excluded in onCreate
                 throw new RuntimeException("Accessor method not accessible", e);
             }
-            ftb.appendValueNoNewLine(method.getName() + "()", value);
+            ftb.appendValue(method.getName() + "()", value, false, valueSemantic);
         }
 
         // Show results in EditText

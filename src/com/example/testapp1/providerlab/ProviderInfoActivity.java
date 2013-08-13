@@ -22,6 +22,8 @@ import com.example.testapp1.FormattedTextBuilder;
 import com.example.testapp1.R;
 import com.example.testapp1.browser.ComponentInfoActivity;
 
+import static com.example.testapp1.FormattedTextBuilder.ValueSemantic;
+
 /**
  *
  */
@@ -81,16 +83,16 @@ public class ProviderInfoActivity extends Activity {
                 if (mProviderInfo.writePermission == null) {
                     text.appendHeader(getString(R.string.provider_rw_world_accessible));
                 } else {
-                    text.appendValue(getString(R.string.provider_w_only_permission), mProviderInfo.writePermission);
+                    text.appendValue(getString(R.string.provider_w_only_permission), mProviderInfo.writePermission, true, ValueSemantic.PERMISSION);
                 }
             } else if (mProviderInfo.readPermission.equals(mProviderInfo.writePermission)) {
-                text.appendValue(getString(R.string.provider_rw_permission), mProviderInfo.readPermission);
+                text.appendValue(getString(R.string.provider_rw_permission), mProviderInfo.readPermission, true, ValueSemantic.PERMISSION);
             } else {
-                text.appendValue(getString(R.string.provider_r_permission), mProviderInfo.readPermission);
+                text.appendValue(getString(R.string.provider_r_permission), mProviderInfo.readPermission, true, ValueSemantic.PERMISSION);
                 if (mProviderInfo.writePermission == null) {
-                    text.appendValueNoNewLine(getResources().getText(R.string.provider_no_w_permission), null);
+                    text.appendValuelessKeyContinuingGroup(getResources().getText(R.string.provider_no_w_permission));
                 } else {
-                    text.appendValueNoNewLine(getString(R.string.provider_w_permission), mProviderInfo.writePermission);
+                    text.appendValue(getString(R.string.provider_w_permission), mProviderInfo.writePermission, false, ValueSemantic.PERMISSION);
                 }
             }
         }

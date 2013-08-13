@@ -37,18 +37,20 @@ public class Utils {
         }
     }
 
+    public static String describeException(Throwable exception) {
+        String exceptionName = exception.getClass().getName();
+        exceptionName = afterLastDot(exceptionName);
+        return exceptionName + ": " + exception.getMessage();
+    }
+
     public static void toastException(Context context, Exception exception) {
         toastException(context, null, exception);
     }
 
     public static void toastException(Context context, String methodName, Exception exception) {
-        String exceptionName = exception.getClass().getName();
-        exceptionName = afterLastDot(exceptionName);
         Toast.makeText(
             context,
-                (methodName != null ? methodName + ": " : "") +
-                exceptionName + ": " +
-                exception.getMessage(),
+            (methodName != null ? methodName + ": " : "") + describeException(exception),
             Toast.LENGTH_LONG
         ).show();
     }

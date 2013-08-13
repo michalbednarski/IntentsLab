@@ -28,6 +28,8 @@ import com.example.testapp1.browser.ExtendedPackageInfo.ExtendedComponentInfo;
 import com.example.testapp1.editor.IntentEditorActivity;
 import com.example.testapp1.editor.IntentEditorConstants;
 
+import static com.example.testapp1.FormattedTextBuilder.ValueSemantic;
+
 public class ComponentInfoActivity extends Activity {
     public static final String EXTRA_PACKAGE_NAME = "package";
     public static final String EXTRA_COMPONENT_NAME = "component";
@@ -224,7 +226,7 @@ public class ComponentInfoActivity extends Activity {
                 } else {
                     String permission = mExtendedComponentInfo.getPermission();
                     if (permission != null) {
-                        text.appendValue(getString(R.string.permission_required_title), permission);
+                        text.appendValue(getString(R.string.permission_required_title), permission, true, ValueSemantic.PERMISSION);
                     }
                 }
 
