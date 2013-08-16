@@ -185,7 +185,7 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
                 mPresentSections[i] = presentSections.get(i);
             }
         } catch (PackageManager.NameNotFoundException e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
 
     }

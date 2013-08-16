@@ -8,17 +8,16 @@ import com.example.testapp1.editor.FragmentTabsActivity;
  */
 public class AppInfoActivity extends FragmentTabsActivity implements AppComponentsFragment.AppInfoHost {
     public static final String EXTRA_PACKAGE_NAME = "intentsLab.packInfo.package";
-    private String mPackageName;
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mPackageName = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
+        String packageName = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
         addTab("Components", new AppComponentsFragment());
-        addTab("Manifest", XMLViewerFragment.create(mPackageName, 0));
+        addTab("Manifest", XMLViewerFragment.create(packageName, 0));
     }
 
     @Override
     public String getViewedPackageName() {
-        return mPackageName;
+        return getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
     }
 }
