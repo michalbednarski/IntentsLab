@@ -44,6 +44,10 @@ public class FormattedTextBuilder {
         appendSpan(key, new StyleSpan(Typeface.BOLD));
     }
 
+    public void appendRaw(String text) {
+        ssb.append(text);
+    }
+
     public enum ValueSemantic {
         NONE,
         ERROR,
