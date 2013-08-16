@@ -24,6 +24,7 @@ import com.example.testapp1.CatchBroadcastService;
 import com.example.testapp1.FormattedTextBuilder;
 import com.example.testapp1.R;
 import com.example.testapp1.XMLViewerActivity;
+import com.example.testapp1.AppInfoActivity;
 import com.example.testapp1.browser.ExtendedPackageInfo.ExtendedComponentInfo;
 import com.example.testapp1.editor.IntentEditorActivity;
 import com.example.testapp1.editor.IntentEditorConstants;
@@ -281,10 +282,10 @@ public class ComponentInfoActivity extends Activity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.view_manifest:
+            case R.id.package_info:
                 startActivity(
-                        new Intent(this, XMLViewerActivity.class)
-                                .putExtra(XMLViewerActivity.EXTRA_PACKAGE_NAME, mPackageName)
+                        new Intent(this, AppInfoActivity.class)
+                                .putExtra(AppInfoActivity.EXTRA_PACKAGE_NAME, mPackageName)
                 );
                 return true;
         }

@@ -25,7 +25,7 @@ public abstract class FragmentTabsActivity extends FragmentActivity {
 
     private ViewPager mViewPager;
 
-    private ArrayList<Class<? extends Fragment>> mFragmentsList = new ArrayList<Class<? extends Fragment>>();
+    private ArrayList<Fragment> mFragmentsList = new ArrayList<Fragment>();
 
     private TabsHelper mTabsHelper;
 
@@ -44,7 +44,7 @@ public abstract class FragmentTabsActivity extends FragmentActivity {
             @Override
             public Fragment getItem(int position) {
                 try {
-                    return mFragmentsList.get(position).newInstance();
+                    return mFragmentsList.get(position);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -69,7 +69,7 @@ public abstract class FragmentTabsActivity extends FragmentActivity {
 	 * @param text Displayed title of tab
 	 * @param fragment Fragment class that has to be instantiated and put in tab
 	 */
-	protected void addTab(CharSequence text, Class<? extends Fragment> fragment) {
+    protected void addTab(CharSequence text, Fragment fragment) {
         mTabsHelper.addTab(text, mFragmentsList.size());
         mFragmentsList.add(fragment);
 	}

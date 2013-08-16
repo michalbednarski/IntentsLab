@@ -137,6 +137,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".PermissionInfoActivity"/>
+        <activity android:name=".AppInfoActivity"/>
     </application>
 
 </manifest>

@@ -102,12 +102,12 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
 
         // Setup tabs
         if (getResources().getBoolean(R.bool.merge_general_and_extras_tabs)) {
-            addTab(getString(R.string.general), IntentGeneralWithExtrasFragment.class);
+            addTab(getString(R.string.general), new IntentGeneralWithExtrasFragment());
         } else {
-            addTab(getString(R.string.general), IntentGeneralFragment.class);
-            addTab(getString(R.string.intent_extras), IntentExtrasFragment.class);
+            addTab(getString(R.string.general), new IntentGeneralFragment());
+            addTab(getString(R.string.intent_extras), new IntentExtrasFragment());
         }
-        addTab("Flags", IntentFlagsFragment.class);
+        addTab("Flags", new IntentFlagsFragment());
 
 
     }
