@@ -40,6 +40,11 @@ public class ComponentInfoActivity extends Activity {
      */
     public static final String EXTRA_LAUNCHED_FROM_INTENT_EDITOR = "componentInfo.launchedFromIntentEditor";
 
+    /**
+     * If this extra is true, "App info" option will just finish activity
+     */
+    public static final String EXTRA_LAUNCHED_FROM_APP_INFO = "componentInfo.launchedFromIntentEditor";
+
     private static final String TAG = "ComponentInfoActivity";
 
     private String mPackageName;
@@ -283,10 +288,14 @@ public class ComponentInfoActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.package_info:
-                startActivity(
-                        new Intent(this, AppInfoActivity.class)
-                                .putExtra(AppInfoActivity.EXTRA_PACKAGE_NAME, mPackageName)
-                );
+                if (getIntent().getBooleanExtra(EXTRA_LAUNCHED_FROM_APP_INFO, false)) {
+                    finish();
+                } else {
+                    startActivity(
+                            new Intent(this, AppInfoActivity.class)
+                                    .putExtra(AppInfoActivity.EXTRA_PACKAGE_NAME, mPackageName)
+                    );
+                }
                 return true;
         }
         return super.onOptionsItemSelected(item);
