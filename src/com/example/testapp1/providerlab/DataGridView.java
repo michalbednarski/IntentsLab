@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Build;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
@@ -75,6 +77,7 @@ public class DataGridView extends LinearLayout {
 
             }
         };
+        mListView.setId(android.R.id.list);
         mListView.setAdapter(mListAdapter);
         mListView.setDivider(null);
 
@@ -151,6 +154,10 @@ public class DataGridView extends LinearLayout {
         mMaxScroll = widthSum - getWidth();
         if (mMaxScroll < 0) {
             mMaxScroll = 0;
+        }
+        if (mScroller.getCurrX() > mMaxScroll) {
+            mScroller.setFinalX(mMaxScroll);
+            mScroller.abortAnimation();
         }
     }
 
@@ -356,6 +363,86 @@ public class DataGridView extends LinearLayout {
             return text;
         }
     }
+
+    /**
+     * Class encapsulating save/restore of this widget
+     */
+    private static class SavedState extends BaseSavedState {
+
+        final int scrollX;
+        private final int[] columnWidths;
+
+        /**
+         * Rebuild this object
+         */
+        public SavedState(Parcel source) {
+            super(source);
+            scrollX = source.readInt();
+            columnWidths = source.createIntArray();
+        }
+
+        /**
+         * Create object containing state of widget
+         */
+        public SavedState(Parcelable superState, DataGridView widget) {
+            super(superState);
+            scrollX = widget.mScroller.getCurrX();
+            columnWidths = new int[widget.mColumns.length];
+            for (int i = 0; i < widget.mColumns.length; i++) {
+                columnWidths[i] = widget.mColumns[i].width;
+            }
+        }
+
+        /**
+         * Restore state into widget
+         *
+         * @see DataGridView#onRestoreInstanceState(Parcelable)
+         */
+        void restore(DataGridView widget) {
+            // Scroll horizontally
+            widget.mScroller.setFinalX(scrollX);
+            widget.mScroller.abortAnimation();
+
+            // Restore column widths
+            if (columnWidths.length == widget.mColumns.length) {
+                for (int i = 0; i < columnWidths.length; i++) {
+                    widget.mColumns[i].width = columnWidths[i];
+                }
+            }
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            super.writeToParcel(dest, flags);
+            dest.writeInt(scrollX);
+            dest.writeIntArray(columnWidths);
+        }
+
+        public static final Creator<SavedState> CREATOR = new Creator<SavedState>() {
+            @Override
+            public SavedState createFromParcel(Parcel source) {
+                return new SavedState(source);
+            }
+
+            @Override
+            public SavedState[] newArray(int size) {
+                return new SavedState[size];
+            }
+        };
+    }
+
+    @Override
+    protected Parcelable onSaveInstanceState() {
+        return new SavedState(super.onSaveInstanceState(), this);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Parcelable state) {
+        final SavedState savedState = (SavedState) state;
+        super.onRestoreInstanceState(savedState.getSuperState());
+        savedState.restore(this);
+    }
+
 
     /**
      * View displaying a row or headers, possibly scrolled horizontally

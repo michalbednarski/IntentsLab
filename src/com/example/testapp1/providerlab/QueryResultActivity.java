@@ -56,6 +56,7 @@ public class QueryResultActivity extends Activity {
         mColumnNames = cursor.getColumnNames();
 
         DataGridView v = new DataGridView(this);
+        v.setId(R.id.data);
         v.setCursor(cursor);
         setContentView(v);
     }
