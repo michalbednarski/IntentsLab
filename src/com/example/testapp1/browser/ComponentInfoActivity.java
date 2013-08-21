@@ -43,7 +43,7 @@ public class ComponentInfoActivity extends Activity {
     /**
      * If this extra is true, "App info" option will just finish activity
      */
-    public static final String EXTRA_LAUNCHED_FROM_APP_INFO = "componentInfo.launchedFromIntentEditor";
+    public static final String EXTRA_LAUNCHED_FROM_APP_INFO = "componentInfo.launchedFromAppInfo";
 
     private static final String TAG = "ComponentInfoActivity";
 
