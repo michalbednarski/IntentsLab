@@ -17,7 +17,6 @@ import com.example.testapp1.Utils;
 import com.example.testapp1.browser.ComponentInfoActivity;
 import com.example.testapp1.browser.ExtendedPackageInfo;
 import com.example.testapp1.valueeditors.Editor;
-import com.example.testapp1.valueeditors.EditorLauncher;
 
 import java.util.ArrayList;
 
@@ -27,7 +26,6 @@ import java.util.ArrayList;
 public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity*/ {
     private static final String TAG = "IntentEditor";
     private static final int REQUEST_CODE_TEST_STARTACTIVITYFORRESULT = 657;
-    private static final int REQUEST_CODE_EXTRAS_EDITOR = 753;
     private static final int REQUEST_CODE_RESULT_INTENT_EDITOR = 754;
 
     public static final String EXTRA_COMPONENT_TYPE = "componentType_";
@@ -46,15 +44,11 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
     private int mMethodId;
     private IntentFilter[] mAttachedIntentFilters = null;
 
-    EditorLauncher.ActivityResultHandler extrasEditorActivityResultHandler;
     private boolean mGenericEditorMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // Editor result handling
-        extrasEditorActivityResultHandler = new EditorLauncher.ActivityResultHandler(this, REQUEST_CODE_EXTRAS_EDITOR);
 
         // Load intent
         Parcelable[] uncastedIntentFilters = null;
@@ -435,10 +429,6 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                     .show();
             }
 
-        } else if (requestCode == REQUEST_CODE_EXTRAS_EDITOR) {
-            // Intent extra editor result handled by EditorLauncher
-            extrasEditorActivityResultHandler.handleActivityResult(resultIntent);
-
         } else if (requestCode == REQUEST_CODE_RESULT_INTENT_EDITOR) {
             // Result intent editor requesting forward result
             if (resultIntent != null && resultIntent.hasExtra(EXTRA_FORWARD_RESULT_INTENT)) {
@@ -448,6 +438,9 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 );
                 finish();
             }
+
+        } else {
+            super.onActivityResult(requestCode, resultCode, resultIntent);
         }
     }
 

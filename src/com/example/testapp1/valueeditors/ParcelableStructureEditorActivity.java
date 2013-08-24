@@ -1,6 +1,5 @@
 package com.example.testapp1.valueeditors;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -8,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.*;
@@ -29,7 +29,7 @@ import static com.example.testapp1.FormattedTextBuilder.ValueSemantic;
 /**
  * Activity for editing general parcelable class
  */
-public class ParcelableStructureEditorActivity extends Activity implements EditorLauncher.EditorLauncherCallback {
+public class ParcelableStructureEditorActivity extends FragmentActivity implements EditorLauncher.EditorLauncherCallback {
     private static final int REQUEST_CODE_EDITOR = 0;
 
     private static final String STATE_SHOW_NON_PUBLIC_FIELDS = "ParcelableStructureEditorActivity.showNonPublicFields";
@@ -46,6 +46,10 @@ public class ParcelableStructureEditorActivity extends Activity implements Edito
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Init EditorLauncher
+        mEditorLauncher = new EditorLauncher(this, "PaScEdLa");
+        mEditorLauncher.setCallback(this);
 
         // Get edited object and/or load saved state
         if (savedInstanceState != null) {
@@ -176,8 +180,7 @@ public class ParcelableStructureEditorActivity extends Activity implements Edito
 
 
     // Editing fields
-    EditorLauncher.ActivityResultHandler mEditorActivityResultHandler = new EditorLauncher.ActivityResultHandler(this, REQUEST_CODE_EDITOR);
-    EditorLauncher mEditorLauncher = new EditorLauncher(mEditorActivityResultHandler, this);
+    EditorLauncher mEditorLauncher;
 
     @Override
     public void onEditorResult(String key, Object newValue) {
@@ -190,14 +193,6 @@ public class ParcelableStructureEditorActivity extends Activity implements Edito
         } catch (Exception e) {
             e.printStackTrace();
             Utils.toastException(this, "Field.set", e);
-        }
-
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_CODE_EDITOR) {
-            mEditorActivityResultHandler.handleActivityResult(data);
         }
     }
 

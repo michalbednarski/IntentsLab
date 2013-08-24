@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<intent-extras>
+    <intent action="android.intent.action.AIRPLANE_MODE">
+        <extra name="state" type="Boolean" />
+    </intent>
+    <intent action="android.intent.action.APP_ERROR">
+        <extra name="android.intent.extra.BUG_REPORT" type="android.app.ApplicationErrorReport" />
+    </intent>
+    <intent action="android.intent.action.GET_CONTENT">
+        <extra name="android.intent.extra.LOCAL_ONLY" type="Boolean" />
+    </intent>
+    <intent action="android.intent.action.INSTALL_PACKAGE">
+        <extra name="android.intent.extra.INSTALLER_PACKAGE_NAME" type="String" suggest-default="myPackageName" />
+        <extra name="android.intent.extra.NOT_UNKNOWN_SOURCE" type="Boolean" />
+        <extra name="android.intent.extra.RETURN_RESULT" type="Boolean" />
+    </intent>
+    <intent action="android.intent.action.SEARCH">
+        <extra name="query" type="String" />
+    </intent>
+    <intent action="android.intent.action.SEND">
+        <extra name="android.intent.extra.TEXT" type="String" /> <!-- Possibly formatted CharSequence, if type is text/plain -->
+        <extra name="android.intent.extra.STREAM" type="String" /> <!-- content:// URI, if type is not text/plain -->
+        <extra name="android.intent.extra.HTML_TEXT" type="String" /> <!-- If used TEXT must be als specified -->
+        <extra name="android.intent.extra.EMAIL" type="String" />
+        <extra name="android.intent.extra.CC" type="String" />
+        <extra name="android.intent.extra.BCC" type="String" />
+        <extra name="android.intent.extra.SUBJECT" type="String" />
+    </intent>
+    <!-- TODO: SEND_MULTIPLE -->
+    <intent action="android.intent.action.WEB_SEARCH">
+        <extra name="query" type="String" />
+    </intent>
+
+    <reply-intent action="android.intent.action.CREATE_SHORTCUT">
+        <extra name="android.intent.extra.shortcut.INTENT" type="android/content/Intent" />
+        <extra name="android.intent.extra.shortcut.NAME" type="String" />
+        <extra name="android.intent.extra.shortcut.ICON" type="android/graphics/Bitmap" />
+        <extra name="android.intent.extra.shortcut.ICON_RESOURCE" type="android/content/Intent$ShortcutIconResource" />
+    </reply-intent>
+</intent-extras>

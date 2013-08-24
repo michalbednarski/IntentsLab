@@ -1,10 +1,10 @@
 package com.example.testapp1.editor;
 
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.view.*;
 import android.view.View.OnClickListener;
 import android.widget.*;
@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 public class BundleAdapter extends BaseAdapter implements OnClickListener,
 		OnItemClickListener, View.OnCreateContextMenuListener, EditorLauncher.EditorLauncherCallback {
 	private static final String TAG = "BundleAdapter";
-	private Activity mActivity;
+	private FragmentActivity mActivity;
 	private LayoutInflater mInflater;
 	private Bundle mBundle;
 	private String[] mKeys = new String[0];
@@ -65,13 +65,16 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
     }
 
     private final EditorLauncher mEditorLauncher;
+    private Fragment mOwnerFragment;
 
-	public BundleAdapter(Activity activity, Bundle map, EditorLauncher.ActivityResultHandler activityResultHandler) {
+    public BundleAdapter(FragmentActivity activity, Bundle map, EditorLauncher editorLauncher, Fragment ownerFragment) {
 		mActivity = activity;
 		mInflater = (LayoutInflater) activity
 				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		setBundle(map);
-        mEditorLauncher = new EditorLauncher(activityResultHandler, this);
+        mEditorLauncher = editorLauncher;
+        mEditorLauncher.setCallback(this);
+        mOwnerFragment = ownerFragment;
     }
 
 	private void updateKeySet() {
@@ -150,29 +153,18 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
 
 	@Override
 	public void onClick(View v) { // For add new button
-        View view = mInflater.inflate(R.layout.add_extra, null);
-        final TextView nameTextView = (TextView) view.findViewById(R.id.name);
-        final Spinner typeSpinner = (Spinner) view.findViewById(R.id.typespinner);
-        typeSpinner.setAdapter(new ArrayAdapter<String>(mActivity, android.R.layout.simple_spinner_item, new String[] {
-                "String/Number" // 0
-                // TODO: more types for adding
-        }));
+        FragmentManager topFragmentManager = mActivity.getSupportFragmentManager();
 
-        new AlertDialog.Builder(mActivity)
-                .setTitle(R.string.btn_add)
-                .setView(view)
-                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        String name = nameTextView.getText().toString();
-                        switch (typeSpinner.getSelectedItemPosition()) {
-                            case 0: // String/Number
-                                mEditorLauncher.launchEditor(name, "");
-                                break;
-                        }
-                    }
-                })
-                .show();
+        if (mOwnerFragment instanceof IntentExtrasFragment && NewExtraPickerDialog.mayHaveSomethingForIntent(mActivity)) {
+            // We're in intent editor and may guess some extras from it
+            // Launch suggestion picker
+            NewExtraPickerDialog newExtraPickerDialog = new NewExtraPickerDialog((IntentExtrasFragment) mOwnerFragment);
+            newExtraPickerDialog.show(topFragmentManager, "newExtraPicker");
+        } else {
+            // Launch generic add extra dialog
+            NewBundleEntryDialog newBundleEntryDialog = new NewBundleEntryDialog(mOwnerFragment);
+            newBundleEntryDialog.show(topFragmentManager, "newBundleEntryDialog");
+        }
 	}
 
 	@Override
@@ -217,5 +209,13 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
                 return true;
             }
         });
+    }
+
+    public void launchEditorForNewEntry(String key, Object initialValue) {
+        mEditorLauncher.launchEditor(key, initialValue);
+    }
+
+    public interface BundleAdapterAggregate {
+        public BundleAdapter getBundleAdapter();
     }
 }

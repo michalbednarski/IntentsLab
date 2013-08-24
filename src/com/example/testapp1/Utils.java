@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.HashMap;
@@ -111,5 +112,11 @@ public class Utils {
     public static Class<?> toWrapperClass(Class<?> aClass) {
         Class<?> wrapperClass = PRIMITIVE_TO_WRAPPER_CLASS_MAP.get(aClass);
         return wrapperClass != null ? wrapperClass : aClass;
+    }
+
+    public static void fixListViewInDialogBackground(ListView listView) {
+        if (Build.VERSION.SDK_INT < 11) {
+            listView.setBackgroundColor(listView.getResources().getColor(android.R.color.background_light));
+        }
     }
 }

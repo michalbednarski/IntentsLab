@@ -1,8 +1,10 @@
 package com.example.testapp1.valueeditors;
 
-import android.app.ListActivity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.widget.ListView;
 import com.example.testapp1.editor.BundleAdapter;
 
 /**
@@ -10,11 +12,18 @@ import com.example.testapp1.editor.BundleAdapter;
  *
  * @see Editor.EditorActivity
  */
-public class BundleEditorActivity extends ListActivity {
-    private static final int REQUEST_CODE_EDIT_ITEM = 1;
+public class BundleEditorActivity extends FragmentActivity {
 
-    private EditorLauncher.ActivityResultHandler mActivityResultHandler;
     private BundleAdapter mBundleAdapter;
+
+    public static class DummyBundleEditorFragment extends Fragment implements BundleAdapter.BundleAdapterAggregate {
+        private BundleAdapter mBundleAdapter;
+
+        @Override
+        public BundleAdapter getBundleAdapter() {
+            return mBundleAdapter;
+        }
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -23,33 +32,40 @@ public class BundleEditorActivity extends ListActivity {
         // Set title
         setTitle("Bundle: " + getIntent().getStringExtra(Editor.EXTRA_KEY));
 
-        // Activity result handler for EditorLauncher
-        mActivityResultHandler = new EditorLauncher.ActivityResultHandler(this, REQUEST_CODE_EDIT_ITEM);
-
         // Get edited bundle
         Bundle bundle =
                 savedInstanceState != null ?
                         savedInstanceState.getBundle(Editor.EXTRA_VALUE) :
                         getIntent().getBundleExtra(Editor.EXTRA_VALUE);
 
+        // Create ListView
+        ListView listView = new ListView(this);
+        listView.setId(android.R.id.list);
+
+        // Create or find dummy BundleAdapterAggregate
+        DummyBundleEditorFragment dummyFragment;
+        if (savedInstanceState == null) {
+            dummyFragment = new DummyBundleEditorFragment();
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .add(dummyFragment, "BAAggregate")
+                    .commit();
+        } else {
+            dummyFragment = (DummyBundleEditorFragment) getSupportFragmentManager().findFragmentByTag("BAAggregate");
+        }
+
         // Create bundle adapter and use it
-        mBundleAdapter = new BundleAdapter(this, bundle, mActivityResultHandler);
-        mBundleAdapter.settleOnList(getListView());
+        mBundleAdapter = new BundleAdapter(this, bundle, new EditorLauncher(this, "editorLauncherInBundleEditor"), dummyFragment);
+        mBundleAdapter.settleOnList(listView);
+        dummyFragment.mBundleAdapter = mBundleAdapter;
+
+        setContentView(listView);
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBundle(Editor.EXTRA_VALUE, mBundleAdapter.getBundle());
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_CODE_EDIT_ITEM) {
-            mActivityResultHandler.handleActivityResult(data);
-        } else {
-            super.onActivityResult(requestCode, resultCode, data);
-        }
     }
 
     // Return modified bundle on back press

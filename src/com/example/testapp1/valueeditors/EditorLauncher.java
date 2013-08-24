@@ -1,16 +1,15 @@
 package com.example.testapp1.valueeditors;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
 import com.example.testapp1.R;
 import com.example.testapp1.editor.BundleAdapter;
 import com.example.testapp1.editor.IntentEditorActivity;
 import com.example.testapp1.editor.StringLikeItemEditor;
-
-import java.util.ArrayList;
 
 /**
  * Editor launcher for object editing
@@ -72,51 +71,13 @@ public class EditorLauncher {
         void onEditorResult(String key, Object newValue);
     }
 
-    /**
-     * Class passing activity result to EditorLauncherCallback
-     *
-     * Must be used by activity using EditorLauncher
-     */
-    public static class ActivityResultHandler {
-        private final Activity mActivity;
-        private final int  mActivityResultId;
-        private ArrayList<Intent> mPendingResultIntents = null;
-        private EditorLauncher mEditorLauncher = null;
-
-        /**
-         * @param activity Activity which is used for startActivityForResult
-         * @param activityResultId requestCode for {@link Activity#startActivityForResult(Intent, int)}
-         */
-        public ActivityResultHandler(Activity activity, int activityResultId) {
-            mActivity = activity;
-            mActivityResultId = activityResultId;
-        }
-
-        /**
-         * Must be called from {@link Activity#onActivityResult(int, int, android.content.Intent)}
-         * when requestCode is equal to one passed to constructor
-         */
-        public void handleActivityResult(Intent resultIntent) {
-            if (resultIntent != null) {
-                if (mEditorLauncher != null) {
-                    mEditorLauncher.doHandleActivityResult(resultIntent);
-                } else {
-                    if (mPendingResultIntents == null) {
-                        mPendingResultIntents = new ArrayList<Intent>();
-                    }
-                    mPendingResultIntents.add(resultIntent);
-                }
-            }
-        }
-    }
 
 
 
+    private final Fragment mFragment;
 
-
-
-    private final ActivityResultHandler mActivityResultHandler;
-    private final EditorLauncherCallback mEditorLauncherCallback;
+    //private final ActivityResultHandler mActivityResultHandler;
+    private EditorLauncherCallback mEditorLauncherCallback = null;
 
 
     /**
@@ -125,22 +86,20 @@ public class EditorLauncher {
      * Note: creating this object immediately triggers pending calls to onEditorResult's
      *       Only use this when you are ready to receive them
      *
-     * @param activityResultHandler ActivityResultHandler maintained by activity for using startActivityForResult and onActivityResult
-     * @param editorLauncherCallback Listener for editing results
      */
-    public EditorLauncher(ActivityResultHandler activityResultHandler, EditorLauncherCallback editorLauncherCallback) {
-        mActivityResultHandler = activityResultHandler;
-        mEditorLauncherCallback = editorLauncherCallback;
-
-        activityResultHandler.mEditorLauncher = this;
-
-        // Handle pending result intents
-        if (activityResultHandler.mPendingResultIntents != null) {
-            for (Intent pendingResultIntent : activityResultHandler.mPendingResultIntents) {
-                doHandleActivityResult(pendingResultIntent);
-            }
-            activityResultHandler.mPendingResultIntents = null;
+    public EditorLauncher(FragmentActivity fragmentActivity, String tag) {
+        final android.support.v4.app.FragmentManager fragmentManager = fragmentActivity.getSupportFragmentManager();
+        ActivityHandlingHeadlessFragment fragment = (ActivityHandlingHeadlessFragment) fragmentManager.findFragmentByTag(tag);
+        if (fragment == null) {
+            fragment = new ActivityHandlingHeadlessFragment();
+            fragmentManager.beginTransaction().add(fragment, tag).commit();
         }
+        fragment.mEditorLauncher = this;
+        mFragment = fragment;
+    }
+
+    public void setCallback(EditorLauncherCallback callback) {
+        mEditorLauncherCallback = callback;
     }
 
     /**
@@ -152,33 +111,35 @@ public class EditorLauncher {
      * @param value Value to be edited
      */
     public void launchEditor(final String key, Object value) {
-        Activity activity = mActivityResultHandler.mActivity;
         for (Editor editor : EDITOR_REGISTRY) {
             if (editor.canEdit(value)) {
                 if (editor instanceof Editor.EditorActivity) {
-                    Intent editorIntent = ((Editor.EditorActivity) editor).getEditorIntent(activity);
+                    Intent editorIntent = ((Editor.EditorActivity) editor).getEditorIntent(mFragment.getActivity());
                     Bundle untypedExtras = new Bundle();
                     BundleAdapter.putInBundle(untypedExtras, Editor.EXTRA_VALUE, value);
                     editorIntent.putExtras(untypedExtras);
                     editorIntent.putExtra(Editor.EXTRA_KEY, key);
-                    activity.startActivityForResult(editorIntent, mActivityResultHandler.mActivityResultId);
+                    mFragment.startActivityForResult(editorIntent, REQUEST_CODE_EDITOR_LAUNCHER_HEADLESS_FRAGMENT);
                 } else {
                     editor.edit(key, value, new Editor.EditorCallback() {
                         @Override
                         public void sendEditorResult(Object newValue) {
                             mEditorLauncherCallback.onEditorResult(key, newValue);
                         }
-                    }, activity);
+                    }, mFragment.getActivity());
                 }
                 return;
             }
         }
-        Toast.makeText(activity, R.string.type_unsupported, Toast.LENGTH_SHORT).show();
+        Toast.makeText(mFragment.getActivity(), R.string.type_unsupported, Toast.LENGTH_SHORT).show();
     }
 
 
 
-    private void doHandleActivityResult(Intent resultIntent) {
+    public void handleActivityResult(Intent resultIntent) {
+        if (resultIntent == null) {
+            return;
+        }
         String key = resultIntent.getStringExtra(Editor.EXTRA_KEY);
         if (key == null) {
             throw new RuntimeException("EXTRA_KEY is null");
@@ -188,4 +149,21 @@ public class EditorLauncher {
         Object value = extras.get(Editor.EXTRA_VALUE);
         mEditorLauncherCallback.onEditorResult(key, value);
     }
+
+    public static class ActivityHandlingHeadlessFragment extends Fragment {
+        public ActivityHandlingHeadlessFragment() {}
+        private EditorLauncher mEditorLauncher;
+
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            if (requestCode == REQUEST_CODE_EDITOR_LAUNCHER_HEADLESS_FRAGMENT) {
+                mEditorLauncher.handleActivityResult(data);
+            } else {
+                super.onActivityResult(requestCode, resultCode, data);
+            }
+        }
+    }
+
+    private static final int REQUEST_CODE_EDITOR_LAUNCHER_HEADLESS_FRAGMENT = 1;
+
 }
