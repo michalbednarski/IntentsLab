@@ -1,7 +1,5 @@
 package com.example.testapp1.editor;
 
-import java.util.List;
-
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
@@ -10,15 +8,12 @@ import android.content.pm.ResolveInfo;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
+import android.widget.*;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
-import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
-
 import com.example.testapp1.R;
+import com.example.testapp1.Utils;
+
+import java.util.List;
 
 class ComponentPicker extends ArrayAdapter<ResolveInfo> implements OnItemClickListener {
 	private LayoutInflater mInflater;
@@ -37,8 +32,8 @@ class ComponentPicker extends ArrayAdapter<ResolveInfo> implements OnItemClickLi
 		mComponentTextView = componentTextView;
 		ListView lv = new ListView(context, null);
 		lv.setAdapter(this);
-		lv.setBackgroundColor(context.getResources().getColor(android.R.color.background_light));
-		lv.setOnItemClickListener(this);
+        Utils.fixListViewInDialogBackground(lv);
+        lv.setOnItemClickListener(this);
 
 		mDialog =
 				new AlertDialog.Builder(context)
