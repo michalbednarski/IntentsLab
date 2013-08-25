@@ -31,15 +31,15 @@ public interface Editor {
      */
     public boolean canEdit(Object value);
 
-    /**
+    /* *
      * Opens non-activity editor for editing value
-     */
-    public void edit(String key, Object value, EditorCallback editorCallback, Context context);
+     * /
+    public void edit(String key, Object value, EditorCallback editorCallback, Context context);*/
 
     /**
      * Interface for returning results from non-activity editor
      *
-     * @see #edit(String, Object, EditorCallback, Context)
+     * @ see #edit(String, Object, EditorCallback, Context)
      */
     public interface EditorCallback {
         void sendEditorResult(Object newValue);
@@ -58,10 +58,18 @@ public interface Editor {
          */
         public abstract Intent getEditorIntent(Context context);
 
-        @Override
+        /*@Override
         public final void edit(String key, Object value, EditorCallback editorCallback, Context context) {
             throw new RuntimeException("EditorActivity is magic, don't use edit method with it");
-        }
+        }*/
+    }
+
+    public static interface DialogFragmentEditor extends Editor {
+        ValueEditorDialogFragment getEditorDialogFragment();
+    }
+
+    public static interface InPlaceValueToggler extends Editor {
+        Object toggleObjectValue(Object originalValue);
     }
 
 

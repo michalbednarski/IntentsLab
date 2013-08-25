@@ -9,7 +9,6 @@ import android.widget.Toast;
 import com.example.testapp1.R;
 import com.example.testapp1.editor.BundleAdapter;
 import com.example.testapp1.editor.IntentEditorActivity;
-import com.example.testapp1.editor.StringLikeItemEditor;
 
 /**
  * Editor launcher for object editing
@@ -22,15 +21,15 @@ public class EditorLauncher {
      */
     private static final Editor[] EDITOR_REGISTRY = {
             // Boolean flipper
-            new Editor() {
+            new Editor.InPlaceValueToggler() {
                 @Override
                 public boolean canEdit(Object value) {
                     return value instanceof Boolean;
                 }
 
                 @Override
-                public void edit(String key, Object value, EditorCallback editorCallback, Context context) {
-                    editorCallback.sendEditorResult(!((Boolean) value));
+                public Object toggleObjectValue(Object originalValue) {
+                    return !((Boolean) originalValue);
                 }
             },
 
@@ -55,7 +54,7 @@ public class EditorLauncher {
             new IntentEditorActivity.LaunchableEditor(),
 
             // Enum editor
-            new EnumEditor(),
+            new EnumEditor.LaunchableEditor(),
 
             // Generic Parcelable structure editor
             new ParcelableStructureEditorActivity.LaunchableEditor()
@@ -114,19 +113,26 @@ public class EditorLauncher {
         for (Editor editor : EDITOR_REGISTRY) {
             if (editor.canEdit(value)) {
                 if (editor instanceof Editor.EditorActivity) {
+                    // Editor in activity
                     Intent editorIntent = ((Editor.EditorActivity) editor).getEditorIntent(mFragment.getActivity());
                     Bundle untypedExtras = new Bundle();
                     BundleAdapter.putInBundle(untypedExtras, Editor.EXTRA_VALUE, value);
                     editorIntent.putExtras(untypedExtras);
                     editorIntent.putExtra(Editor.EXTRA_KEY, key);
                     mFragment.startActivityForResult(editorIntent, REQUEST_CODE_EDITOR_LAUNCHER_HEADLESS_FRAGMENT);
-                } else {
-                    editor.edit(key, value, new Editor.EditorCallback() {
-                        @Override
-                        public void sendEditorResult(Object newValue) {
-                            mEditorLauncherCallback.onEditorResult(key, newValue);
-                        }
-                    }, mFragment.getActivity());
+                } else if (editor instanceof Editor.DialogFragmentEditor) {
+                    // Editor in DialogFragment
+                    ValueEditorDialogFragment d = ((Editor.DialogFragmentEditor) editor).getEditorDialogFragment();
+                    Bundle args = new Bundle();
+                    args.putString(Editor.EXTRA_KEY, key);
+                    BundleAdapter.putInBundle(args, Editor.EXTRA_VALUE, value);
+                    d.setArguments(args);
+                    d.setTargetFragment(mFragment, 0);
+                    d.show(mFragment.getActivity().getSupportFragmentManager(), "DFEditorFor" + key);
+                } else if (editor instanceof Editor.InPlaceValueToggler) {
+                    // In place value toggler (eg. for Boolean)
+                    Object newValue = ((Editor.InPlaceValueToggler) editor).toggleObjectValue(value);
+                    mEditorLauncherCallback.onEditorResult(key, newValue);
                 }
                 return;
             }
@@ -161,6 +167,10 @@ public class EditorLauncher {
             } else {
                 super.onActivityResult(requestCode, resultCode, data);
             }
+        }
+
+        void handleDialogResponse(String key, Object newValue) {
+            mEditorLauncher.mEditorLauncherCallback.onEditorResult(key, newValue);
         }
     }
 
