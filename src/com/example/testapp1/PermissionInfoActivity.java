@@ -184,8 +184,12 @@ public class PermissionInfoActivity extends ListActivity implements AdapterView.
                     .putExtra(ComponentInfoActivity.EXTRA_COMPONENT_NAME, componentInfo.name)
             );
         } else {
-            PackageInfo packageInfo = mListEntries[listId][positionInSubList];
-            Toast.makeText(this, packageInfo.packageName, Toast.LENGTH_SHORT).show(); // TODO: show package info
+            // Package, show our package info
+            String packageName = mListEntries[listId][positionInSubList].packageName;
+            startActivity(
+                    new Intent(this, AppInfoActivity.class)
+                    .putExtra(AppInfoActivity.EXTRA_PACKAGE_NAME, packageName)
+            );
         }
     }
 
