@@ -72,7 +72,9 @@ public class ProviderInfoActivity extends Activity {
         FormattedTextBuilder text = new FormattedTextBuilder();
 
         // Authority
-        text.appendValue("Authority", mProviderInfo.authority);
+        if (mProviderInfo.authority != null) {
+            text.appendValue("Authority", mProviderInfo.authority);
+        }
 
         // Permissions
         // Description: permission/exported
