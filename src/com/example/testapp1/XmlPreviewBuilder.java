@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.content.res.XmlResourceParser;
 import android.graphics.Color;
+import android.net.Uri;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.method.LinkMovementMethod;
@@ -17,6 +18,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -198,6 +200,38 @@ public class XmlPreviewBuilder {
                                 return;
                             } catch (Resources.NotFoundException ignored) {}
                         }
+
+                        // Another file resource
+                        {
+                            try {
+                                // Check if file can be accessed
+                                xmlOwnerContext.getResources().getAssets().openNonAssetFd(resStringValue).close();
+
+                                // Build an intent to view it
+                                final Intent intent = new Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse(
+                                                "content://" + AssetProvider.AUTHORITY +
+                                                        "/" + xmlOwnerContext.getPackageName() + "/" + resStringValue
+                                        )
+                                );
+
+                                // Get mime type
+                                intent.resolveType(xmlOwnerContext.getContentResolver());
+
+                                // Check if any app can handle this intent and if so display value as link
+                                if (!xmlOwnerContext.getPackageManager().queryIntentActivities(intent, 0).isEmpty()) {
+                                    attr(name, resStringValue, new ClickableSpan() {
+                                        @Override
+                                        public void onClick(View widget) {
+                                            widget.getContext().startActivity(intent);
+                                        }
+                                    });
+                                    return;
+                                } // Otherwise fall through
+                            } catch (IOException ignored) {}
+                        }
+
                         attr(name, resStringValue);
                         return;
                     }

@@ -138,6 +138,9 @@
         </activity>
         <activity android:name=".PermissionInfoActivity"/>
         <activity android:name=".AppInfoActivity"/>
+        <provider
+            android:name=".AssetProvider"
+            android:authorities="intentslab.assetsprovider" />
     </application>
 
 </manifest>
