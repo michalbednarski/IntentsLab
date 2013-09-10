@@ -366,7 +366,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                     setResult(
                             0,
                             new Intent()
-                            .putExtra(EXTRA_FORWARD_RESULT_CODE, -1) // TODO: resultCode
+                            .putExtra(EXTRA_FORWARD_RESULT_CODE, mMethodId)
                             .putExtra(EXTRA_FORWARD_RESULT_INTENT, mEditedIntent)
                     );
                     finish();
@@ -385,7 +385,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
         if (requestCode == REQUEST_CODE_TEST_STARTACTIVITYFORRESULT) {
             // Result of tested startActivityForResult
             if (resultIntent == null) {
-                Toast.makeText(this, getString(R.string.startactivityforresult_no_result), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.startactivityforresult_no_result, resultCode), Toast.LENGTH_SHORT).show();
             } else {
                 AlertDialog.Builder alertBuilder = new AlertDialog.Builder(this)
                     .setMessage(getString(R.string.startactivityforresult_got_result));
@@ -399,6 +399,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                                     new Intent(IntentEditorActivity.this, IntentEditorActivity.class)
                                             .putExtra("intent", resultIntent)
                                             .putExtra(EXTRA_COMPONENT_TYPE, IntentEditorConstants.RESULT)
+                                            .putExtra(EXTRA_METHOD_ID, resultCode)
                                             .putExtra(EXTRA_FORWARD_ABLE_RESULT, true),
                                     REQUEST_CODE_RESULT_INTENT_EDITOR
                             );

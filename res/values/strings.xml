@@ -33,11 +33,11 @@
     <string name="item_value">Value:</string>
     <!-- <string name="title_activity_start">StartActivity</string> -->
 
-    <string name="startactivityforresult_no_result">Activity finished without result</string>
+    <string name="startactivityforresult_no_result">Activity finished without result\nresultCode=%1$d</string>
     <string name="startactivityforresult_got_result">Got activity result</string>
     <string name="startactivityforresult_view_result">View result intent</string>
 
-    <string name="result_intent">Result intent</string>
+    <string name="result_intent">Result intent, resultCode = </string>
     <string name="received_broadcast_result">Received broadcast result</string>
 
     <!-- Attach IntentFilter -->

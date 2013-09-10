@@ -44,6 +44,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     private TextView mComponentText;
     private Spinner mComponentTypeSpinner;
     private Spinner mMethodSpinner;
+    private TextView mResponseCodeTextView;
     private Intent mEditedIntent;
     private UriAutocompleteAdapter mUriAutocompleteAdapter;
 
@@ -83,6 +84,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         mCategoriesContainer = (ViewGroup) v.findViewById(R.id.categories);
         mAddCategoryButton = (Button) v.findViewById(R.id.category_add);
         mCategoriesHeader = v.findViewById(R.id.categories_header);
+        mResponseCodeTextView = (TextView) v.findViewById(R.id.response_code);
 
         // Apparently using android:scrollHorizontally="true" does not work.
         // http://stackoverflow.com/questions/9011944/android-ice-cream-sandwich-edittext-disabling-spell-check-and-word-wrap
@@ -148,7 +150,26 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         mDataText.setText(mEditedIntent.getDataString());
 
         showOrHideFieldsForResultIntent(v);
-        if (getComponentType() != IntentEditorConstants.RESULT) {
+        if (getComponentType() == IntentEditorConstants.RESULT) {
+            mResponseCodeTextView.setText(String.valueOf(getIntentEditor().getMethodId()));
+            mResponseCodeTextView.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    try {
+                        getIntentEditor().setMethodId(Integer.parseInt(s.toString()));
+                        mResponseCodeTextView.setError(null);
+                    } catch (NumberFormatException e) {
+                        mResponseCodeTextView.setError(getIntentEditor().getText(R.string.value_parse_error));
+                    }
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {}
+            });
+        } else {
             initComponentAndMethodSpinners();
         }
 
@@ -612,7 +633,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         v.findViewById(R.id.component_and_method_spinners).setVisibility(isResultIntent ? View.GONE : View.VISIBLE);
         v.findViewById(R.id.component_header).setVisibility(isResultIntent ? View.GONE : View.VISIBLE);
         v.findViewById(R.id.component_field_with_buttons).setVisibility(isResultIntent ? View.GONE : View.VISIBLE);
-        v.findViewById(R.id.result_intent_text).setVisibility(isResultIntent ? View.VISIBLE : View.GONE);
+        v.findViewById(R.id.result_intent_wrapper).setVisibility(isResultIntent ? View.VISIBLE : View.GONE);
     }
 
     @Override
