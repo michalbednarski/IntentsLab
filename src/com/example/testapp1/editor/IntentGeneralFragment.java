@@ -112,6 +112,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         v.findViewById(R.id.data_query_button).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
+                getIntentEditor().updateIntent();
                 startActivity(new Intent(getActivity(), AdvancedQueryActivity.class).setData(mEditedIntent.getData()));
             }
         });
