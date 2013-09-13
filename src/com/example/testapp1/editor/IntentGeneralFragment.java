@@ -10,15 +10,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.LayoutInflater;
-import android.view.View;
+import android.view.*;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 import android.widget.*;
 import android.widget.AdapterView.OnItemSelectedListener;
 import com.example.testapp1.NameAutocompleteAdapter;
 import com.example.testapp1.R;
 import com.example.testapp1.providerlab.AdvancedQueryActivity;
+import com.example.testapp1.providerlab.proxy.ProxyProvider;
+import com.example.testapp1.providerlab.proxy.ProxyProviderForGrantUriPermission;
 import com.example.testapp1.providerlab.UriAutocompleteAdapter;
 
 import java.util.*;
@@ -113,6 +113,34 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(getActivity(), AdvancedQueryActivity.class).setData(mEditedIntent.getData()));
+            }
+        });
+        v.findViewById(R.id.data_query_button).setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
+            @Override
+            public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+                getIntentEditor().updateIntent();
+                final Uri uri = mEditedIntent.getData();
+                if (uri != null) {
+                    final String scheme = uri.getScheme();
+                    final String authority = uri.getAuthority();
+                    if ("content".equals(scheme) && authority != null) {
+                        menu.add("Wrap").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                            @Override
+                            public boolean onMenuItemClick(MenuItem item) {
+                                mDataText.setText(
+                                        "content://" +
+                                        ((mEditedIntent.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION)) != 0 ?
+                                                ProxyProviderForGrantUriPermission.AUTHORITY :
+                                                ProxyProvider.AUTHORITY) +
+                                        "/" +
+                                        authority +
+                                        uri.getPath()
+                                );
+                                return true;
+                            }
+                        });
+                    }
+                }
             }
         });
 

@@ -7,9 +7,14 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.widget.ListView;
 import android.widget.Toast;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -118,5 +123,34 @@ public class Utils {
         if (Build.VERSION.SDK_INT < 11) {
             listView.setBackgroundColor(listView.getResources().getColor(android.R.color.background_light));
         }
+    }
+
+    public static JSONArray toJsonArray(String[] javaArray) {
+        return javaArray == null ? null : new JSONArray(Arrays.asList(javaArray));
+    }
+
+    public static JSONObject contentValuesToJsonObject(ContentValues contentValues) throws JSONException {
+        if (contentValues == null) {
+            return null;
+        }
+        JSONObject jsonObject = new JSONObject();
+        for (String key : getKeySet(contentValues)) {
+            jsonObject.put(key, contentValues.getAsString(key));
+        }
+        return jsonObject;
+    }
+
+    public static ContentValues jsonObjectToContentValues(JSONObject jsonObject) throws JSONException {
+        if (jsonObject == null) {
+            return null;
+        }
+        ContentValues contentValues = new ContentValues();
+        @SuppressWarnings("unchecked")
+        final Iterator<String> iterator = jsonObject.keys();
+        while (iterator.hasNext()) {
+            String key = iterator.next();
+            contentValues.put(key, jsonObject.getString(key));
+        }
+        return contentValues;
     }
 }

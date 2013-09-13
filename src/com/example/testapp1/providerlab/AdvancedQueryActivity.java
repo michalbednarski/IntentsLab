@@ -17,6 +17,9 @@ public class AdvancedQueryActivity extends Activity {
     public static final int METHOD_INSERT = 1;
     public static final int METHOD_UPDATE = 2;
     public static final int METHOD_DELETE = 3;
+    public static final int METHOD_GET_TYPE = 4;
+    public static final int METHOD_OPEN_FILE = 5;
+    public static final int METHOD_OPEN_ASSET_FILE = 6;
     private static final String[] METHOD_NAMES = new String[]{
             "query",
             "insert",

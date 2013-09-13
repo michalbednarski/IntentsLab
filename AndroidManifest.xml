@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
           package="com.example.testapp1"
           android:versionCode="1"
           android:versionName="1.0">
@@ -145,6 +146,17 @@
         <provider
             android:name=".AssetProvider"
             android:authorities="intentslab.assetsprovider" />
+        <provider
+            android:name=".providerlab.proxy.ProxyProvider"
+            android:authorities="intentslab.proxyprovider"
+            android:exported="true"
+            tools:ignore="ExportedContentProvider"/>
+        <provider
+            android:name=".providerlab.proxy.ProxyProviderForGrantUriPermission"
+            android:authorities="intentslab.proxyprovider.forgranturipermission"
+            android:exported="false"
+            android:grantUriPermissions="true"/>
+        <activity android:name=".providerlab.proxy.LogViewerActivity" />
     </application>
 
 </manifest>

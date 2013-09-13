@@ -208,5 +208,8 @@
     <string name="permission_denied_to">Denied to</string>
     <string name="permission_enforcing_components">Components declaratively enforcing this permission</string>
     <string name="preparing_xml">Parsing and rebuilding XML...</string>
+    <string name="proxy_log_empty">Log is empty, long press \"...\" button near \"Data (URI)\" in intent editor field
+        and use \"Wrap\" option
+    </string>
 
 </resources>

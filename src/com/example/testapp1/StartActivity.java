@@ -15,6 +15,7 @@ import com.example.testapp1.browser.BrowseComponentsActivity;
 import com.example.testapp1.editor.IntentEditorActivity;
 import com.example.testapp1.editor.IntentEditorInterceptedActivity;
 import com.example.testapp1.providerlab.AdvancedQueryActivity;
+import com.example.testapp1.providerlab.proxy.LogViewerActivity;
 
 public class StartActivity extends Activity {
 
@@ -39,6 +40,14 @@ public class StartActivity extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.activity_start, menu);
+        // TODO: move to menu resource
+        menu.add("Proxy log (experimental)").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                startActivity(new Intent(StartActivity.this, LogViewerActivity.class));
+                return true;
+            }
+        });
         return true;
     }
 
