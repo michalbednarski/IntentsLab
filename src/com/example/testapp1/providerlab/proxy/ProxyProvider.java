@@ -13,6 +13,7 @@ import android.os.ParcelFileDescriptor;
 import com.example.testapp1.providerlab.AdvancedQueryActivity;
 
 import java.io.FileNotFoundException;
+import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +22,12 @@ import java.util.regex.Pattern;
  */
 public class ProxyProvider extends ContentProvider {
     public static final String AUTHORITY = "intentslab.proxyprovider";
+
+    private static HashSet<String> DISALLOWED_AUTHORITIES = new HashSet<String>();
+    static {
+        DISALLOWED_AUTHORITIES.add(ProxyProvider.AUTHORITY);
+        DISALLOWED_AUTHORITIES.add(ProxyProviderForGrantUriPermission.AUTHORITY);
+    }
 
     private enum PermissionEnforcement {
         ENFORCE_READ,
@@ -43,6 +50,11 @@ public class ProxyProvider extends ContentProvider {
         final String authority = matcher.group(1);
         final String path = matcher.group(2);
         Uri unwrappedUri = Uri.parse("content://" + authority + path);
+
+        // Check blacklist
+        if (DISALLOWED_AUTHORITIES.contains(authority)) {
+            throw new SecurityException("Not allowed to proxy to " + authority);
+        }
 
         // Check permissions
         final boolean isUnprotected = shouldSkipPermissionChecks() || enforcement == PermissionEnforcement.UNPROTECTED;
