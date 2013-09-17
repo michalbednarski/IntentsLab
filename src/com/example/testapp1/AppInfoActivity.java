@@ -16,7 +16,7 @@ public class AppInfoActivity extends FragmentTabsActivity implements AppComponen
         try {
             final PackageManager packageManager = getPackageManager();
             final CharSequence packageLabel = packageManager.getPackageInfo(packageName, 0).applicationInfo.loadLabel(packageManager);
-            setTitle(packageLabel + " (" + packageName + ")");
+            setTitle(packageLabel);
         } catch (Exception e) {
             setTitle(packageName);
         }
