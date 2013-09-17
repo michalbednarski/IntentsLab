@@ -18,7 +18,6 @@
         <activity android:name=".StartActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
@@ -35,7 +34,7 @@
         </activity>
         <activity
             android:name=".browser.BrowseComponentsActivity"
-            android:label="@string/browse_components">"/>
+            android:label="@string/browse_components">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.testapp1.StartActivity"/>
@@ -95,7 +94,7 @@
                 <action android:name="android.intent.action.ATTACH_DATA"/>
                 <action android:name="android.intent.action.BUG_REPORT"/>
                 <action android:name="android.intent.action.CALL_BUTTON"/>
-                <action android:name="android.intent.action.CREATE_SHORTCUT" />
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
                 <action android:name="android.intent.action.MAIN"/>
                 <action android:name="android.intent.action.MANAGE_NETWORK_USAGE"/>
                 <action android:name="android.intent.action.MANAGE_PACKAGE_STORAGE"/>
@@ -138,14 +137,15 @@
                 <category android:name="android.intent.category.OPENABLE"/>
                 <category android:name="android.intent.category.SELECTED_ALTERNATIVE"/>
 
-                <data android:mimeType="*/*" />
+                <data android:mimeType="*/*"/>
             </intent-filter>
         </activity>
         <activity android:name=".PermissionInfoActivity"/>
         <activity android:name=".AppInfoActivity"/>
+
         <provider
             android:name=".AssetProvider"
-            android:authorities="intentslab.assetsprovider" />
+            android:authorities="intentslab.assetsprovider"/>
         <provider
             android:name=".providerlab.proxy.ProxyProvider"
             android:authorities="intentslab.proxyprovider"
@@ -156,7 +156,8 @@
             android:authorities="intentslab.proxyprovider.forgranturipermission"
             android:exported="false"
             android:grantUriPermissions="true"/>
-        <activity android:name=".providerlab.proxy.LogViewerActivity" />
+
+        <activity android:name=".providerlab.proxy.LogViewerActivity"/>
     </application>
 
 </manifest>
