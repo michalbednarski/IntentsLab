@@ -16,6 +16,9 @@ import com.example.testapp1.editor.IntentEditorActivity;
 import com.example.testapp1.editor.IntentEditorInterceptedActivity;
 import com.example.testapp1.providerlab.AdvancedQueryActivity;
 import com.example.testapp1.providerlab.proxy.LogViewerActivity;
+import com.example.testapp1.runas.RemoteEntryPoint;
+
+import java.io.IOException;
 
 public class StartActivity extends Activity {
 
@@ -45,6 +48,18 @@ public class StartActivity extends Activity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 startActivity(new Intent(StartActivity.this, LogViewerActivity.class));
+                return true;
+            }
+        });
+        menu.add("RunAs install (experimental)").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                try {
+                    RemoteEntryPoint.install(StartActivity.this);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    throw new RuntimeException(e);
+                }
                 return true;
             }
         });
