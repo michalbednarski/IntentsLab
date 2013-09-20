@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextUtils;
 import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -98,6 +99,14 @@ public class NameAutocompleteAdapter extends BaseAdapter implements Filterable {
 
         @Override
         protected FilterResults performFiltering(CharSequence constraint) {
+            if (TextUtils.isEmpty(constraint)) {
+                // Return empty results
+                FilterResults wrappedResults = new FilterResults();
+                wrappedResults.values = null;
+                wrappedResults.count = 0;
+                return wrappedResults;
+            }
+
             // Load names from resource
             if (mNames == null) { // Check first outside synchronized for performance since we don't lock it for reading
                 synchronized (mResourceLoadLock) {
