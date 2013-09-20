@@ -16,6 +16,8 @@ import com.example.testapp1.SavedItemsDatabase;
 import com.example.testapp1.Utils;
 import com.example.testapp1.browser.ComponentInfoActivity;
 import com.example.testapp1.browser.ExtendedPackageInfo;
+import com.example.testapp1.runas.IRemoteInterface;
+import com.example.testapp1.runas.RunAsManager;
 import com.example.testapp1.valueeditors.Editor;
 
 import java.util.ArrayList;
@@ -296,13 +298,18 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
 
     public void runIntent() {
         updateIntent();
+        IRemoteInterface remoteInterface = RunAsManager.getSelectedRemoteInterface();
         try {
             switch (getComponentType()) {
 
                 case IntentEditorConstants.ACTIVITY:
                     switch (getMethodId()) {
                         case IntentEditorConstants.ACTIVITY_METHOD_STARTACTIVITY:
-                            startActivity(mEditedIntent);
+                            if (remoteInterface != null) {
+                                remoteInterface.startActivity(mEditedIntent);
+                            } else {
+                                startActivity(mEditedIntent);
+                            }
                             break;
                         case IntentEditorConstants.ACTIVITY_METHOD_STARTACTIVITYFORRESULT:
                             startActivityForResult(mEditedIntent, REQUEST_CODE_TEST_STARTACTIVITYFORRESULT);

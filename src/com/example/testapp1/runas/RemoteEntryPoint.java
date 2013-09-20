@@ -30,6 +30,10 @@ public class RemoteEntryPoint {
             ActivityManagerWrapper.get().sendOrderedBroadcast(initBroadcastIntent, new RealIIntentReceiver() {
                 @Override
                 public void performReceive(Intent intent, int resultCode, String data, Bundle extras, boolean ordered) {
+                    // Debugging
+                    System.out.print("extras=");
+                    System.out.println(extras);
+
                     // Get remote request interface
                     final IBinder requestBinder = (IBinder) extras.get(RunAsInitReceiver.RESULT_EXTRA_REMOTE_INTERFACE_REQUEST);
 
@@ -39,6 +43,7 @@ public class RemoteEntryPoint {
                             @Override
                             public void binderDied() {
                                 synchronized (exitLock) {
+                                    System.out.println("=> UI disconnected");
                                     exitLock.notify();
                                 }
                             }

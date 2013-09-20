@@ -6,5 +6,5 @@ package com.example.testapp1.runas;
  * Note: This interface is used only for internal IPC and doesn't have to be backward-compatible
  */
 interface IRemoteInterface {
-    void nop();
+    void startActivity(in Intent intent);
 }

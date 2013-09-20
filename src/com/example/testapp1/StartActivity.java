@@ -17,6 +17,7 @@ import com.example.testapp1.editor.IntentEditorInterceptedActivity;
 import com.example.testapp1.providerlab.AdvancedQueryActivity;
 import com.example.testapp1.providerlab.proxy.LogViewerActivity;
 import com.example.testapp1.runas.RemoteEntryPoint;
+import com.example.testapp1.runas.RunAsInitReceiver;
 
 import java.io.IOException;
 
@@ -60,6 +61,20 @@ public class StartActivity extends Activity {
                     e.printStackTrace();
                     throw new RuntimeException(e);
                 }
+                return true;
+            }
+        });
+        menu.add("RunAs local (experimental)").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                (new Thread() {
+                    @Override
+                    public void run() {
+                        RemoteEntryPoint.main(new String[] {
+                                new ComponentName(StartActivity.this, RunAsInitReceiver.class).flattenToShortString()
+                        });
+                    }
+                }).start();
                 return true;
             }
         });
