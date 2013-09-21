@@ -149,12 +149,20 @@
             android:name=".providerlab.proxy.ProxyProvider"
             android:authorities="intentslab.proxyprovider"
             android:exported="true"
-            tools:ignore="ExportedContentProvider"/>
+            tools:ignore="ExportedContentProvider">
+            <meta-data
+                android:name="intentslab.disallowproxy"
+                android:value="true" />
+        </provider>
         <provider
             android:name=".providerlab.proxy.ProxyProviderForGrantUriPermission"
             android:authorities="intentslab.proxyprovider.forgranturipermission"
             android:exported="false"
-            android:grantUriPermissions="true"/>
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="intentslab.disallowproxy"
+                android:value="true" />
+        </provider>
 
         <activity android:name=".providerlab.proxy.LogViewerActivity"/>
         <receiver
