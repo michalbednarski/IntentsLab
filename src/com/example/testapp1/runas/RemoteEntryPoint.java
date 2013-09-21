@@ -3,13 +3,17 @@ package com.example.testapp1.runas;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import com.example.testapp1.Utils;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+
+import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 
 /**
  * Entry point for remote process of RunAs mode
@@ -77,6 +81,23 @@ public class RemoteEntryPoint {
 
     public static File getScriptFile(Context context) {
         return new File(context.getFilesDir().getParentFile(), "rr");
+    }
+
+    public static void ensureInstalled(Context context) {
+        int checksum = context.getPackageCodePath().hashCode();
+        final SharedPreferences preferences = getDefaultSharedPreferences(context);
+        if (preferences.getInt("runAsModeInstallationChecksum", 0) != checksum) {
+            try {
+                install(context);
+                Utils.applyOrCommitPrefs(
+                    preferences
+                        .edit()
+                        .putInt("runAsModeInstallationChecksum", checksum)
+                );
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public static void install(Context context) throws IOException {

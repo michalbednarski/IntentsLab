@@ -37,6 +37,8 @@ public class StartActivity extends Activity {
             SavedItemsDatabase.getInstance(this).lazyAttachListAdapter(savedItemsList);
         }
 
+        RemoteEntryPoint.ensureInstalled(this);
+
         // Intercept Intent Activity
         mInterceptActivityComponentName = new ComponentName(this, IntentEditorInterceptedActivity.class);
     }
@@ -49,18 +51,6 @@ public class StartActivity extends Activity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 startActivity(new Intent(StartActivity.this, LogViewerActivity.class));
-                return true;
-            }
-        });
-        menu.add("RunAs install (experimental)").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                try {
-                    RemoteEntryPoint.install(StartActivity.this);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    throw new RuntimeException(e);
-                }
                 return true;
             }
         });
