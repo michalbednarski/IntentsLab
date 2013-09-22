@@ -1,5 +1,6 @@
 package com.example.testapp1.runas;
 
+import android.app.IActivityController;
 import android.content.IIntentReceiver;
 import android.content.Intent;
 import android.net.Uri;
@@ -23,6 +24,7 @@ class ActivityManagerWrapper {
 
     private final CrossVersionReflectedMethod mStartActivityMethod;
     private final CrossVersionReflectedMethod mBroadcastIntentMethod;
+    private final CrossVersionReflectedMethod mSetActivityControllerMethod;
 
 
 
@@ -150,6 +152,12 @@ class ActivityManagerWrapper {
                         boolean.class,              "serialized",       false,
                         boolean.class,              "sticky",           false
                     );
+            mSetActivityControllerMethod =
+                    new CrossVersionReflectedMethod(mAmClass)
+                    .tryMethodVariant(
+                            "setActivityController",
+                            IActivityController.class, "watcher", null
+                    );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -182,5 +190,14 @@ class ActivityManagerWrapper {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
+    }
+
+    boolean setActivityController(IActivityController controller) {
+        try {
+            mSetActivityControllerMethod.invoke(mAm, "watcher", controller);
+        } catch (InvocationTargetException e) {
+            return false;
+        }
+        return true;
     }
 }

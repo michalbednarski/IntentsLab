@@ -170,6 +170,9 @@
             android:exported="true"
             android:label="Run-As mode internal BroadcastReceiver"
             tools:ignore="ExportedReceiver"/>
+
+        <activity android:name=".ActivityMonitorActivity"/>
+        <service android:name=".ActivityMonitorActivity$ActivityRecorderService" />
     </application>
 
 </manifest>

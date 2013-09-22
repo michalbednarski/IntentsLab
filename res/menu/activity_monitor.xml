@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/end_recording"
+        android:title="End recording"
+        android:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/save"
+        android:title="Save list"
+        android:showAsAction="ifRoom" />
+</menu>

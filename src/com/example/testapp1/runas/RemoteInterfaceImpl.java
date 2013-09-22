@@ -1,5 +1,6 @@
 package com.example.testapp1.runas;
 
+import android.app.IActivityController;
 import android.content.Intent;
 import android.os.RemoteException;
 
@@ -13,5 +14,10 @@ class RemoteInterfaceImpl extends IRemoteInterface.Stub {
         ActivityManagerWrapper.get().startActivity(
                 "intent", intent
         );
+    }
+
+    @Override
+    public void setActivityController(IActivityController controller) throws RemoteException {
+        ActivityManagerWrapper.get().setActivityController(controller);
     }
 }

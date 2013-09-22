@@ -154,4 +154,21 @@ public class RunAsManager {
         }
         return sRemoteInterfaces.get((int) sSelectedId);
     }
+
+    public static IRemoteInterface getRemoteInterfaceForSystemDebuggingCommands() {
+        // Try to get remote interface running as shell (adb)
+        IRemoteInterface shellRemoteInterface = sRemoteInterfaces.get(2000);
+        if (shellRemoteInterface != null && shellRemoteInterface.asBinder().isBinderAlive()) {
+            return shellRemoteInterface;
+        }
+
+        // Try to get remote interface running as root
+        IRemoteInterface rootRemoteInterface = sRemoteInterfaces.get(0);
+        if (rootRemoteInterface != null && rootRemoteInterface.asBinder().isBinderAlive()) {
+            return rootRemoteInterface;
+        }
+
+        // Neither exists nor is alive
+        return null;
+    }
 }

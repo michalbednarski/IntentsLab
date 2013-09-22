@@ -19,8 +19,6 @@ import com.example.testapp1.providerlab.proxy.LogViewerActivity;
 import com.example.testapp1.runas.RemoteEntryPoint;
 import com.example.testapp1.runas.RunAsInitReceiver;
 
-import java.io.IOException;
-
 public class StartActivity extends Activity {
 
     private ComponentName mInterceptActivityComponentName;
@@ -65,6 +63,13 @@ public class StartActivity extends Activity {
                         });
                     }
                 }).start();
+                return true;
+            }
+        });
+        menu.add("Activity Monitor (experimental)").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                startActivity(new Intent(StartActivity.this, ActivityMonitorActivity.class));
                 return true;
             }
         });

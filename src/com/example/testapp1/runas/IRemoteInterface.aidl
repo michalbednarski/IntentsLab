@@ -1,5 +1,7 @@
 package com.example.testapp1.runas;
 
+import android.app.IActivityController;
+
 /**
  * Interface exposed by remote process for invoking methods on behalf of it from UI
  *
@@ -7,4 +9,6 @@ package com.example.testapp1.runas;
  */
 interface IRemoteInterface {
     void startActivity(in Intent intent);
+
+    void setActivityController(IActivityController controller);
 }
