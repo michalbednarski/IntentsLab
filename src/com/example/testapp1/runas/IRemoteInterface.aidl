@@ -1,5 +1,6 @@
 package com.example.testapp1.runas;
 
+//import java.lang.Throwable;
 import android.app.IActivityController;
 
 /**
@@ -8,7 +9,7 @@ import android.app.IActivityController;
  * Note: This interface is used only for internal IPC and doesn't have to be backward-compatible
  */
 interface IRemoteInterface {
-    void startActivity(in Intent intent);
+    Bundle startActivity(in Intent intent, IBinder token, int requestCode);
 
     void setActivityController(IActivityController controller);
 }

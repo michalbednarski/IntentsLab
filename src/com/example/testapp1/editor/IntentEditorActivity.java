@@ -1,11 +1,18 @@
 package com.example.testapp1.editor;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.*;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
@@ -20,6 +27,7 @@ import com.example.testapp1.runas.IRemoteInterface;
 import com.example.testapp1.runas.RunAsManager;
 import com.example.testapp1.valueeditors.Editor;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 /**
@@ -296,6 +304,36 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
         }
     }
 
+    private IBinder getTokenForRemoteInterface() {
+        try {
+            return (IBinder) getClass().getMethod("getActivityToken").invoke(this);
+        } catch (Exception e) {
+            try {
+                final Field field = Activity.class.getDeclaredField("mToken");
+                field.setAccessible(true);
+                return (IBinder) field.get(this);
+            } catch (Exception e2) {
+                return null;
+            }
+        }
+    }
+
+    private void startActivityRemote(IRemoteInterface remoteInterface, boolean forResult) throws Throwable {
+        Bundle result = remoteInterface.startActivity(
+                mEditedIntent,
+                ((mEditedIntent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK) != 0 && !forResult) ?
+                        null :
+                        getTokenForRemoteInterface(),
+                forResult ?
+                        REQUEST_CODE_TEST_STARTACTIVITYFORRESULT :
+                        -1
+        );
+        Throwable exception = (Throwable) result.getSerializable("exception");
+        if (exception != null) {
+            throw exception;
+        }
+    }
+
     public void runIntent() {
         updateIntent();
         IRemoteInterface remoteInterface = RunAsManager.getSelectedRemoteInterface();
@@ -306,13 +344,17 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                     switch (getMethodId()) {
                         case IntentEditorConstants.ACTIVITY_METHOD_STARTACTIVITY:
                             if (remoteInterface != null) {
-                                remoteInterface.startActivity(mEditedIntent);
+                                startActivityRemote(remoteInterface, false);
                             } else {
                                 startActivity(mEditedIntent);
                             }
                             break;
                         case IntentEditorConstants.ACTIVITY_METHOD_STARTACTIVITYFORRESULT:
-                            startActivityForResult(mEditedIntent, REQUEST_CODE_TEST_STARTACTIVITYFORRESULT);
+                            if (remoteInterface != null) {
+                                startActivityRemote(remoteInterface, true);
+                            } else {
+                                startActivityForResult(mEditedIntent, REQUEST_CODE_TEST_STARTACTIVITYFORRESULT);
+                            }
                             break;
                     }
                     break;
@@ -379,7 +421,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                     finish();
                     break;
             }
-        } catch (Exception exception) {
+        } catch (Throwable exception) {
             Utils.toastException(this, exception);
         }
     }

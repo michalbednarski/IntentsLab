@@ -49,11 +49,11 @@ public class Utils {
         return exceptionName + ": " + exception.getMessage();
     }
 
-    public static void toastException(Context context, Exception exception) {
+    public static void toastException(Context context, Throwable exception) {
         toastException(context, null, exception);
     }
 
-    public static void toastException(Context context, String methodName, Exception exception) {
+    public static void toastException(Context context, String methodName, Throwable exception) {
         Toast.makeText(
             context,
             (methodName != null ? methodName + ": " : "") + describeException(exception),

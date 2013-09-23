@@ -170,12 +170,8 @@ class ActivityManagerWrapper {
         return sInstance;
     }
 
-    void startActivity(Object... argumentNamesAndValues) {
-        try {
-            mStartActivityMethod.invoke(mAm, argumentNamesAndValues);
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        }
+    void startActivity(Object... argumentNamesAndValues) throws InvocationTargetException {
+        mStartActivityMethod.invoke(mAm, argumentNamesAndValues);
     }
 
 
