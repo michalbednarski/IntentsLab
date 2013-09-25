@@ -47,6 +47,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     private TextView mResponseCodeTextView;
     private Intent mEditedIntent;
     private UriAutocompleteAdapter mUriAutocompleteAdapter;
+    private TextView mPackageNameText;
 
 
     public IntentGeneralFragment() {
@@ -85,6 +86,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         mAddCategoryButton = (Button) v.findViewById(R.id.category_add);
         mCategoriesHeader = v.findViewById(R.id.categories_header);
         mResponseCodeTextView = (TextView) v.findViewById(R.id.response_code);
+        mPackageNameText = (TextView) v.findViewById(R.id.package_name);
 
         // Apparently using android:scrollHorizontally="true" does not work.
         // http://stackoverflow.com/questions/9011944/android-ice-cream-sandwich-edittext-disabling-spell-check-and-word-wrap
@@ -177,6 +179,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         setupActionSpinnerOrField();
         updateNonActionIntentFilter(true);
         mDataText.setText(mEditedIntent.getDataString());
+        mPackageNameText.setText(mEditedIntent.getPackage());
 
         showOrHideFieldsForResultIntent(v);
         if (getComponentType() == IntentEditorConstants.RESULT) {
@@ -477,6 +480,16 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
                 data.equals("") ? null : Uri.parse(data),
                 getDataType()
         );
+
+        // Package name
+        {
+            String packageName = mPackageNameText.getText().toString();
+            if ("".equals(packageName)) {
+                editedIntent.setPackage(null);
+            } else {
+                editedIntent.setPackage(packageName);
+            }
+        }
 
         // Set component for explicit intent
         updateIntentComponent();
