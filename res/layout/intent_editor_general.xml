@@ -35,7 +35,7 @@
             <view
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                class="com.example.testapp1.runas.RunAsSelectorView"
+                class="com.github.michalbednarski.intentslab.runas.RunAsSelectorView"
                 android:id="@+id/run_as_selector"/>
         </LinearLayout>
 
