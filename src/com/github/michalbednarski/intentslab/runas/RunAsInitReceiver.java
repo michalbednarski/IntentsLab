@@ -31,7 +31,7 @@ public class RunAsInitReceiver extends BroadcastReceiver {
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
-    private static void putBinderInBundle(Bundle bundle, String key, Binder binder) {
+    public static void putBinderInBundle(Bundle bundle, String key, IBinder binder) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
             bundle.putBinder(key, binder);
         } else {

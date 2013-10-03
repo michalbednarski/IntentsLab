@@ -21,10 +21,12 @@ import android.widget.Toast;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.SavedItemsDatabase;
 import com.github.michalbednarski.intentslab.Utils;
+import com.github.michalbednarski.intentslab.bindservice.BindServiceManager;
 import com.github.michalbednarski.intentslab.browser.ComponentInfoActivity;
 import com.github.michalbednarski.intentslab.browser.ExtendedPackageInfo;
 import com.github.michalbednarski.intentslab.runas.IRemoteInterface;
 import com.github.michalbednarski.intentslab.runas.RunAsManager;
+import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
 import com.github.michalbednarski.intentslab.valueeditors.Editor;
 
 import java.lang.reflect.Field;
@@ -406,8 +408,15 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                             startService(mEditedIntent);
                             break;
                         default:
+                        {
+                            if (!SandboxManager.isSandboxInstalled(this)) {
+                                SandboxManager.requestSandboxInstall(this);
+                            } else {
+                                BindServiceManager.bindServiceAndShowUI(this, mEditedIntent);
+                            }
+                        }
                             // TODO runIntent bindService
-                            Toast.makeText(this, "Not implemented", Toast.LENGTH_SHORT).show();
+
                     }
                     break;
 
