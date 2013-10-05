@@ -1,28 +1,25 @@
 package com.github.michalbednarski.intentslab.bindservice;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ListView;
 import android.widget.Toast;
-import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
+import com.github.michalbednarski.intentslab.valueeditors.EditorLauncher;
+import com.github.michalbednarski.intentslab.valueeditors.InlineValueEditor;
+import com.github.michalbednarski.intentslab.valueeditors.InlineValueEditorsLayout;
 
 /**
  * Created by mb on 03.10.13.
  */
-public class InvokeAidlMethodDialog extends DialogFragment {
+public class InvokeAidlMethodDialog extends DialogFragment implements EditorLauncher.EditorLauncherCallback {
     private static final String ARG_SERVICE = "bound-service-descriptor";
     private static final String ARG_METHOD_NUMBER = "method-number";
     private static final String STATE_METHOD_ARGUMENTS = "method-arguments";
@@ -30,6 +27,8 @@ public class InvokeAidlMethodDialog extends DialogFragment {
     private IAidlInterface mAidlInterface;
     private final int mMethodNumber;
     private SandboxedMethodArguments mMethodArguments;
+    private EditorLauncher mEditorLauncher;
+    private InlineValueEditor[] mValueEditors;
 
 
     /**
@@ -56,6 +55,13 @@ public class InvokeAidlMethodDialog extends DialogFragment {
     }
 
     @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        mEditorLauncher = new EditorLauncher(getActivity(), "");
+        mEditorLauncher.setCallback(this);
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (mAidlInterface == null) {
@@ -70,16 +76,49 @@ public class InvokeAidlMethodDialog extends DialogFragment {
             dismissAllowingStateLoss();
             return;
         }
+        final int argumentCount = sandboxedMethod.argumentTypes.length;
         if (savedInstanceState != null) {
             mMethodArguments = savedInstanceState.getParcelable(STATE_METHOD_ARGUMENTS);
-            if (mMethodArguments.arguments.length != sandboxedMethod.argumentTypes.length) {
+            if (mMethodArguments.arguments.length != argumentCount) {
                 Log.e("InvokeAidlMethodDialog", "Arguments count changed unexpectedly");
                 dismissAllowingStateLoss();
                 return;
             }
         } else {
-            mMethodArguments = new SandboxedMethodArguments(sandboxedMethod.argumentTypes.length);
+            mMethodArguments = new SandboxedMethodArguments(argumentCount);
         }
+        mValueEditors = new InlineValueEditor[argumentCount];
+        for (int ii = 0; ii < argumentCount; ii++) {
+            Class<?> type;
+            try {
+                type = Class.forName(sandboxedMethod.argumentTypes[ii]);
+            } catch (ClassNotFoundException e) {
+                type = Object.class;
+            }
+            final int i = ii;
+            mValueEditors[ii] = new InlineValueEditor(
+                    type,
+                    "arg" + i,
+                    new InlineValueEditor.ValueAccessors() {
+                        @Override
+                        public Object getValue() {
+                            return mMethodArguments.arguments[i];
+                        }
+
+                        @Override
+                        public void setValue(Object newValue) {
+                            mMethodArguments.arguments[i] = newValue;
+                        }
+
+                        @Override
+                        public void startEditor() {
+                            mEditorLauncher.launchEditor("arg" + i, getValue());
+                        }
+                    }
+            );
+        }
+
+
     }
 
     @Override
@@ -90,10 +129,11 @@ public class InvokeAidlMethodDialog extends DialogFragment {
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
+        InlineValueEditorsLayout editorsLayout = new InlineValueEditorsLayout(getActivity());
+        editorsLayout.setValueEditors(mValueEditors);
+
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        ListView listView = new ListView(getActivity());
-        listView.setAdapter(mAdapter);
-        builder.setView(listView);
+        builder.setView(editorsLayout);
         builder.setPositiveButton("Invoke", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -105,38 +145,10 @@ public class InvokeAidlMethodDialog extends DialogFragment {
 
 
 
-    private final BaseAdapter mAdapter = new BaseAdapter() {
-        @Override
-        public int getCount() {
-            return mMethodArguments.arguments.length;
-        }
-
-        @Override
-        public Object getItem(int position) {
-            return null;
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            if (convertView == null) {
-                convertView = ((LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.strucutre_editor_row_with_button, parent, false);
-            }
-            return convertView;
-        }
-
-        @Override
-        public boolean areAllItemsEnabled() {
-            return false;
-        }
-
-        @Override
-        public boolean isEnabled(int position) {
-            return false;
-        }
-    };
+    @Override
+    public void onEditorResult(String key, Object newValue) {
+        final int i = Integer.parseInt(key.substring(3));
+        mMethodArguments.arguments[i] = newValue;
+        mValueEditors[i].updateTextOnButton();
+    }
 }
