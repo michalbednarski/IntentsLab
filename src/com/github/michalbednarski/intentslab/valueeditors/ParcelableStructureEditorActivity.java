@@ -8,9 +8,8 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.view.*;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.TextView;
 import com.github.michalbednarski.intentslab.FormattedTextBuilder;
 import com.github.michalbednarski.intentslab.R;
@@ -30,8 +29,6 @@ import static com.github.michalbednarski.intentslab.FormattedTextBuilder.ValueSe
  * Activity for editing general parcelable class
  */
 public class ParcelableStructureEditorActivity extends FragmentActivity implements EditorLauncher.EditorLauncherCallback {
-    private static final int REQUEST_CODE_EDITOR = 0;
-
     private static final String STATE_SHOW_NON_PUBLIC_FIELDS = "ParcelableStructureEditorActivity.showNonPublicFields";
     private static final String STATE_MODIFIED = "ParcelableStructureEditorActivity.modified";
 
@@ -40,8 +37,8 @@ public class ParcelableStructureEditorActivity extends FragmentActivity implemen
     private boolean mShowNonPublicFields = false;
     private boolean mModified = false;
 
-
-
+    private HashMap<String, InlineValueEditor> mValueEditors;
+    private InlineValueEditorsLayout mInlineValueEditorsLayout;
 
 
     public void onCreate(Bundle savedInstanceState) {
@@ -61,32 +58,77 @@ public class ParcelableStructureEditorActivity extends FragmentActivity implemen
         }
         assert mObject != null;
 
-        // Prepare layout
-        setContentView(R.layout.strucutre_editor_wrapper);
-        ViewGroup layout = (ViewGroup) findViewById(R.id.wrapper);
-
+        // Get class
         Class<? extends Parcelable> aClass = mObject.getClass();
 
         // Prepare field editors
+        mValueEditors = new HashMap<String, InlineValueEditor>();
+        ArrayList<InlineValueEditor> valueEditors = new ArrayList<InlineValueEditor>();
+
         for (Class fieldsClass = aClass; fieldsClass != null; fieldsClass = fieldsClass.getSuperclass()) {
-            for (Field field : fieldsClass.getDeclaredFields()) {
+            for (final Field field : fieldsClass.getDeclaredFields()) {
                 int modifiers = field.getModifiers();
 
 
                 if (
-                        (modifiers & Modifier.STATIC) == 0 && // Not static field
-                        !mFieldEditHashMap.containsKey(field.getName()) // Not scanned already
+                        !Modifier.isStatic(modifiers) && // Not static field
+                        !mValueEditors.containsKey(field.getName()) // Not scanned already
                         ) {
-                    FieldEdit fieldEdit = new FieldEdit(field);
-                    layout.addView(fieldEdit.mView); // Add field to layout
+
+
+
+
+                    // Set flag if there are non-public fields
+                    boolean isPublic = Modifier.isPublic(modifiers);
+                    if (!isPublic) {
+                        mHasNonPublicFields = true;
+                        field.setAccessible(true);
+                    }
+
+                    // Create an editor object
+                    InlineValueEditor editor = new InlineValueEditor(
+                            field.getType(),
+                            field.getName(),
+                            !isPublic,
+                            new InlineValueEditor.ValueAccessors() {
+                                @Override
+                                public Object getValue() {
+                                    try {
+                                        return field.get(mObject);
+                                    } catch (IllegalAccessException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                }
+
+                                @Override
+                                public void setValue(Object newValue) {
+                                    try {
+                                        field.set(mObject, newValue);
+                                    } catch (IllegalAccessException e) {
+                                        throw new RuntimeException(e);
+                                    }
+                                    markModified();
+                                    invokeGetters();
+                                }
+
+                                @Override
+                                public void startEditor() {
+                                    mEditorLauncher.launchEditor(field.getName(), getValue());
+                                }
+                            }
+                    );
+
+                    // Register editor
+                    mValueEditors.put(field.getName(), editor);
+                    valueEditors.add(editor);
+
+
                 }
             }
         }
 
-
         // Prepare getters TextView
         mGettersOutput = new TextView(this);
-        layout.addView(mGettersOutput);
 
         // List getters
         final Pattern getterPattern = Pattern.compile("(?!getClass$)(is|get)[A-Z].*");
@@ -100,8 +142,15 @@ public class ParcelableStructureEditorActivity extends FragmentActivity implemen
             }
         }
 
-        // invoke getters
+        // Invoke getters
         invokeGetters();
+
+        // Set up final layout
+        mInlineValueEditorsLayout = new InlineValueEditorsLayout(this);
+        mInlineValueEditorsLayout.setValueEditors(valueEditors.toArray(new InlineValueEditor[valueEditors.size()]));
+        mInlineValueEditorsLayout.addHeaderOrFooter(mGettersOutput);
+        mInlineValueEditorsLayout.setHiddenEditorsVisible(mShowNonPublicFields);
+        setContentView(mInlineValueEditorsLayout);
     }
 
     @Override
@@ -149,9 +198,7 @@ public class ParcelableStructureEditorActivity extends FragmentActivity implemen
         switch (item.getItemId()) {
             case R.id.show_non_public_fields:
                 mShowNonPublicFields = !mShowNonPublicFields;
-                for (FieldEdit fieldEdit : mFieldEditHashMap.values()) {
-                    fieldEdit.showOrHide();
-                }
+                mInlineValueEditorsLayout.setHiddenEditorsVisible(mShowNonPublicFields);
                 ActivityCompat.invalidateOptionsMenu(this);
                 return true;
             case R.id.discard:
@@ -185,228 +232,14 @@ public class ParcelableStructureEditorActivity extends FragmentActivity implemen
     @Override
     public void onEditorResult(String key, Object newValue) {
         try {
-            FieldEdit fieldEdit = mFieldEditHashMap.get(key);
-            fieldEdit.mField.set(mObject, newValue);
+            final InlineValueEditor valueEditor = mValueEditors.get(key);
+            valueEditor.getAccessors().setValue(newValue);
+            valueEditor.updateTextOnButton();
             markModified();
-            fieldEdit.updateText();
             invokeGetters();
         } catch (Exception e) {
             e.printStackTrace();
             Utils.toastException(this, "Field.set", e);
-        }
-    }
-
-    // Field name to FieldEdit wrapper map
-    private HashMap<String, FieldEdit> mFieldEditHashMap = new HashMap<String, FieldEdit>();
-
-    private class FieldEdit implements View.OnClickListener, TextWatcher {
-        final ViewGroup mView;
-        final Field mField;
-        private final TextView mValueTextView;
-        private final boolean mIsPublic;
-        private boolean mUseNullInsteadEmptyString = false;
-
-        FieldEdit(Field field) {
-            // Disable access checks for this field
-            field.setAccessible(true);
-
-            // Store field instance
-            mField = field;
-            mFieldEditHashMap.put(field.getName(), this);
-
-            // Check if it's public
-            mIsPublic = (field.getModifiers() & Modifier.PUBLIC) != 0;
-            if (!mIsPublic) {
-                // and if it's not set flag that there are non-public fields
-                mHasNonPublicFields = true;
-            }
-
-            // Check if value is string-like,
-            // that is can be edited inline in EditText
-            boolean isStringLike =
-                    field.getType() == String.class ||
-                    field.getType() == Byte.TYPE ||
-                    field.getType() == Character.TYPE ||
-                    field.getType() == Short.TYPE ||
-                    field.getType() == Integer.TYPE ||
-                    field.getType() == Long.TYPE ||
-                    field.getType() == Float.TYPE ||
-                    field.getType() == Double.TYPE;
-
-            // Inflate table row
-            mView = (ViewGroup) getLayoutInflater().inflate(
-                    isStringLike ?
-                            R.layout.structure_editor_row_with_textfield :
-                            R.layout.strucutre_editor_row_with_button,
-                    null
-            );
-
-            // Fill header (name) text
-            TextView headerText = (TextView) mView.findViewById(R.id.header);
-            headerText.setText(field.getName() + ": ");
-
-            // Find value TextView/Button
-            mValueTextView = (TextView) mView.findViewById(R.id.value);
-
-            // Prepare value text
-            updateText();
-
-            // Hide by default if this isn't public field
-            showOrHide();
-
-            // Bind events
-            if (isStringLike) {
-                mValueTextView.addTextChangedListener(this);
-
-                // Empty string/null switching
-                if (field.getType() == String.class) {
-                    mValueTextView.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
-                        @Override
-                        public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-                            if (mValueTextView.getText().length() == 0) {
-                                final boolean useNull = !mUseNullInsteadEmptyString;
-                                menu.add(useNull ? getString(R.string.set_to_null) : getString(R.string.set_to_empty_string)).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-                                    @Override
-                                    public boolean onMenuItemClick(MenuItem item) {
-                                        try {
-                                            mField.set(mObject, useNull ? null : "");
-                                        } catch (IllegalAccessException e) {
-                                            throw new RuntimeException(e);
-                                        }
-                                        markModified();
-                                        updateText();
-                                        return true;
-                                    }
-                                });
-                            }
-                        }
-                    });
-                }
-            } else {
-                mValueTextView.setOnClickListener(this);
-            }
-
-        }
-
-        /**
-         * Update text displayed on Button or EditText
-         * based on field value
-         */
-        void updateText() {
-            try {
-                Object value = mField.get(mObject);
-                if (mField.getType() == String.class) {
-                    if (value == null) {
-                        value = "";
-                        mUseNullInsteadEmptyString = true;
-                    } else if ("".equals(value)) {
-                        mUseNullInsteadEmptyString = false;
-                    }
-                    mValueTextView.setHint(mUseNullInsteadEmptyString ? "null" : "\"\"");
-                }
-                mValueTextView.setText(value + "");
-            } catch (IllegalAccessException e) {
-                // Shouldn't happen, we make all field accessible
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Override // For non-EditText types
-        public void onClick(View v) {
-
-            try {
-                if (mField.getType() == Boolean.TYPE) {
-                    // Booleans are primitives, so they cannot be handled by EditorLauncher
-                    mField.setBoolean(mObject, !mField.getBoolean(mObject));
-                    markModified();
-                    updateText();
-                    invokeGetters();
-                } else {
-                    // Non-primitive non-string-like types are handled by EditorLauncher
-                    mEditorLauncher.launchEditor(mField.getName(), mField.get(mObject));
-                }
-            } catch (IllegalAccessException e) {
-                //e.printStackTrace();
-                throw new RuntimeException(e);
-            }
-        }
-
-        /**
-         * Update field value based on text
-         *
-         * This is used for String and primitive types except boolean
-         */
-        private void updateValueFromText() {
-            String value = mValueTextView.getText().toString();
-            Class type = mField.getType();
-            try {
-                // Convert to right type and set field value
-                if (type == String.class) {
-                    // String (may be null)
-                    if (mUseNullInsteadEmptyString && "".equals(value)) {
-                        value = null;
-                    }
-                    mField.set(mObject, value);
-                } else if (type == Byte.TYPE) {
-                    mField.setByte(mObject, Byte.parseByte(value));
-                } else if (type == Character.TYPE) {
-                    // Character
-                    if (value.length() == 1) {
-                        mField.setChar(mObject, value.charAt(0));
-                    } else {
-                        throw new NumberFormatException(); // TODO: report wrong length instead generic parse error
-                    }
-                } else if (type == Short.TYPE) {
-                    mField.setShort(mObject, Short.parseShort(value));
-                } else if (type == Integer.TYPE) {
-                    mField.setInt(mObject, Integer.parseInt(value));
-                } else if (type == Long.TYPE) {
-                    mField.setLong(mObject, Long.parseLong(value));
-                } else if (type == Float.TYPE) {
-                    mField.setFloat(mObject, Float.parseFloat(value));
-                } else if (type == Double.TYPE) {
-                    mField.setDouble(mObject, Double.parseDouble(value));
-                }
-            } catch (NumberFormatException e) {
-
-                // Set error message for text field
-                mValueTextView.setError(getString(R.string.value_parse_error));
-                return;
-            } catch (Exception e) {
-
-                // Shouldn't happen
-                throw new RuntimeException(e);
-            }
-
-            // Nothing was thrown
-            // Set modified flag
-            markModified();
-
-            // Clear error
-            mValueTextView.setError(null);
-
-            // Update getter values
-            invokeGetters();
-        }
-
-        @Override
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-        @Override
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-            updateValueFromText();
-        }
-
-        @Override
-        public void afterTextChanged(Editable s) {}
-
-        /**
-         * Show or hide this field edit
-         *
-         * Field will be hidden if it's not public and "show non-public fields" is off
-         */
-        void showOrHide() {
-            mView.setVisibility(mIsPublic || mShowNonPublicFields ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -451,7 +284,6 @@ public class ParcelableStructureEditorActivity extends FragmentActivity implemen
         // Show results in EditText
         mGettersOutput.setText(ftb.getText());
     }
-
 
 
     // Starting this editor from other types
