@@ -45,14 +45,7 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
                     SandboxedMethod sandboxedMethod = new SandboxedMethod();
                     sandboxedMethod.methodNumber = sandboxedMethods.size();
                     sandboxedMethod.name = method.getName();
-
-                    final Class<?>[] parameterTypes = method.getParameterTypes();
-                    sandboxedMethod.argumentTypes = new String[parameterTypes.length];
-                    sandboxedMethod.argumentTypesFlags = new byte[parameterTypes.length];
-                    for (int i = 0; i < parameterTypes.length; i++) {
-                        sandboxedMethod.argumentTypes[i] = parameterTypes[i].getName();
-                        sandboxedMethod.argumentTypesFlags[i] = 0;
-                    }
+                    sandboxedMethod.argumentTypes = method.getParameterTypes();
 
                     sandboxedMethods.add(sandboxedMethod);
                     filteredMethods.add(method);

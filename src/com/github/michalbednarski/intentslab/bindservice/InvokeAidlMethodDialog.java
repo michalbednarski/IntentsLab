@@ -89,12 +89,7 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
         }
         mValueEditors = new InlineValueEditor[argumentCount];
         for (int ii = 0; ii < argumentCount; ii++) {
-            Class<?> type;
-            try {
-                type = Class.forName(sandboxedMethod.argumentTypes[ii]);
-            } catch (ClassNotFoundException e) {
-                type = Object.class;
-            }
+            Class<?> type = sandboxedMethod.argumentTypes[ii];
             final int i = ii;
             mValueEditors[ii] = new InlineValueEditor(
                     type,
