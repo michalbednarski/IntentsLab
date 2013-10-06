@@ -14,6 +14,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.Utils;
+import com.github.michalbednarski.intentslab.valueeditors.framework.Editor;
+import com.github.michalbednarski.intentslab.valueeditors.framework.ValueEditorDialogFragment;
 
 import java.lang.reflect.InvocationTargetException;
 

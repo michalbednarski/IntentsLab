@@ -6,11 +6,13 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.widget.ListView;
 import com.github.michalbednarski.intentslab.editor.BundleAdapter;
+import com.github.michalbednarski.intentslab.valueeditors.framework.Editor;
+import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 
 /**
  * Activity for editing (nested) Bundles
  *
- * @see Editor.EditorActivity
+ * @see com.github.michalbednarski.intentslab.valueeditors.framework.Editor.EditorActivity
  */
 public class BundleEditorActivity extends FragmentActivity {
 

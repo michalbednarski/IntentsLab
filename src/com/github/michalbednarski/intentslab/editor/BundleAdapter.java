@@ -11,7 +11,7 @@ import android.widget.*;
 import android.widget.AdapterView.OnItemClickListener;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.Utils;
-import com.github.michalbednarski.intentslab.valueeditors.EditorLauncher;
+import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

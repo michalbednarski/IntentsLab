@@ -1,4 +1,4 @@
-package com.github.michalbednarski.intentslab.valueeditors;
+package com.github.michalbednarski.intentslab.valueeditors.framework;
 
 import android.content.Context;
 import android.content.Intent;
@@ -7,15 +7,6 @@ import android.content.Intent;
 * Created by mb on 20.06.13.
 */
 public interface Editor {
-    /**
-     * String used as key for edited in activity value
-     *
-     * Being phased out, used only in DialogFragment-based editors but will be moved
-     *
-     * @see EditorActivity
-     */
-    @Deprecated
-    public String EXTRA_KEY = "editor_launcher.activity.key";
 
     /**
      * Intent extra for value passed to and from editor
@@ -55,7 +46,7 @@ public interface Editor {
     /**
      * Pointer to editor implemented in external activity
      *
-     * @see Editor#EXTRA_KEY
+     * @see ValueEditorDialogFragment#EXTRA_KEY
      * @see Editor#EXTRA_VALUE
      */
     public static abstract class EditorActivity implements Editor {

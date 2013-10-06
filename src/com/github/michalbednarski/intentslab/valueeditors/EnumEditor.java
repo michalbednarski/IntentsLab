@@ -5,6 +5,8 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import com.github.michalbednarski.intentslab.Utils;
+import com.github.michalbednarski.intentslab.valueeditors.framework.Editor;
+import com.github.michalbednarski.intentslab.valueeditors.framework.ValueEditorDialogFragment;
 
 /**
  * Generic enum editor

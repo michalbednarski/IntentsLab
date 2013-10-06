@@ -27,7 +27,7 @@ import com.github.michalbednarski.intentslab.browser.ExtendedPackageInfo;
 import com.github.michalbednarski.intentslab.runas.IRemoteInterface;
 import com.github.michalbednarski.intentslab.runas.RunAsManager;
 import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
-import com.github.michalbednarski.intentslab.valueeditors.Editor;
+import com.github.michalbednarski.intentslab.valueeditors.framework.Editor;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

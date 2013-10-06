@@ -1,4 +1,4 @@
-package com.github.michalbednarski.intentslab.valueeditors;
+package com.github.michalbednarski.intentslab.valueeditors.framework;
 
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +12,10 @@ import android.widget.Toast;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.editor.BundleAdapter;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
+import com.github.michalbednarski.intentslab.valueeditors.BundleEditorActivity;
+import com.github.michalbednarski.intentslab.valueeditors.EnumEditor;
+import com.github.michalbednarski.intentslab.valueeditors.ParcelableStructureEditorActivity;
+import com.github.michalbednarski.intentslab.valueeditors.StringLikeItemEditor;
 
 /**
  * Editor launcher for object editing
@@ -107,7 +111,7 @@ public class EditorLauncher {
     /**
      * Start an editor or show Toast message if no applicable editor is available
      *
-     * Results are returned to {@link com.github.michalbednarski.intentslab.valueeditors.EditorLauncher.EditorLauncherCallback#onEditorResult(String, Object) your onEditorResult method}
+     * Results are returned to {@link EditorLauncher.EditorLauncherCallback#onEditorResult(String, Object) your onEditorResult method}
      *
      * @param key Key/title, will be visible to user, returned intact to onEditorResult
      * @param value Value to be edited
@@ -136,7 +140,7 @@ public class EditorLauncher {
                     // Editor in DialogFragment
                     ValueEditorDialogFragment d = ((Editor.DialogFragmentEditor) editor).getEditorDialogFragment();
                     Bundle args = new Bundle();
-                    args.putString(Editor.EXTRA_KEY, key);
+                    args.putString(ValueEditorDialogFragment.EXTRA_KEY, key);
                     args.putString(Editor.EXTRA_TITLE, title);
                     BundleAdapter.putInBundle(args, Editor.EXTRA_VALUE, value);
                     d.setArguments(args);

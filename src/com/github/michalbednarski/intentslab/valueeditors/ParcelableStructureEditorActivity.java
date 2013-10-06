@@ -14,6 +14,8 @@ import android.widget.TextView;
 import com.github.michalbednarski.intentslab.FormattedTextBuilder;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.Utils;
+import com.github.michalbednarski.intentslab.valueeditors.framework.Editor;
+import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -286,7 +288,7 @@ public class ParcelableStructureEditorActivity extends FragmentActivity implemen
 
 
     // Starting this editor from other types
-    static class LaunchableEditor extends Editor.EditorActivity {
+    public static class LaunchableEditor extends Editor.EditorActivity {
 
         @Override
         public boolean canEdit(Object value) {

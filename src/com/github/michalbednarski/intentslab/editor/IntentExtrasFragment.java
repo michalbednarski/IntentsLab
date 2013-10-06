@@ -6,7 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
-import com.github.michalbednarski.intentslab.valueeditors.EditorLauncher;
+import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 
 public class IntentExtrasFragment extends IntentEditorPanel implements BundleAdapter.BundleAdapterAggregate {
     public IntentExtrasFragment() {}

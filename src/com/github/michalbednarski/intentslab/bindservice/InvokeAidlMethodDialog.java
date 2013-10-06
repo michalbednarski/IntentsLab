@@ -12,7 +12,7 @@ import android.widget.Toast;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
-import com.github.michalbednarski.intentslab.valueeditors.EditorLauncher;
+import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 import com.github.michalbednarski.intentslab.valueeditors.InlineValueEditor;
 import com.github.michalbednarski.intentslab.valueeditors.InlineValueEditorsLayout;
 
