@@ -6,7 +6,7 @@ import android.support.v4.app.DialogFragment;
  * Created by mb on 24.08.13.
  */
 public class ValueEditorDialogFragment extends DialogFragment {
-    protected String getKey() {
+    protected String getTitle() {
         return getArguments().getString(Editor.EXTRA_KEY);
     }
 
@@ -15,6 +15,6 @@ public class ValueEditorDialogFragment extends DialogFragment {
     }
 
     protected void sendResultAndDismiss(Object newValue) {
-        ((EditorLauncher.ActivityHandlingHeadlessFragment) getTargetFragment()).handleDialogResponse(getKey(), newValue);
+        ((EditorLauncher.ActivityHandlingHeadlessFragment) getTargetFragment()).handleDialogResponse(getArguments().getString(Editor.EXTRA_KEY), newValue);
     }
 }

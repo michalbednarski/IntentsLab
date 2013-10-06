@@ -188,7 +188,6 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 setResult(
                         0,
                         new Intent()
-                        .putExtra(Editor.EXTRA_KEY, getIntent().getStringExtra(Editor.EXTRA_KEY))
                         .putExtra(Editor.EXTRA_VALUE, mEditedIntent)
                 );
                 finish();

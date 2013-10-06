@@ -10,12 +10,19 @@ public interface Editor {
     /**
      * String used as key for edited in activity value
      *
-     * Must be echoed back in Activity#setResult()
-     * May be used as title
+     * Being phased out, used only in DialogFragment-based editors but will be moved
      *
      * @see EditorActivity
      */
+    @Deprecated
     public String EXTRA_KEY = "editor_launcher.activity.key";
+
+    /**
+     * Intent extra for value passed to and from editor
+     *
+     * @see EditorActivity
+     */
+    public String EXTRA_TITLE = "editor_launcher.activity.title";
 
     /**
      * Intent extra for value passed to and from editor

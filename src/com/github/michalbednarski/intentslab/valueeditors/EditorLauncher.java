@@ -3,8 +3,11 @@ package com.github.michalbednarski.intentslab.valueeditors;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.util.SparseArray;
 import android.widget.Toast;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.editor.BundleAdapter;
@@ -73,7 +76,7 @@ public class EditorLauncher {
 
 
 
-    private final Fragment mFragment;
+    private final ActivityHandlingHeadlessFragment mFragment;
 
     //private final ActivityResultHandler mActivityResultHandler;
     private EditorLauncherCallback mEditorLauncherCallback = null;
@@ -104,27 +107,37 @@ public class EditorLauncher {
     /**
      * Start an editor or show Toast message if no applicable editor is available
      *
-     * Results are returned to {@link EditorLauncherCallback#onEditorResult(String, Object) your onEditorResult method}
+     * Results are returned to {@link com.github.michalbednarski.intentslab.valueeditors.EditorLauncher.EditorLauncherCallback#onEditorResult(String, Object) your onEditorResult method}
      *
-     * @param key Key, will be visible to user, returned intact to onEditorResult
+     * @param key Key/title, will be visible to user, returned intact to onEditorResult
      * @param value Value to be edited
      */
     public void launchEditor(final String key, Object value) {
+        launchEditor(key, key, value);
+    }
+
+    /**
+     * Start an editor or show Toast message if no applicable editor is available
+     *
+     * Results are returned to {@link EditorLauncherCallback#onEditorResult(String, Object) your onEditorResult method}
+     *
+     * @param key Key, returned to onEditorResult
+     * @param title Title that may be displayed on editor
+     * @param value Value to be edited
+     */
+    public void launchEditor(final String key, String title, Object value) {
         for (Editor editor : EDITOR_REGISTRY) {
             if (editor.canEdit(value)) {
                 if (editor instanceof Editor.EditorActivity) {
                     // Editor in activity
                     Intent editorIntent = ((Editor.EditorActivity) editor).getEditorIntent(mFragment.getActivity());
-                    Bundle untypedExtras = new Bundle();
-                    BundleAdapter.putInBundle(untypedExtras, Editor.EXTRA_VALUE, value);
-                    editorIntent.putExtras(untypedExtras);
-                    editorIntent.putExtra(Editor.EXTRA_KEY, key);
-                    mFragment.startActivityForResult(editorIntent, REQUEST_CODE_EDITOR_LAUNCHER_HEADLESS_FRAGMENT);
+                    mFragment.startEditorInActivity(editorIntent, key, value);
                 } else if (editor instanceof Editor.DialogFragmentEditor) {
                     // Editor in DialogFragment
                     ValueEditorDialogFragment d = ((Editor.DialogFragmentEditor) editor).getEditorDialogFragment();
                     Bundle args = new Bundle();
                     args.putString(Editor.EXTRA_KEY, key);
+                    args.putString(Editor.EXTRA_TITLE, title);
                     BundleAdapter.putInBundle(args, Editor.EXTRA_VALUE, value);
                     d.setArguments(args);
                     d.setTargetFragment(mFragment, 0);
@@ -140,40 +153,114 @@ public class EditorLauncher {
         Toast.makeText(mFragment.getActivity(), R.string.type_unsupported, Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * Parcelable class managing mapping of activity request codes and key passed to launchEditor
+     */
+    private static class EditorLauncherState implements Parcelable {
+        private int nextFreeRequestCode = 0;
+        private SparseArray<String> requestKeys = new SparseArray<String>();
 
+        @Override
+        public int describeContents() {
+            return 0;
+        }
 
-    public void handleActivityResult(Intent resultIntent) {
-        if (resultIntent == null) {
-            return;
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            final int count = requestKeys.size();
+            dest.writeInt(count);
+            for (int i = 0; i < count; i++) {
+                dest.writeInt(requestKeys.keyAt(0));
+                dest.writeValue(requestKeys.valueAt(0));
+            }
         }
-        String key = resultIntent.getStringExtra(Editor.EXTRA_KEY);
-        if (key == null) {
-            throw new RuntimeException("EXTRA_KEY is null");
+
+        public static final Creator<EditorLauncherState> CREATOR = new Creator<EditorLauncherState>() {
+            @Override
+            public EditorLauncherState createFromParcel(Parcel source) {
+                final EditorLauncherState editorLauncherState = new EditorLauncherState();
+                int count = source.readInt();
+                int tmpNextFreeRequestCode = 0;
+                for (int i = 0; i < count; i++) {
+                    int requestCode = source.readInt();
+                    String keyValue = source.readString();
+                    if (requestCode >= tmpNextFreeRequestCode) {
+                        tmpNextFreeRequestCode = requestCode + 1;
+                    }
+                    editorLauncherState.requestKeys.put(requestCode, keyValue);
+                }
+                editorLauncherState.nextFreeRequestCode = tmpNextFreeRequestCode;
+                return editorLauncherState;
+            }
+
+            @Override
+            public EditorLauncherState[] newArray(int size) {
+                return new EditorLauncherState[size];
+            }
+        };
+
+        int putKeyAndGetRequestCode(String key) {
+            int requestCode = nextFreeRequestCode++;
+            requestKeys.put(requestCode, key);
+            return requestCode;
         }
-        Bundle extras = resultIntent.getExtras();
-        assert extras != null;
-        Object value = extras.get(Editor.EXTRA_VALUE);
-        mEditorLauncherCallback.onEditorResult(key, value);
+
+        String getKeyAndReleaseRequestCode(int requestCode) {
+            final String key = requestKeys.get(requestCode);
+            requestKeys.remove(requestCode);
+            return key;
+        }
     }
 
+    /**
+     * Fragment used for activity handling and retaining state
+     */
     public static class ActivityHandlingHeadlessFragment extends Fragment {
         public ActivityHandlingHeadlessFragment() {}
         private EditorLauncher mEditorLauncher;
+        private EditorLauncherState mState;
 
         @Override
         public void onActivityResult(int requestCode, int resultCode, Intent data) {
-            if (requestCode == REQUEST_CODE_EDITOR_LAUNCHER_HEADLESS_FRAGMENT) {
-                mEditorLauncher.handleActivityResult(data);
+            if (requestCode >= 0 && requestCode <= 0xffff) {
+                final String key = mState.getKeyAndReleaseRequestCode(requestCode);
+                if (data != null && data.getExtras() != null) {
+                    Object newValue = data.getExtras().get(Editor.EXTRA_VALUE);
+                    mEditorLauncher.mEditorLauncherCallback.onEditorResult(key, newValue);
+                }
             } else {
                 super.onActivityResult(requestCode, resultCode, data);
             }
         }
 
+        void startEditorInActivity(Intent baseEditorIntent, String key, Object value) {
+            Bundle extras = new Bundle(1);
+            BundleAdapter.putInBundle(extras, Editor.EXTRA_VALUE, value);
+            int requestCode = mState.putKeyAndGetRequestCode(key);
+            startActivityForResult(baseEditorIntent.putExtras(extras), requestCode);
+        }
+
         void handleDialogResponse(String key, Object newValue) {
             mEditorLauncher.mEditorLauncherCallback.onEditorResult(key, newValue);
         }
+
+        @Override
+        public void onSaveInstanceState(Bundle outState) {
+            super.onSaveInstanceState(outState);
+            outState.putParcelable(STATE_EDITOR_LAUNCHER_STATE, mState);
+        }
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            if (savedInstanceState == null) {
+                mState = new EditorLauncherState();
+            } else {
+                mState = savedInstanceState.getParcelable(STATE_EDITOR_LAUNCHER_STATE);
+            }
+        }
     }
 
-    private static final int REQUEST_CODE_EDITOR_LAUNCHER_HEADLESS_FRAGMENT = 1;
+    private static final String STATE_EDITOR_LAUNCHER_STATE = "EditorLauncher.internal.genericState";
 
 }

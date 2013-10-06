@@ -56,7 +56,7 @@ public class StringLikeItemEditor extends ValueEditorDialogFragment implements O
         mValueTextView.setText(getOriginalValue().toString());
 
         return new AlertDialog.Builder(getActivity())
-                .setTitle(getKey())
+                .setTitle(getTitle())
                 .setView(view)
                 .setPositiveButton("OK", this)
                 .create();

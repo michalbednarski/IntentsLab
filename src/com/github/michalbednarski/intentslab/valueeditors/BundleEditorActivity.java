@@ -30,7 +30,7 @@ public class BundleEditorActivity extends FragmentActivity {
         super.onCreate(savedInstanceState);
 
         // Set title
-        setTitle("Bundle: " + getIntent().getStringExtra(Editor.EXTRA_KEY));
+        setTitle("Bundle: " + getIntent().getStringExtra(Editor.EXTRA_TITLE));
 
         // Get edited bundle
         Bundle bundle =
@@ -74,7 +74,6 @@ public class BundleEditorActivity extends FragmentActivity {
         setResult(
                 0,
                 new Intent()
-                        .putExtra(Editor.EXTRA_KEY, getIntent().getStringExtra(Editor.EXTRA_KEY))
                         .putExtra(Editor.EXTRA_VALUE, mBundleAdapter.getBundle())
         );
         finish();

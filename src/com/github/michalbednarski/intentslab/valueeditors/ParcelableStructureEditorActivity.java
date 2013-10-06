@@ -167,7 +167,6 @@ public class ParcelableStructureEditorActivity extends FragmentActivity implemen
             setResult(
                     0,
                     new Intent()
-                    .putExtra(Editor.EXTRA_KEY, getIntent().getStringExtra(Editor.EXTRA_KEY))
                     .putExtra(Editor.EXTRA_VALUE, mObject)
             );
         }
