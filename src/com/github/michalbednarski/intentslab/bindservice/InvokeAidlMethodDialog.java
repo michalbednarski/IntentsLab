@@ -12,9 +12,9 @@ import android.widget.Toast;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
-import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 import com.github.michalbednarski.intentslab.valueeditors.InlineValueEditor;
 import com.github.michalbednarski.intentslab.valueeditors.InlineValueEditorsLayout;
+import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 
 /**
  * Created by mb on 03.10.13.
@@ -98,7 +98,7 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
             final int i = ii;
             mValueEditors[ii] = new InlineValueEditor(
                     type,
-                    "arg" + i,
+                    type.getName(),
                     new InlineValueEditor.ValueAccessors() {
                         @Override
                         public Object getValue() {
