@@ -66,22 +66,6 @@
             android:name=".providerlab.AdvancedQueryActivity"
             android:windowSoftInputMode="stateHidden"/>
         <activity android:name=".valueeditors.BundleEditorActivity"/>
-
-        <receiver
-            android:name=".samplecomponents.AbortBroadcastReceiver"
-            android:label="Sample abortBroadcast()">
-            <intent-filter>
-                <action android:name="sample.abortbroadcast"/>
-            </intent-filter>
-        </receiver>
-        <receiver
-            android:name=".samplecomponents.SetResultReceiver"
-            android:label="Sample setResult()">
-            <intent-filter>
-                <action android:name="sample.setresult"/>
-            </intent-filter>
-        </receiver>
-
         <activity android:name=".valueeditors.ParcelableStructureEditorActivity"/>
 
         <!-- Interception activity -->

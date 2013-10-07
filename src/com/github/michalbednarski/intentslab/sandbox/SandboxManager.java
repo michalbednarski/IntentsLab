@@ -12,7 +12,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.bindservice.BindServiceManager;
-import com.github.michalbednarski.intentslab.samplecomponents.AbortBroadcastReceiver;
+import com.github.michalbednarski.intentslab.runas.RunAsInitReceiver;
 
 import java.util.ArrayList;
 
@@ -98,7 +98,7 @@ public class SandboxManager {
             startForeground(235,
                     new NotificationCompat.Builder(this)
                             .setSmallIcon(R.drawable.ic_launcher)
-                            .setContentIntent(PendingIntent.getBroadcast(this, 0, new Intent(this, AbortBroadcastReceiver.class), 0))
+                            .setContentIntent(PendingIntent.getBroadcast(this, 0, new Intent(this, RunAsInitReceiver.class), 0))
                             .build());
 
             bindService(new Intent().setClassName(SANDBOX_PACKAGE, SANDBOX_SERVICE_CLASS), new ServiceConnection() {
