@@ -11,9 +11,18 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.NavUtils;
-import android.view.*;
-import android.widget.*;
+import android.view.ContextMenu;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
 
 import java.util.HashSet;
@@ -74,7 +83,7 @@ public class PickRecentlyRunningActivity extends ListActivity implements Adapter
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                NavUtils.navigateUpFromSameTask(this);
+                finish();
                 return true;
             case R.id.menu_show_boring:
                 mAdapter.excludeBoringIntents = !mAdapter.excludeBoringIntents;
