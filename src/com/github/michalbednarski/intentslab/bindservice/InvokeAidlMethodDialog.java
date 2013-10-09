@@ -9,7 +9,9 @@ import android.os.RemoteException;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
 import android.widget.Toast;
+import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
+import com.github.michalbednarski.intentslab.sandbox.ISandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
 import com.github.michalbednarski.intentslab.valueeditors.InlineValueEditor;
@@ -132,12 +134,37 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
         builder.setPositiveButton("Invoke", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                Toast.makeText(getActivity(), "TODO", Toast.LENGTH_SHORT).show(); // TODO
+                invokeAidlMethod();
             }
         });
         return builder.create();
     }
 
+    private void invokeAidlMethod() {
+        try {
+            Bundle outExtras = new Bundle();
+            final ISandboxedObject parcelableValue = mAidlInterface.invokeMethod(mMethodNumber, mMethodArguments, outExtras);
+            if (parcelableValue != null) { // True if there weren't error
+                Toast.makeText(getActivity(), String.valueOf(parcelableValue.getObject().value), Toast.LENGTH_LONG).show();
+                return;
+            } else {
+                Throwable e = (Throwable) outExtras.getSerializable("targetException");
+                if (e != null) {
+                    Utils.toastException(getActivity(), e);
+                    return;
+                }
+                e = (Throwable) outExtras.getSerializable("exception");
+                if (e != null) {
+                    Utils.toastException(getActivity(), "Reflection", e);
+                    return;
+                }
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            // Fall through
+        }
+        Toast.makeText(getActivity(), "Something went wrong...", Toast.LENGTH_SHORT).show(); // Should never happen
+    }
 
 
     @Override

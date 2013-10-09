@@ -2,6 +2,7 @@ package com.github.michalbednarski.intentslab.sandbox.remote;
 
 import android.app.Service;
 import android.content.Context;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import com.github.michalbednarski.intentslab.Utils;
@@ -73,8 +74,9 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
     }
 
     @Override
-    public ISandboxedObject invokeMethod(int methodNumber, SandboxedMethodArguments remoteObjects) throws RemoteException {
+    public ISandboxedObject invokeMethod(int methodNumber, SandboxedMethodArguments remoteObjects, Bundle outExtras) throws RemoteException {
         Object[] arguments = new Object[remoteObjects.arguments.length];
+
         for (int i = 0; i < remoteObjects.arguments.length; i++) {
             //
             Object arg = remoteObjects.arguments[i];
@@ -84,13 +86,13 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
                 arg = ((SandboxedAidlInterfaceImpl) arg).mObject;
             }
             arguments[i] = arg;
-            try {
-                mMethods[methodNumber].invoke(mObject, arguments);
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            }
+        }
+        try {
+            return new SandboxedObjectImpl(mMethods[methodNumber].invoke(mObject, arguments));
+        } catch (InvocationTargetException e) {
+            outExtras.putSerializable("targetException", e.getTargetException());
+        } catch (Exception e) {
+            outExtras.putSerializable("exception", e);
         }
         return null;
     }

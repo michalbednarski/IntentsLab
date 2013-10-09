@@ -12,7 +12,7 @@ interface IAidlInterface {
 
     SandboxedMethod[] getMethods();
 
-    ISandboxedObject invokeMethod(int methodNumber, in SandboxedMethodArguments remoteObjects);
+    ISandboxedObject invokeMethod(int methodNumber, in SandboxedMethodArguments remoteObjects, out Bundle outExtras);
 
 
 }
