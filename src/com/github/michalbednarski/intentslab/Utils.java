@@ -82,6 +82,7 @@ public class Utils {
     /**
      * contentValues.keySet() with fallback for older platform versions
      */
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static Set<String> getKeySet(ContentValues contentValues) {
         try {
             return contentValues.keySet();
