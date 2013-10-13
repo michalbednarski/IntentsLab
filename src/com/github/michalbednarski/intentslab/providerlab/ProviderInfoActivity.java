@@ -14,10 +14,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.github.michalbednarski.intentslab.AppInfoActivity;
 import com.github.michalbednarski.intentslab.FormattedTextBuilder;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.browser.ComponentInfoActivity;
@@ -107,6 +110,29 @@ public class ProviderInfoActivity extends Activity {
         TextView textView = (TextView) findViewById(R.id.description);
         textView.setMovementMethod(LinkMovementMethod.getInstance());
         textView.setText(text.getText());
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.component_info, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.package_info:
+                if (getIntent().getBooleanExtra(ComponentInfoActivity.EXTRA_LAUNCHED_FROM_APP_INFO, false)) {
+                    finish();
+                } else {
+                    startActivity(
+                            new Intent(this, AppInfoActivity.class)
+                                    .putExtra(AppInfoActivity.EXTRA_PACKAGE_NAME, mPackageName)
+                    );
+                }
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @TargetApi(Build.VERSION_CODES.GINGERBREAD)

@@ -363,6 +363,7 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
                         new Intent(getActivity(), ProviderInfoActivity.class)
                         .putExtra(ComponentInfoActivity.EXTRA_PACKAGE_NAME, mPackageName)
                         .putExtra(ComponentInfoActivity.EXTRA_COMPONENT_NAME, providerInfo.name)
+                        .putExtra(ComponentInfoActivity.EXTRA_LAUNCHED_FROM_APP_INFO, true)
                 );
                 return true;
             }
