@@ -41,6 +41,7 @@ public class FormattedTextBuilder {
     }
 
     public void appendValuelessKeyContinuingGroup(CharSequence key) {
+        ssb.append("\n");
         appendSpan(key, new StyleSpan(Typeface.BOLD));
     }
 
