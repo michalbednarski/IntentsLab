@@ -5,6 +5,9 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.*;
 import com.github.michalbednarski.intentslab.R;
@@ -37,7 +40,6 @@ public class AdvancedQueryActivity extends Activity {
 
 
     private AutoCompleteTextView mUriTextView;
-    private Button mExecuteButton;
 
 
     public void onCreate(Bundle savedInstanceState) {
@@ -204,9 +206,6 @@ public class AdvancedQueryActivity extends Activity {
             }
         }
 
-        // Execute `method()` button
-        mExecuteButton = (Button) findViewById(R.id.execute);
-
         // Method (affects previous views so they must be initialized first)
         mMethodSpinner = (Spinner) findViewById(R.id.method);
         mMethodSpinner.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, METHOD_NAMES));
@@ -220,6 +219,27 @@ public class AdvancedQueryActivity extends Activity {
         outState.putStringArray(EXTRA_PROJECTION, getProjection());
         outState.putStringArray(EXTRA_SELECTION_ARGS, getSelectionArgs());
         outState.putParcelable(EXTRA_CONTENT_VALUES, getContentValues());
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.query, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.execute).setTitle(METHOD_NAMES[mMethodSpinner.getSelectedItemPosition()] + "()");
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.execute:
+                executeQuery();
+        }
+        return false;
     }
 
     // Method
@@ -271,8 +291,8 @@ public class AdvancedQueryActivity extends Activity {
             mSpecifyOrderCheckBox.setVisibility(showProjectionAndOrder ? View.VISIBLE : View.GONE);
             mOrderTextView.setVisibility((showProjectionAndOrder && mSpecifyOrderCheckBox.isChecked()) ? View.VISIBLE : View.GONE);
 
-            // Set execute `method()` button label
-            mExecuteButton.setText(METHOD_NAMES[position] + "()");
+            // Update execute `method()` menu item title
+            ActivityCompat.invalidateOptionsMenu(AdvancedQueryActivity.this);
         }
 
         @Override
@@ -519,7 +539,7 @@ public class AdvancedQueryActivity extends Activity {
     }
     // /Order
 
-    public void executeQuery(View v) {
+    private void executeQuery() {
         Uri uri = Uri.parse(mUriTextView.getText().toString());
         try {
             switch (mMethodSpinner.getSelectedItemPosition()) {

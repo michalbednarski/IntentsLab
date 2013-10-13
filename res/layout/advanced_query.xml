@@ -165,15 +165,5 @@
             android:layout_marginLeft="@dimen/group_indent"
             />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="...()"
-            android:onClick="executeQuery"
-            android:layout_marginTop="@dimen/group_delimiter_space"
-            android:layout_gravity="center"
-            android:id="@+id/execute"
-            tools:ignore="HardcodedText"/>
-
     </LinearLayout>
 </ScrollView>
