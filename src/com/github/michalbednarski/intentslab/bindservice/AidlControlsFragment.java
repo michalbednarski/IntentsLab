@@ -37,8 +37,10 @@ public class AidlControlsFragment extends ListFragment {
                 if (mAidlInterface != null) {
                     createAdapter();
                 } else {
-                    // TODO: handle non-aidl or unknown interface binders
-                    getActivity().finish();
+                    getFragmentManager()
+                            .beginTransaction()
+                            .replace(getId(), new UnrecognizedAidlFragment())
+                            .commitAllowingStateLoss();
                 }
             }
         });
