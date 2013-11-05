@@ -40,27 +40,30 @@ public abstract class FragmentTabsActivity extends FragmentActivity {
 		} else {
             mTabsHelper = new TabsHelperTabWidget();
 		}
-        mViewPager.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
-            @Override
-            public Fragment getItem(int position) {
-                try {
-                    return mFragmentsList.get(position);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
+	}
 
-            @Override
-            public int getCount() {
-                return mFragmentsList.size();
-            }
-        });
-        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-            @Override
-            public void onPageSelected(int position) {
-                mTabsHelper.selectTab(position);
-            }
-        });
+	protected void allTabsAdded() {
+		mViewPager.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
+			@Override
+			public Fragment getItem(int position) {
+				try {
+					return mFragmentsList.get(position);
+				} catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			}
+
+			@Override
+			public int getCount() {
+				return mFragmentsList.size();
+			}
+		});
+		mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+			@Override
+			public void onPageSelected(int position) {
+				mTabsHelper.selectTab(position);
+			}
+		});
 	}
 
 	/**

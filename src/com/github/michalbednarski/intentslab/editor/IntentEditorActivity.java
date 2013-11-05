@@ -114,7 +114,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
             addTab(getString(R.string.intent_extras), new IntentExtrasFragment());
         }
         addTab("Flags", new IntentFlagsFragment());
-
+		allTabsAdded();
 
     }
 
