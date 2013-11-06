@@ -11,6 +11,7 @@ import android.os.AsyncTask;
 import android.os.Looper;
 import android.os.PatternMatcher;
 import android.util.Log;
+import com.github.michalbednarski.intentslab.XMLViewerFragment;
 import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -60,11 +61,7 @@ public class ExtendedPackageInfo {
                                     PackageManager.GET_DISABLED_COMPONENTS |
                                     mExtraPackageInfoRequest);
                 }
-                XmlPullParser manifest =
-                        mContext
-                                .createPackageContext(mPackageName, 0)
-                                .getAssets()
-                                .openXmlResourceParser("AndroidManifest.xml");
+                XmlPullParser manifest = XMLViewerFragment.getManifest(mContext, mPackageName);
                 preScanPackageComponents(IntentEditorConstants.ACTIVITY, mPackageInfo.activities);
                 preScanPackageComponents(IntentEditorConstants.BROADCAST, mPackageInfo.receivers);
                 preScanPackageComponents(IntentEditorConstants.SERVICE, mPackageInfo.services);

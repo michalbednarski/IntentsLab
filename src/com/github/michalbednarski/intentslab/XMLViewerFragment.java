@@ -1,17 +1,23 @@
 package com.github.michalbednarski.intentslab;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.content.res.XmlResourceParser;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
 import org.xmlpull.v1.XmlPullParser;
+
+import java.io.IOException;
+import java.lang.reflect.Method;
 
 public class XMLViewerFragment extends Fragment {
     public static final String ARG_PACKAGE_NAME = "packageName__Arg";
@@ -89,7 +95,7 @@ public class XMLViewerFragment extends Fragment {
                 if (mResourceId != 0) {
                     parser = scannedAppContext.getResources().getXml(mResourceId);
                 } else {
-                    parser = scannedAppContext.getAssets().openXmlResourceParser("AndroidManifest.xml");
+                    parser = getManifest(mApplicationContext, mPackageName);
                 }
 
                 // Parse and reserialize xml
@@ -145,5 +151,87 @@ public class XMLViewerFragment extends Fragment {
         }
 
         mLoaderView.setVisibility(View.GONE);
+    }
+
+
+
+
+    private static boolean sThemeManifestBugProbed = false;
+    private static boolean sHasThemeManifestBug;
+
+    /**
+     * Check if device has theme manifest bug, that is {@link android.content.res.AssetManager#openXmlResourceParser(String)}
+     * will return manifest of device theme instead of app
+     */
+    private static boolean probeManifestThemeBug(Context context) {
+        XmlResourceParser parser = null;
+        try {
+            // Open parser
+            parser = context.getAssets().openXmlResourceParser("AndroidManifest.xml");
+
+            // Find first start tag
+            int token;
+            do {
+                token = parser.next();
+            } while (token != XmlPullParser.START_TAG && token != XmlPullParser.END_DOCUMENT);
+
+            // Ensure it's <manifest>
+            if (!"manifest".equals(parser.getName())) {
+                return true; // Not our manifest - Enable workaround
+            }
+
+            // Find package attribute
+            for (int i = 0, attributeCount = parser.getAttributeCount(); i < attributeCount; i++) {
+                if ("package".equals(parser.getAttributeName(i))) {
+                    // Check if it's value is expected package name
+                    return !context.getPackageName().equals(parser.getAttributeValue(i));
+                }
+            }
+            return true; // Not our manifest - Enable workaround
+
+        } catch (Exception e) {
+            Log.w("ManifestThemeBug", "Probing failed");
+            e.printStackTrace();
+            return false; // Disable workaround, it'd probably also fail
+        } finally {
+            if (parser != null) {
+                parser.close();
+            }
+        }
+    }
+
+    /**
+     * Get manifest for given package
+     */
+    public static XmlResourceParser getManifest(Context context, String packageName) throws IOException, PackageManager.NameNotFoundException {
+        // Check once if bug occurs on device
+        if (!sThemeManifestBugProbed) {
+            sHasThemeManifestBug = probeManifestThemeBug(context);
+            sThemeManifestBugProbed = true;
+        }
+
+
+        final Context packageContext = context.createPackageContext(packageName, 0);
+        AssetManager assets = packageContext.getAssets();
+
+        // Workaround bug if it exists
+        if (sHasThemeManifestBug) {
+            try {
+                final Method getCookieName = AssetManager.class.getDeclaredMethod("getCookieName", int.class);
+                final String resourcesPath = packageContext.getPackageResourcePath();
+                int cookie = 1;
+                for (; cookie < 100; cookie++) { // Should throw exception before reaching value if something goes wrong
+                    if (resourcesPath.equals(getCookieName.invoke(assets, cookie))) {
+                        return assets.openXmlResourceParser(cookie, "AndroidManifest.xml");
+                    }
+                }
+            } catch (Exception ignored) {
+                Log.w("ManifestThemeBug", "Workaround failed");
+                // fall through
+            }
+        }
+
+        // Normal way if device don't have bug or workaround failed
+        return assets.openXmlResourceParser("AndroidManifest.xml");
     }
 }
