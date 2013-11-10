@@ -3,6 +3,7 @@ package com.github.michalbednarski.intentslab.sandbox.remote;
 import android.app.Service;
 import android.os.IBinder;
 import android.os.RemoteException;
+import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.ISandbox;
 
@@ -17,7 +18,7 @@ class SandboxImpl extends ISandbox.Stub {
     }
 
     @Override
-    public IAidlInterface queryInterface(IBinder binder, String fromPackage) throws RemoteException {
+    public IAidlInterface queryInterface(IBinder binder, ClassLoaderDescriptor fromPackage) throws RemoteException {
         try {
             return new SandboxedAidlInterfaceImpl(binder, fromPackage, mService);
         } catch (SandboxedAidlInterfaceImpl.UnknownInterfaceException e) {

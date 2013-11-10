@@ -9,6 +9,7 @@ import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.widget.Toast;
+import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
 
@@ -130,7 +131,7 @@ public class BindServiceManager {
                             @Override
                             protected IAidlInterface doInBackground(Object... params) {
                                 try {
-                                    return SandboxManager.getSandbox().queryInterface(mBoundService, mPackageName);
+                                    return SandboxManager.getSandbox().queryInterface(mBoundService, new ClassLoaderDescriptor(mPackageName));
                                 } catch (RemoteException e) {
                                     e.printStackTrace();
                                     return null;

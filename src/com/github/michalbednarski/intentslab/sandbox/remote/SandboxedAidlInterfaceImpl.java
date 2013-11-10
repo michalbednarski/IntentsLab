@@ -1,11 +1,11 @@
 package com.github.michalbednarski.intentslab.sandbox.remote;
 
 import android.app.Service;
-import android.content.Context;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import com.github.michalbednarski.intentslab.Utils;
+import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
@@ -25,7 +25,7 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
     private final SandboxedMethod[] mSandboxedMethods;
     private final Method[] mMethods;
 
-    SandboxedAidlInterfaceImpl(IBinder binder, String fromPackage, Service service) throws RemoteException, UnknownInterfaceException {
+    SandboxedAidlInterfaceImpl(IBinder binder, ClassLoaderDescriptor fromPackage, Service service) throws RemoteException, UnknownInterfaceException {
         // Get interface name
         mInterfaceDescriptor = binder.getInterfaceDescriptor();
         if (Utils.stringEmptyOrNull(mInterfaceDescriptor)) {
@@ -33,8 +33,8 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
         }
         try {
             // Load interface class
-            final Context packageContext = service.createPackageContext(fromPackage, Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY);
-            final Class<?> stub = packageContext.getClassLoader().loadClass(mInterfaceDescriptor + "$Stub");
+            final ClassLoader classLoader = fromPackage.getClassLoader(service);
+            final Class<?> stub = classLoader.loadClass(mInterfaceDescriptor + "$Stub");
             mObject = stub.getMethod("asInterface", IBinder.class).invoke(null, binder);
 
             // Get it's methods
