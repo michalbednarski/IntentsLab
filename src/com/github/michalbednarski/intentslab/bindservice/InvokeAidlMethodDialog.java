@@ -89,7 +89,7 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
         } else {
             mMethodArguments = new SandboxedMethodArguments(argumentCount);
             for (int i = 0; i < argumentCount; i++) {
-                final Class<?> type = sandboxedMethod.argumentTypes[i];
+                final Class<?> type = sandboxedMethod.argumentTypes[i].aClass;
                 if (type == Boolean.TYPE) {
                     mMethodArguments.arguments[i] = false;
                 } else if (type == Byte.TYPE) {
@@ -111,7 +111,7 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
         }
         mValueEditors = new InlineValueEditor[argumentCount];
         for (int ii = 0; ii < argumentCount; ii++) {
-            Class<?> type = sandboxedMethod.argumentTypes[ii];
+            Class<?> type = sandboxedMethod.argumentTypes[ii].aClass;
             final int i = ii;
             mValueEditors[ii] = new InlineValueEditor(
                     type,

@@ -10,6 +10,7 @@ import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
+import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -46,7 +47,7 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
                     SandboxedMethod sandboxedMethod = new SandboxedMethod();
                     sandboxedMethod.methodNumber = sandboxedMethods.size();
                     sandboxedMethod.name = method.getName();
-                    sandboxedMethod.argumentTypes = method.getParameterTypes();
+                    sandboxedMethod.argumentTypes = SandboxedType.wrapClassesArray(method.getParameterTypes());
 
                     sandboxedMethods.add(sandboxedMethod);
                     filteredMethods.add(method);
