@@ -31,6 +31,8 @@ import static com.github.michalbednarski.intentslab.FormattedTextBuilder.ValueSe
  * Activity for editing general parcelable class
  */
 public class ParcelableStructureEditorActivity extends FragmentActivity implements EditorLauncher.EditorLauncherCallback {
+    public static final String EXTRA_VALUE_IS_SANDBOXED = "ParcelableStructureEditorActivity.valueIsSandboxed";
+
     private static final String STATE_SHOW_NON_PUBLIC_FIELDS = "ParcelableStructureEditorActivity.showNonPublicFields";
     private static final String STATE_MODIFIED = "ParcelableStructureEditorActivity.modified";
 

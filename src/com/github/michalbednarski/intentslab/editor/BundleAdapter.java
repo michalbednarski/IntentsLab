@@ -1,24 +1,39 @@
 package com.github.michalbednarski.intentslab.editor;
 
 import android.content.Context;
+import android.os.BadParcelableException;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
-import android.view.*;
+import android.view.ContextMenu;
+import android.view.LayoutInflater;
+import android.view.MenuItem;
+import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.*;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.TextView;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.Utils;
+import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
+import com.github.michalbednarski.intentslab.sandbox.ISandboxedBundle;
+import com.github.michalbednarski.intentslab.sandbox.ParcelableValue;
+import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
 import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 public class BundleAdapter extends BaseAdapter implements OnClickListener,
-		OnItemClickListener, View.OnCreateContextMenuListener, EditorLauncher.EditorLauncherCallback {
+		OnItemClickListener, View.OnCreateContextMenuListener, EditorLauncher.EditorLauncherWithSandboxCallback {
 	private static final String TAG = "BundleAdapter";
 	private FragmentActivity mActivity;
 	private LayoutInflater mInflater;
@@ -27,6 +42,10 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
 	private int mKeysCount = 0;
 
 	private boolean mShowAddNewOption = true;
+
+    private boolean mUseSandbox = false;
+    private ISandboxedBundle mSandboxedBundle = null;
+    private ArrayList<Runnable> mSandboxedBundleReadyCallbacks = null;
 
 	/*static final String[] bundleContainableTypes = { "Byte", "Char", "Short",
 			"Int", "Long", "Float", "Double", "String", "CharSequence",
@@ -78,14 +97,96 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
     }
 
 	private void updateKeySet() {
-		if (mBundle.keySet() != null) {
-			mKeys = mBundle.keySet().toArray(mKeys);
-			mKeysCount = mBundle.size();
-		} else {
-			mKeys = new String[0];
-			mKeysCount = 0;
-		}
+        // Try to unpack bundle without sandbox
+        if (!mUseSandbox) {
+            try {
+                if (mBundle.keySet() != null) {
+                    mKeys = mBundle.keySet().toArray(mKeys);
+                    mKeysCount = mBundle.size();
+                } else {
+                    mKeys = new String[0];
+                    mKeysCount = 0;
+                }
+                return;
+            } catch (BadParcelableException ignored) {}
+        }
+
+        // If it failed or was disabled
+        sandboxBundle(true, null);
 	}
+
+    private void sandboxBundle(boolean alwaysUpdateKeySet, final Runnable whenDone) {
+        if (mUseSandbox) {
+            // Sandbox already enabled, return if it's still alive, that is, there's no need to reinitialize
+            if (mSandboxedBundle != null && mSandboxedBundle.asBinder().isBinderAlive()) {
+                if (alwaysUpdateKeySet) {
+                    try {
+                        mKeys = mSandboxedBundle.getKeySet();
+                        mKeysCount = mKeys.length;
+                        notifyDataSetChanged();
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                }
+                if (whenDone != null) {
+                    whenDone.run();
+                }
+                return;
+            }
+        } else {
+            // Start using sandbox
+            mUseSandbox = true;
+            SandboxManager.refSandbox();
+        }
+
+        // If it's being prepared, add to ready callbacks
+        if (mSandboxedBundleReadyCallbacks != null) {
+            if (whenDone != null) {
+                mSandboxedBundleReadyCallbacks.add(whenDone);
+            }
+            return;
+        }
+
+        // Set flag we're working and add ready callback
+        mSandboxedBundleReadyCallbacks = new ArrayList<Runnable>();
+        if (whenDone != null) {
+            mSandboxedBundleReadyCallbacks.add(whenDone);
+        }
+
+        // Initialize sandbox
+        SandboxManager.initSandboxAndRunWhenReady(mActivity, new Runnable() {
+            @Override
+            public void run() {
+
+                try {
+                    // Wrap bundle
+                    // TODO: don't hardcode package name
+                    mSandboxedBundle = SandboxManager.getSandbox().sandboxBundle(mBundle, new ClassLoaderDescriptor("com.github.michalbednarski.intentslab.samples"));
+
+                    // Update key set
+                    mKeys = mSandboxedBundle.getKeySet();
+                    mKeysCount = mKeys.length;
+
+                    // Notify all callbacks that we're ready
+                    for (Runnable readyCallback : mSandboxedBundleReadyCallbacks) {
+                        readyCallback.run();
+                    }
+                    mSandboxedBundleReadyCallbacks = null;
+
+                    notifyDataSetChanged();
+                } catch (Exception e) {
+                    mSandboxedBundle = null;
+                }
+
+            }
+        });
+    }
+
+    public void shutdown() {
+        if (mUseSandbox) {
+            SandboxManager.unrefSandbox();
+        }
+    }
 
 	void setBundle(Bundle newMap) {
 		if (newMap != null) {
@@ -93,15 +194,29 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
 		} else {
 			mBundle = new Bundle();
 		}
+        mUseSandbox = false;
+        mSandboxedBundle = null;
 		updateKeySet();
 	}
 
 	public Bundle getBundle() {
+        if (mUseSandbox && mSandboxedBundle != null) {
+            try {
+                mBundle = mSandboxedBundle.getBundle();
+            } catch (RemoteException e) {
+                // There was some problem with sandbox,
+                // but we can't do anything about that
+                e.printStackTrace();
+            }
+        }
 		return mBundle;
 	}
 
 	@Override
 	public int getCount() {
+        if (mUseSandbox && mSandboxedBundle == null) {
+            return 0;
+        }
 		return mKeysCount + (mShowAddNewOption ? 1 : 0);
 	}
 
@@ -121,6 +236,9 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
 	}
 	@Override
 	public int getItemViewType(int position) {
+        if (mUseSandbox && mSandboxedBundle == null) {
+            return IGNORE_ITEM_VIEW_TYPE;
+        }
 		return position == mKeysCount ? 1 : 0;
 	}
 
@@ -142,12 +260,24 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
 					parent, false);
 		}
 
-		Object value = mBundle.get(mKeys[position]);
+        final String key = mKeys[position];
+        String valueAsString;
 
-		((TextView) view.findViewById(android.R.id.text1))
-				.setText(mKeys[position]);
+        if (mUseSandbox) {
+            try {
+                valueAsString = mSandboxedBundle.getAsString(key);
+            } catch (RemoteException e) {
+                // TODO: resandbox bundle
+                valueAsString = "[Sandbox error]";
+            }
+        } else {
+            valueAsString = String.valueOf(mBundle.get(key));
+        }
+
+        ((TextView) view.findViewById(android.R.id.text1))
+				.setText(key);
 		((TextView) view.findViewById(android.R.id.text2))
-				.setText(value == null ? "null" : value.toString());
+				.setText(valueAsString);
 		return view;
 	}
 
@@ -171,21 +301,77 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
 	public void onItemClick(AdapterView<?> parent, View view, int position,
 			long id) {
 		if (position != mKeysCount) {
-			String key = mKeys[position];
-			Object value = mBundle.get(key);
-            mEditorLauncher.launchEditor(key, value);
+            String key = mKeys[position];
+            if (mUseSandbox) {
+                Bundle wrappedValue;
+                try {
+                    wrappedValue = mSandboxedBundle.getWrapped(key);
+                } catch (RemoteException e) {
+                    return;
+                }
+                try {
+                    mEditorLauncher.launchEditor(key, SandboxManager.unwrapObject(wrappedValue));
+                } catch (BadParcelableException e) {
+                    mEditorLauncher.launchEditorForSandboxedObject(key, key, wrappedValue);
+                }
+            } else {
+                mEditorLauncher.launchEditor(key, mBundle.get(key));
+            }
 		}
 	}
 
 
     @Override
-    public void onEditorResult(String key, Object newValue) {
-        boolean keySetChange = !mBundle.containsKey(key);
-        putInBundle(mBundle, key, newValue);
-        if (keySetChange) {
-            updateKeySet();
+    public void onEditorResult(final String key, final Object newValue) {
+
+        if (mUseSandbox) {
+            // Async wrap in sandbox
+            sandboxBundle(false, new Runnable() {
+                @Override
+                public void run() {
+                    boolean keySetChange = false;
+                    try {
+                        keySetChange = !mSandboxedBundle.containsKey(key);
+                        mSandboxedBundle.put(key, new ParcelableValue(newValue));
+                    } catch (Exception e) {
+                        e.printStackTrace(); // Cannot recover
+                    }
+                    if (keySetChange) {
+                        updateKeySet();
+                    }
+                    notifyDataSetChanged();
+                }
+            });
+        } else {
+            // No sandbox
+            boolean keySetChange;
+            keySetChange = !mBundle.containsKey(key);
+            putInBundle(mBundle, key, newValue);
+            if (keySetChange) {
+                updateKeySet();
+            }
+            notifyDataSetChanged();
         }
-        notifyDataSetChanged();
+    }
+
+    @Override
+    public void onSandboxedEditorResult(final String key, final Bundle newWrappedValue) {
+        sandboxBundle(false, new Runnable() {
+            @Override
+            public void run() {
+                boolean keySetChange = false;
+                try {
+                    keySetChange = !mSandboxedBundle.containsKey(key);
+                    mSandboxedBundle.putWrapped(key, newWrappedValue);
+                } catch (Exception e) {
+                    e.printStackTrace(); // Cannot recover
+                }
+                if (keySetChange) {
+                    updateKeySet();
+                }
+                notifyDataSetChanged();
+            }
+        });
     }
 
 	public void settleOnList(ListView listView) {
@@ -203,7 +389,16 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
         menu.add(mActivity.getString(R.string.delete)).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                mBundle.remove(mKeys[aMenuInfo.position]);
+                final String key = mKeys[aMenuInfo.position];
+                if (mUseSandbox) {
+                    try {
+                        mSandboxedBundle.remove(key);
+                    } catch (RemoteException e) {
+                        e.printStackTrace(); // TODO: resandbox bundle
+                    }
+                } else {
+                    mBundle.remove(key);
+                }
                 updateKeySet();
                 notifyDataSetChanged();
                 return true;

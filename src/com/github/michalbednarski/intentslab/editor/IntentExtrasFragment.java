@@ -27,12 +27,23 @@ public class IntentExtrasFragment extends IntentEditorPanel implements BundleAda
 
 		mExtrasList = new ListView(inflater.getContext());
 
-        mBundleAdapter = new BundleAdapter(getActivity(), getEditedIntent().getExtras(), new EditorLauncher(getActivity(), "IntentExtrasEditorLauncher"), this);
+        if (mBundleAdapter == null) {
+            mBundleAdapter = new BundleAdapter(getActivity(), getEditedIntent().getExtras(), new EditorLauncher(getActivity(), "IntentExtrasEditorLauncher"), this);
+        }
 		mBundleAdapter.settleOnList(mExtrasList);
 		return mExtrasList;
 	}
 
-	@Override
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        if (mBundleAdapter != null) {
+            mBundleAdapter.shutdown();
+            mBundleAdapter = null;
+        }
+    }
+
+    @Override
 	public void updateEditedIntent(Intent editedIntent) {
 		editedIntent.replaceExtras(mBundleAdapter.getBundle());
 	}

@@ -7,11 +7,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.bindservice.BindServiceManager;
+import com.github.michalbednarski.intentslab.editor.BundleAdapter;
 import com.github.michalbednarski.intentslab.runas.RunAsInitReceiver;
 
 import java.util.ArrayList;
@@ -77,7 +79,15 @@ public class SandboxManager {
         return sSandbox;
     }
 
+    private static int sRefCount = 0;
+    public static void refSandbox() {
+        sRefCount++;
+    }
 
+    public static void unrefSandbox() {
+        sRefCount--;
+        assert sRefCount >= 0;
+    }
 
 
 
@@ -132,4 +142,15 @@ public class SandboxManager {
     }
 
 
+    private static final String KEY_WRAPPED_VALUE = "v";
+
+    public static Bundle wrapObject(Object o) {
+        Bundle b = new Bundle();
+        BundleAdapter.putInBundle(b, KEY_WRAPPED_VALUE, o);
+        return b;
+    }
+
+    public static Object unwrapObject(Bundle b) {
+        return b.get(KEY_WRAPPED_VALUE);
+    }
 }

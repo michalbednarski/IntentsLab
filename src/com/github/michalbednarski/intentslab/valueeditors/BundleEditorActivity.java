@@ -65,6 +65,12 @@ public class BundleEditorActivity extends FragmentActivity {
     }
 
     @Override
+    protected void onDestroy() {
+        mBundleAdapter.shutdown();
+        super.onDestroy();
+    }
+
+    @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBundle(Editor.EXTRA_VALUE, mBundleAdapter.getBundle());

@@ -77,7 +77,15 @@ public class EditorLauncher {
         void onEditorResult(String key, Object newValue);
     }
 
-
+    /**
+     * EditorLauncher Callback with support for {@link #launchEditorForSandboxedObject(String, String, android.os.Bundle)}
+     *
+     * This is interface implemented by caller of launchEditor
+     * returning data after edit, passed to constructor
+     */
+    public interface EditorLauncherWithSandboxCallback extends EditorLauncherCallback {
+        void onSandboxedEditorResult(String key, Bundle newWrappedValue);
+    }
 
 
     private final ActivityHandlingHeadlessFragment mFragment;
@@ -158,11 +166,57 @@ public class EditorLauncher {
     }
 
     /**
+     * Start an editor or show Toast message if no applicable editor is available
+     *
+     * Results are returned to {@link EditorLauncherWithSandboxCallback#onSandboxedEditorResult(String, android.os.Bundle)}
+     *
+     * @param key Key, returned to onEditorResult
+     * @param title Title that may be displayed on editor
+     * @param wrappedValue Value to be edited wrapped by {@link com.github.michalbednarski.intentslab.sandbox.SandboxManager#wrapObject(Object)}
+     */
+    public void launchEditorForSandboxedObject(final String key, String title, Bundle wrappedValue) {
+        // Build intent
+        Intent editorIntent = new Intent(mFragment.getActivity(), ParcelableStructureEditorActivity.class);
+        editorIntent.putExtra(Editor.EXTRA_TITLE, title);
+        editorIntent.putExtra(Editor.EXTRA_VALUE, wrappedValue);
+        editorIntent.putExtra(ParcelableStructureEditorActivity.EXTRA_VALUE_IS_SANDBOXED, true);
+
+        // Register callback and start for result
+        final int requestCode = mFragment.mState.saveRequestInfoAndGetCode(new ActivityRequestInfo(key, true));
+        mFragment.startActivityForResult(editorIntent, requestCode);
+    }
+
+    /**
+     * Extra info about started activity
+     */
+    private static class ActivityRequestInfo {
+        String key;
+        boolean isSandboxed;
+
+        ActivityRequestInfo(String key, boolean isSandboxed) {
+            this.key = key;
+            this.isSandboxed = isSandboxed;
+        }
+
+        // Pseudo parcelable
+        ActivityRequestInfo(Parcel source) {
+            key = source.readString();
+            isSandboxed = source.readInt() != 0;
+        }
+
+        void writeToParcel(Parcel dest) {
+            dest.writeString(key);
+            dest.writeInt(isSandboxed ? 1 : 0);
+        }
+    }
+
+
+    /**
      * Parcelable class managing mapping of activity request codes and key passed to launchEditor
      */
     private static class EditorLauncherState implements Parcelable {
         private int nextFreeRequestCode = 0;
-        private SparseArray<String> requestKeys = new SparseArray<String>();
+        private SparseArray<ActivityRequestInfo> requestInfos = new SparseArray<ActivityRequestInfo>();
 
         @Override
         public int describeContents() {
@@ -171,11 +225,11 @@ public class EditorLauncher {
 
         @Override
         public void writeToParcel(Parcel dest, int flags) {
-            final int count = requestKeys.size();
+            final int count = requestInfos.size();
             dest.writeInt(count);
             for (int i = 0; i < count; i++) {
-                dest.writeInt(requestKeys.keyAt(0));
-                dest.writeValue(requestKeys.valueAt(0));
+                dest.writeInt(requestInfos.keyAt(0));
+                requestInfos.valueAt(0).writeToParcel(dest);
             }
         }
 
@@ -187,11 +241,10 @@ public class EditorLauncher {
                 int tmpNextFreeRequestCode = 0;
                 for (int i = 0; i < count; i++) {
                     int requestCode = source.readInt();
-                    String keyValue = source.readString();
                     if (requestCode >= tmpNextFreeRequestCode) {
                         tmpNextFreeRequestCode = requestCode + 1;
                     }
-                    editorLauncherState.requestKeys.put(requestCode, keyValue);
+                    editorLauncherState.requestInfos.put(requestCode, new ActivityRequestInfo(source));
                 }
                 editorLauncherState.nextFreeRequestCode = tmpNextFreeRequestCode;
                 return editorLauncherState;
@@ -203,16 +256,16 @@ public class EditorLauncher {
             }
         };
 
-        int putKeyAndGetRequestCode(String key) {
+        int saveRequestInfoAndGetCode(ActivityRequestInfo key) {
             int requestCode = nextFreeRequestCode++;
-            requestKeys.put(requestCode, key);
+            requestInfos.put(requestCode, key);
             return requestCode;
         }
 
-        String getKeyAndReleaseRequestCode(int requestCode) {
-            final String key = requestKeys.get(requestCode);
-            requestKeys.remove(requestCode);
-            return key;
+        ActivityRequestInfo getRequestInfoAndReleaseCode(int requestCode) {
+            final ActivityRequestInfo requestInfo = requestInfos.get(requestCode);
+            requestInfos.remove(requestCode);
+            return requestInfo;
         }
     }
 
@@ -227,10 +280,16 @@ public class EditorLauncher {
         @Override
         public void onActivityResult(int requestCode, int resultCode, Intent data) {
             if (requestCode >= 0 && requestCode <= 0xffff) {
-                final String key = mState.getKeyAndReleaseRequestCode(requestCode);
+                final ActivityRequestInfo requestInfo = mState.getRequestInfoAndReleaseCode(requestCode);
+                final String key = requestInfo.key;
                 if (data != null && data.getExtras() != null) {
                     Object newValue = data.getExtras().get(Editor.EXTRA_VALUE);
-                    mEditorLauncher.mEditorLauncherCallback.onEditorResult(key, newValue);
+                    if (requestInfo.isSandboxed) {
+                        ((EditorLauncherWithSandboxCallback) mEditorLauncher.mEditorLauncherCallback)
+                                .onSandboxedEditorResult(key, (Bundle) newValue);
+                    } else {
+                        mEditorLauncher.mEditorLauncherCallback.onEditorResult(key, newValue);
+                    }
                 }
             } else {
                 super.onActivityResult(requestCode, resultCode, data);
@@ -240,7 +299,7 @@ public class EditorLauncher {
         void startEditorInActivity(Intent baseEditorIntent, String key, Object value) {
             Bundle extras = new Bundle(1);
             BundleAdapter.putInBundle(extras, Editor.EXTRA_VALUE, value);
-            int requestCode = mState.putKeyAndGetRequestCode(key);
+            int requestCode = mState.saveRequestInfoAndGetCode(new ActivityRequestInfo(key, false));
             startActivityForResult(baseEditorIntent.putExtras(extras), requestCode);
         }
 
