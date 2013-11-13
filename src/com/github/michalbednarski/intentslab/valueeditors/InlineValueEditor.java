@@ -21,8 +21,6 @@ import java.util.Iterator;
  * Created by mb on 03.10.13.
  */
 public class InlineValueEditor {
-    static final int REQUIRED_VIEW_TYPE_COUNT = 2;
-
     private final Class<?> mValueType;
     private final String mLabel;
     final boolean mHidden;
