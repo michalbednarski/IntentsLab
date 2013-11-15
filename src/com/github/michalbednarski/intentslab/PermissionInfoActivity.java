@@ -1,5 +1,6 @@
 package com.github.michalbednarski.intentslab;
 
+import android.annotation.SuppressLint;
 import android.app.ListActivity;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -55,7 +56,7 @@ public class PermissionInfoActivity extends ListActivity implements AdapterView.
             } catch (PackageManager.NameNotFoundException ignored) {}
 
 
-            headerText.appendValue(getString(R.string.permission_protection_level), String.valueOf(permissionInfo.protectionLevel));
+            headerText.appendValue(getString(R.string.permission_protection_level), protectionLevelToString(permissionInfo.protectionLevel));
             declaringPackage = mPm.getPackageInfo(permissionInfo.packageName, 0);
         } catch (PackageManager.NameNotFoundException e) {
             // Undeclared permission
@@ -163,6 +164,40 @@ public class PermissionInfoActivity extends ListActivity implements AdapterView.
 
     private boolean isPermissionGrantedTo(String permissionName, PackageInfo packageInfo) {
         return mPm.checkPermission(permissionName, packageInfo.packageName) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @SuppressLint("InlinedApi")
+    private static String protectionLevelToString(int protectionLevel) {
+        int base = protectionLevel & PermissionInfo.PROTECTION_MASK_BASE;
+        int flags = protectionLevel & PermissionInfo.PROTECTION_MASK_FLAGS;
+
+        // Base
+        StringBuilder builder = new StringBuilder(
+                base == PermissionInfo.PROTECTION_NORMAL ? "normal" :
+                base == PermissionInfo.PROTECTION_DANGEROUS ? "dangerous" :
+                base == PermissionInfo.PROTECTION_SIGNATURE ? "signature" :
+                base == PermissionInfo.PROTECTION_SIGNATURE_OR_SYSTEM ? "signatureOrSystem" :
+                        String.valueOf(base) // If none matched
+        );
+
+        // Flags
+        if ((flags & PermissionInfo.PROTECTION_FLAG_SYSTEM) != 0) {
+            builder.append("|system");
+        }
+        if ((flags & PermissionInfo.PROTECTION_FLAG_DEVELOPMENT) != 0) {
+            builder.append("|development");
+        }
+
+        // Unrecognized flags
+        int unknownFlags = flags & ~(
+                PermissionInfo.PROTECTION_FLAG_SYSTEM |
+                PermissionInfo.PROTECTION_FLAG_DEVELOPMENT
+        );
+        if (unknownFlags != 0) {
+            builder.append("|");
+            builder.append(unknownFlags);
+        }
+        return builder.toString();
     }
 
     @Override
