@@ -58,6 +58,11 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
 
 
     public static void putInBundle(Bundle bundle, String key, Object value) {
+        if (value == null) {
+            bundle.putString(key, null);
+            return;
+        }
+
         Pattern putMethodName = Pattern.compile("put[A-Z][A-Za-z]+");
         for (Method method : Bundle.class.getMethods()) {
             if (
