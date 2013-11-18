@@ -16,10 +16,12 @@ import java.util.Set;
  */
 public class SandboxedBundleImpl extends ISandboxedBundle.Stub {
 
+    private final ClassLoader mClassLoader;
     private Bundle mBundle;
 
     public SandboxedBundleImpl(Bundle bundle, ClassLoaderDescriptor classLoaderDescriptor, Service sandboxService) {
-        bundle.setClassLoader(classLoaderDescriptor.getClassLoader(sandboxService));
+        mClassLoader = classLoaderDescriptor.getClassLoader(sandboxService);
+        bundle.setClassLoader(mClassLoader);
         mBundle = bundle;
     }
 
@@ -56,6 +58,7 @@ public class SandboxedBundleImpl extends ISandboxedBundle.Stub {
 
     @Override
     public void putWrapped(String key, Bundle wrappedValue) throws RemoteException {
+        wrappedValue.setClassLoader(mClassLoader);
         BundleAdapter.putInBundle(mBundle, key, SandboxManager.unwrapObject(wrappedValue));
     }
 

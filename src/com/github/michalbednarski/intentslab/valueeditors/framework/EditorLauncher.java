@@ -14,7 +14,7 @@ import com.github.michalbednarski.intentslab.editor.BundleAdapter;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
 import com.github.michalbednarski.intentslab.valueeditors.BundleEditorActivity;
 import com.github.michalbednarski.intentslab.valueeditors.EnumEditor;
-import com.github.michalbednarski.intentslab.valueeditors.ParcelableStructureEditorActivity;
+import com.github.michalbednarski.intentslab.valueeditors.object.ObjectEditorActivity;
 import com.github.michalbednarski.intentslab.valueeditors.StringLikeItemEditor;
 
 /**
@@ -63,8 +63,8 @@ public class EditorLauncher {
             // Enum editor
             new EnumEditor.LaunchableEditor(),
 
-            // Generic Parcelable structure editor
-            new ParcelableStructureEditorActivity.LaunchableEditor()
+            // Generic Parcelable object editor
+            new ObjectEditorActivity.LaunchableEditor()
     };
 
     /**
@@ -176,10 +176,10 @@ public class EditorLauncher {
      */
     public void launchEditorForSandboxedObject(final String key, String title, Bundle wrappedValue) {
         // Build intent
-        Intent editorIntent = new Intent(mFragment.getActivity(), ParcelableStructureEditorActivity.class);
+        Intent editorIntent = new Intent(mFragment.getActivity(), ObjectEditorActivity.class);
         editorIntent.putExtra(Editor.EXTRA_TITLE, title);
         editorIntent.putExtra(Editor.EXTRA_VALUE, wrappedValue);
-        editorIntent.putExtra(ParcelableStructureEditorActivity.EXTRA_VALUE_IS_SANDBOXED, true);
+        editorIntent.putExtra(ObjectEditorActivity.EXTRA_VALUE_IS_SANDBOXED, true);
 
         // Register callback and start for result
         final int requestCode = mFragment.mState.saveRequestInfoAndGetCode(new ActivityRequestInfo(key, true));

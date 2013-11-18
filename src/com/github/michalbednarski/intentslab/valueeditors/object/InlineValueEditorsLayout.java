@@ -1,4 +1,4 @@
-package com.github.michalbednarski.intentslab.valueeditors;
+package com.github.michalbednarski.intentslab.valueeditors.object;
 
 import android.content.Context;
 import android.util.AttributeSet;

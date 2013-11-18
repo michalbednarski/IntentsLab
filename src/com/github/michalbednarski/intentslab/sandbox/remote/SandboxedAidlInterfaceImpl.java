@@ -25,6 +25,7 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
     private final String mInterfaceDescriptor;
     private final SandboxedMethod[] mSandboxedMethods;
     private final Method[] mMethods;
+    private final ClassLoader mClassLoader;
 
     SandboxedAidlInterfaceImpl(IBinder binder, ClassLoaderDescriptor fromPackage, Service service) throws RemoteException, UnknownInterfaceException {
         // Get interface name
@@ -34,8 +35,8 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
         }
         try {
             // Load interface class
-            final ClassLoader classLoader = fromPackage.getClassLoader(service);
-            final Class<?> stub = classLoader.loadClass(mInterfaceDescriptor + "$Stub");
+            mClassLoader = fromPackage.getClassLoader(service);
+            final Class<?> stub = mClassLoader.loadClass(mInterfaceDescriptor + "$Stub");
             mObject = stub.getMethod("asInterface", IBinder.class).invoke(null, binder);
 
             // Get it's methods
@@ -89,7 +90,7 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
             arguments[i] = arg;
         }
         try {
-            return new SandboxedObjectImpl(mMethods[methodNumber].invoke(mObject, arguments));
+            return new SandboxedObjectImpl(mMethods[methodNumber].invoke(mObject, arguments), mClassLoader);
         } catch (InvocationTargetException e) {
             outExtras.putSerializable("targetException", e.getTargetException());
         } catch (Exception e) {
