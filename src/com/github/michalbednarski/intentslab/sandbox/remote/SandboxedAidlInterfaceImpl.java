@@ -8,6 +8,7 @@ import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedObject;
+import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
@@ -76,7 +77,7 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
     }
 
     @Override
-    public ISandboxedObject invokeMethod(int methodNumber, SandboxedMethodArguments remoteObjects, Bundle outExtras) throws RemoteException {
+    public Bundle invokeMethod(int methodNumber, SandboxedMethodArguments remoteObjects, Bundle outExtras) throws RemoteException {
         Object[] arguments = new Object[remoteObjects.arguments.length];
 
         for (int i = 0; i < remoteObjects.arguments.length; i++) {
@@ -90,7 +91,9 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
             arguments[i] = arg;
         }
         try {
-            return new SandboxedObjectImpl(mMethods[methodNumber].invoke(mObject, arguments), mClassLoader);
+            Object result = mMethods[methodNumber].invoke(mObject, arguments);
+            outExtras.putString("string", String.valueOf(result));
+            return SandboxManager.wrapObject(result);
         } catch (InvocationTargetException e) {
             outExtras.putSerializable("targetException", e.getTargetException());
         } catch (Exception e) {

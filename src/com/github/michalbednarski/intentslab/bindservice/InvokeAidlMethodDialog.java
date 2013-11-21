@@ -11,12 +11,11 @@ import android.util.Log;
 import android.widget.Toast;
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
-import com.github.michalbednarski.intentslab.sandbox.ISandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
+import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 import com.github.michalbednarski.intentslab.valueeditors.object.InlineValueEditor;
 import com.github.michalbednarski.intentslab.valueeditors.object.InlineValueEditorsLayout;
-import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 
 /**
  * Created by mb on 03.10.13.
@@ -163,9 +162,9 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
     private void invokeAidlMethod() {
         try {
             Bundle outExtras = new Bundle();
-            final ISandboxedObject parcelableValue = mAidlInterface.invokeMethod(mMethodNumber, mMethodArguments, outExtras);
-            if (parcelableValue != null) { // True if there weren't error
-                Toast.makeText(getActivity(), String.valueOf(parcelableValue/*.getObject().value*/), Toast.LENGTH_LONG).show();
+            final Bundle result = mAidlInterface.invokeMethod(mMethodNumber, mMethodArguments, outExtras);
+            if (result != null) { // True if there weren't error
+                Toast.makeText(getActivity(), outExtras.getString("string"), Toast.LENGTH_LONG).show();
                 return;
             } else {
                 Throwable e = (Throwable) outExtras.getSerializable("targetException");
