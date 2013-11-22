@@ -72,7 +72,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
             uncastedIntentFilters = savedInstanceState.getParcelableArray("intentFilters");
         } else if (isInterceptedIntent()) {
             // Intercept
-            mEditedIntent = getIntent();
+            mEditedIntent = new Intent(getIntent());
             mEditedIntent.setComponent(null);
             mComponentType = IntentEditorConstants.ACTIVITY;
             mMethodId =
