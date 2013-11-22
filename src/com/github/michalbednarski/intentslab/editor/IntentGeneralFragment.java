@@ -420,8 +420,15 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
                 ri = pm.queryIntentServices(intent, 0);
                 break;
         }
-        new ComponentPicker(getActivity(), ri, mComponentText).show();
+        if (ri.isEmpty()) {
+            Toast.makeText(getActivity(), R.string.no_matching_components_found, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        new ComponentPickerDialogFragment(ri, this).show(getActivity().getSupportFragmentManager(), "component-picker");
 
+    }
+    void setComponentText(String text) {
+        mComponentText.setText(text);
     }
 
     private void updateIntentComponent() {
