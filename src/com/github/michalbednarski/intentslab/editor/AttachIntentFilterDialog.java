@@ -106,6 +106,14 @@ public class AttachIntentFilterDialog extends DialogFragment implements AdapterV
     private int mAvailableFlags = 0;
 
     /**
+     * Use "Find" mode instead of "attach intent filter" mode, that is change title
+     * and use inexact search by default
+     *
+     * @see #enableFindMode()
+     */
+    private boolean mFindMode = false;
+
+    /**
      * Name of package which we scan for components or null if we're scanning all packages
      */
     private String mScanComponentsInPackage = null;
@@ -116,6 +124,15 @@ public class AttachIntentFilterDialog extends DialogFragment implements AdapterV
     private static final String PREF_SKIP_FILTERS_IN_COMPONENTS = "attachIntentFilter.skipFilters";
 
     public AttachIntentFilterDialog() {
+    }
+
+    /**
+     * Switch to "find" mode
+     */
+    public AttachIntentFilterDialog enableFindMode() {
+        mFindMode = true;
+        mFlags |= FLAG_CASE_INSENSITIVE_AND_SUBSTRING;
+        return this;
     }
 
     @Override
@@ -150,7 +167,7 @@ public class AttachIntentFilterDialog extends DialogFragment implements AdapterV
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         final Dialog dialog = super.onCreateDialog(savedInstanceState);
-        dialog.setTitle(R.string.attach_intentfilter);
+        dialog.setTitle(mFindMode ? R.string.find : R.string.attach_intentfilter);
         return dialog;
     }
 

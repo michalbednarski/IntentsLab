@@ -3,6 +3,7 @@
     <string name="app_name">IntentsLab</string>
     <string name="start_empty">Empty Intent</string>
 
+    <string name="find">Find</string>
     <string name="attach_intentfilter">Attach IntentFilter</string>
     <string name="detach_intentfilter">Detach IntentFilter</string>
     <string name="menu_settings">Settings</string>

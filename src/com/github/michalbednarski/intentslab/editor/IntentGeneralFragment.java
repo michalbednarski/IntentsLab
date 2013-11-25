@@ -105,6 +105,13 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
                 pickComponent();
             }
         });
+        v.findViewById(R.id.component_pick).setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                findComponent();
+                return true;
+            }
+        });
         v.findViewById(R.id.component_clear).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -427,6 +434,14 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         new ComponentPickerDialogFragment(ri, this).show(getActivity().getSupportFragmentManager(), "component-picker");
 
     }
+
+    private void findComponent() {
+        getIntentEditor().updateIntent();
+        new AttachIntentFilterDialog()
+                .enableFindMode()
+                .show(getActivity().getSupportFragmentManager(), "component-finder");
+    }
+
     void setComponentText(String text) {
         mComponentText.setText(text);
     }
