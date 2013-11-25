@@ -180,6 +180,7 @@ public class AttachIntentFilterDialog extends DialogFragment implements AdapterV
         appsListView.setAdapter(mAppListAdapter);
         appsListView.setOnItemClickListener(this);
         appsListView.setOnItemLongClickListener(this);
+        Utils.fixListViewInDialogBackground(appsListView);
 
         // Find fields related to filtering
         View filteringViewGroup = mView.findViewById(R.id.filtering);
