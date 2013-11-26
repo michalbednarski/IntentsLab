@@ -13,6 +13,7 @@ import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
+import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
 import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 import com.github.michalbednarski.intentslab.valueeditors.object.InlineValueEditor;
 import com.github.michalbednarski.intentslab.valueeditors.object.InlineValueEditorsLayout;
@@ -110,11 +111,11 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
         }
         mValueEditors = new InlineValueEditor[argumentCount];
         for (int ii = 0; ii < argumentCount; ii++) {
-            Class<?> type = sandboxedMethod.argumentTypes[ii].aClass;
+            SandboxedType type = sandboxedMethod.argumentTypes[ii];
             final int i = ii;
             mValueEditors[ii] = new InlineValueEditor(
-                    type,
-                    type.getName(),
+                    type.aClass,
+                    type.toString(),
                     new InlineValueEditor.ValueAccessors() {
                         @Override
                         public Object getValue() {

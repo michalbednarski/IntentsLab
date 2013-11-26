@@ -36,6 +36,13 @@ public class SandboxedType implements Parcelable {
         return types;
     }
 
+    public String toString() {
+        if (aClass != null && aClass != ISandboxedObject.class) {
+            return aClass.getName();
+        }
+        return typeName;
+    }
+
     /*
      *
      * Parcelable
