@@ -11,6 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -153,5 +154,25 @@ public class Utils {
             contentValues.put(key, jsonObject.getString(key));
         }
         return contentValues;
+    }
+
+    public static Object[] deepCastArray(Object[] array, Class targetType) {
+        assert targetType.isArray() && !targetType.getComponentType().isPrimitive();
+
+        if (targetType.isInstance(array)) {
+            return array;
+        }
+
+        Class componentType = targetType.getComponentType();
+        Class nestedComponentType = componentType.getComponentType();
+        Object[] newArray = (Object[]) Array.newInstance(componentType, array.length);
+        if (nestedComponentType != null && !nestedComponentType.isPrimitive()) {
+            for (int i = 0; i < array.length; i++) {
+                newArray[i] = deepCastArray((Object[]) array[i], nestedComponentType);
+            }
+        } else {
+            System.arraycopy(array, 0, newArray, 0, array.length);
+        }
+        return newArray;
     }
 }

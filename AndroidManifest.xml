@@ -163,6 +163,8 @@
 
         <service android:name=".ActivityMonitorActivity$ActivityRecorderService" />
         <service android:name=".sandbox.SandboxManager$AService"/>
+
+        <activity android:name=".valueeditors.ArrayEditorActivity" />
     </application>
 
 </manifest>

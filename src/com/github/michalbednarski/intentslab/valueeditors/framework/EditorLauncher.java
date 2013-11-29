@@ -10,8 +10,10 @@ import android.support.v4.app.FragmentActivity;
 import android.util.SparseArray;
 import android.widget.Toast;
 import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.editor.BundleAdapter;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
+import com.github.michalbednarski.intentslab.valueeditors.ArrayEditorActivity;
 import com.github.michalbednarski.intentslab.valueeditors.BundleEditorActivity;
 import com.github.michalbednarski.intentslab.valueeditors.EnumEditor;
 import com.github.michalbednarski.intentslab.valueeditors.object.ObjectEditorActivity;
@@ -62,6 +64,9 @@ public class EditorLauncher {
 
             // Enum editor
             new EnumEditor.LaunchableEditor(),
+
+            // Array editor
+            new ArrayEditorActivity.LaunchableEditor(),
 
             // Generic Parcelable object editor
             new ObjectEditorActivity.LaunchableEditor()
@@ -192,21 +197,44 @@ public class EditorLauncher {
     private static class ActivityRequestInfo {
         String key;
         boolean isSandboxed;
+        Class requestedType;
 
         ActivityRequestInfo(String key, boolean isSandboxed) {
             this.key = key;
             this.isSandboxed = isSandboxed;
         }
 
+        public ActivityRequestInfo(String key, Class requestedType) {
+            this.key = key;
+            this.requestedType = requestedType;
+        }
+
+        Object deepCastIfNeeded(Object object) {
+            if (object instanceof Object[] && requestedType != null && requestedType.isArray() &&
+                    !requestedType.getComponentType().isPrimitive()) {
+                return Utils.deepCastArray((Object[]) object, requestedType);
+            }
+            return object;
+        }
+
         // Pseudo parcelable
         ActivityRequestInfo(Parcel source) {
             key = source.readString();
             isSandboxed = source.readInt() != 0;
+            String requestedTypeName = source.readString();
+            if (requestedTypeName != null) {
+                try {
+                    requestedType = Class.forName(requestedTypeName);
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
 
         void writeToParcel(Parcel dest) {
             dest.writeString(key);
             dest.writeInt(isSandboxed ? 1 : 0);
+            dest.writeString(requestedType != null ? requestedType.getName() : null);
         }
     }
 
@@ -288,7 +316,7 @@ public class EditorLauncher {
                         ((EditorLauncherWithSandboxCallback) mEditorLauncher.mEditorLauncherCallback)
                                 .onSandboxedEditorResult(key, (Bundle) newValue);
                     } else {
-                        mEditorLauncher.mEditorLauncherCallback.onEditorResult(key, newValue);
+                        mEditorLauncher.mEditorLauncherCallback.onEditorResult(key, requestInfo.deepCastIfNeeded(newValue));
                     }
                 }
             } else {
@@ -299,7 +327,7 @@ public class EditorLauncher {
         void startEditorInActivity(Intent baseEditorIntent, String key, Object value) {
             Bundle extras = new Bundle(1);
             BundleAdapter.putInBundle(extras, Editor.EXTRA_VALUE, value);
-            int requestCode = mState.saveRequestInfoAndGetCode(new ActivityRequestInfo(key, false));
+            int requestCode = mState.saveRequestInfoAndGetCode(new ActivityRequestInfo(key, value.getClass()));
             startActivityForResult(baseEditorIntent.putExtras(extras), requestCode);
         }
 
