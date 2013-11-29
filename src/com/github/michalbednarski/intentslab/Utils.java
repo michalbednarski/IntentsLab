@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
+import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.Toast;
 import org.json.JSONArray;
@@ -174,5 +175,14 @@ public class Utils {
             System.arraycopy(array, 0, newArray, 0, array.length);
         }
         return newArray;
+    }
+
+    public static void updateLegacyCheckedIcon(MenuItem menuItem) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+            menuItem.setIcon(
+                    menuItem.isChecked() ?
+                            R.drawable.ic_menu_checked :
+                            R.drawable.ic_menu_unchecked);
+        }
     }
 }

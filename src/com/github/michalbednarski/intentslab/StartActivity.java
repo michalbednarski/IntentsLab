@@ -78,9 +78,11 @@ public class StartActivity extends Activity {
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
-        menu.findItem(R.id.interception).setChecked(
+        MenuItem interceptionOption = menu.findItem(R.id.interception);
+        interceptionOption.setChecked(
                 getPackageManager().getComponentEnabledSetting(mInterceptActivityComponentName) == PackageManager.COMPONENT_ENABLED_STATE_ENABLED
         );
+        Utils.updateLegacyCheckedIcon(interceptionOption);
         return true;
     }
 
