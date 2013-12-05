@@ -215,5 +215,6 @@
     <string name="proxy_log_empty">Log is empty, long press \"...\" button near \"Data (URI)\" in intent editor field
         and use \"Wrap\" option
     </string>
+    <string name="no_components">No components</string>
 
 </resources>

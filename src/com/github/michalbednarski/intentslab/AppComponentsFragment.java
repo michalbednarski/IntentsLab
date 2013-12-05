@@ -7,11 +7,14 @@ import android.content.pm.*;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import com.github.michalbednarski.intentslab.browser.ComponentInfoActivity;
 import com.github.michalbednarski.intentslab.providerlab.ProviderInfoActivity;
@@ -192,10 +195,32 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        final ExpandableListView expandableListView = new ExpandableListView(getActivity());
+        FragmentActivity activity = getActivity();
+        FrameLayout frameLayout = new FrameLayout(activity);
+        FrameLayout.LayoutParams stretch = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+        );
+        FrameLayout.LayoutParams center = new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                FrameLayout.LayoutParams.WRAP_CONTENT,
+                Gravity.CENTER
+        );
+
+        final ExpandableListView expandableListView = new ExpandableListView(activity);
         expandableListView.setAdapter(this);
         expandableListView.setOnChildClickListener(this);
-        return expandableListView;
+        expandableListView.setLayoutParams(stretch);
+        frameLayout.addView(expandableListView);
+
+        final TextView emptyView = new TextView(activity);
+        emptyView.setText(activity.getString(R.string.no_components));
+        emptyView.setLayoutParams(center);
+        frameLayout.addView(emptyView);
+
+        expandableListView.setEmptyView(emptyView);
+
+        return frameLayout;
     }
 
     @Override
@@ -321,7 +346,7 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
 
     @Override
     public boolean isEmpty() {
-        return false;
+        return getGroupCount() == 0;
     }
 
     @Override
