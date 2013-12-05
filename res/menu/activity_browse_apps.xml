@@ -27,6 +27,13 @@
                 <item
                     android:id="@+id/content_providers"
                     android:title="@string/content_providers"/>
+                <item
+                    android:id="@+id/applications"
+                    android:title="@string/applications"/>
+                <item
+                    android:id="@+id/dummy_component_type"
+                    android:title=""
+                    android:visible="false"/>
             </group>
         </menu>
     </item>
