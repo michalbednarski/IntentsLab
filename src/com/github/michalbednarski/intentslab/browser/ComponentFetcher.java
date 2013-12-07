@@ -134,7 +134,7 @@ public class ComponentFetcher extends Fetcher {
 
         if (allPackages == null || allPackages.isEmpty()) {
             workAroundSmallBinderBuffer = true;
-            allPackages = pm.getInstalledPackages(PackageManager.GET_SERVICES);
+            allPackages = pm.getInstalledPackages(0);
         }
 
         ArrayList<Category> selectedApps = new ArrayList<Category>();
