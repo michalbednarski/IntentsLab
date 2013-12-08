@@ -165,6 +165,7 @@
         <service android:name=".sandbox.SandboxManager$AService"/>
 
         <activity android:name=".valueeditors.ArrayEditorActivity" />
+        <activity android:name=".bindservice.BoundServicesListActivity" />
     </application>
 
 </manifest>

@@ -9,11 +9,13 @@ import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.widget.Toast;
+import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 
 /**
@@ -44,6 +46,11 @@ public class BindServiceManager {
         return null;
     }
 
+    static Helper[] getBoundServices() {
+        Collection<Helper> values = sBoundServices.values();
+        return values.toArray(new Helper[values.size()]);
+    }
+
     public static void executePendingBindServices(Service sandboxService) {
         assert sandboxService != null;
         for (Helper pendingBindService : sPendingBindServices) {
@@ -59,6 +66,7 @@ public class BindServiceManager {
         IAidlInterface mAidlInterface;
         private String mPackageName;
         private ArrayList<Runnable> mAidlReadyCallbacks = null;
+        private String mTitle;
 
 
         private Helper(Intent intent, Context requesterContext) {
@@ -66,6 +74,8 @@ public class BindServiceManager {
 
             mDescriptor = new BindServiceDescriptor();
             mDescriptor.intent = intent;
+
+            mTitle = Utils.afterLastDot(intent.getAction());
         }
 
         private void registerPending() {
@@ -158,6 +168,10 @@ public class BindServiceManager {
                 mContextForShowingDialogs = null;
                 unbind();
             }
+        }
+
+        public String getTitle() {
+            return mTitle;
         }
     }
 }

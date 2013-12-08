@@ -16,6 +16,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.bindservice.BindServiceManager;
+import com.github.michalbednarski.intentslab.bindservice.BoundServicesListActivity;
 import com.github.michalbednarski.intentslab.editor.BundleAdapter;
 import com.github.michalbednarski.intentslab.runas.RunAsInitReceiver;
 
@@ -113,7 +114,13 @@ public class SandboxManager {
             startForeground(235,
                     new NotificationCompat.Builder(this)
                             .setSmallIcon(R.drawable.ic_launcher)
-                            .setContentIntent(PendingIntent.getBroadcast(this, 0, new Intent(this, RunAsInitReceiver.class), 0))
+                            .setContentText("[Bound services]")
+                            .setContentIntent(PendingIntent.getActivity(
+                                    this,
+                                    0,
+                                    new Intent(this, BoundServicesListActivity.class),
+                                    0
+                            ))
                             .build());
 
             bindService(new Intent().setClassName(SANDBOX_PACKAGE, SANDBOX_SERVICE_CLASS), new ServiceConnection() {
