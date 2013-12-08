@@ -15,6 +15,7 @@ import android.view.View.OnClickListener;
 import android.widget.*;
 import android.widget.AdapterView.OnItemSelectedListener;
 import com.github.michalbednarski.intentslab.NameAutocompleteAdapter;
+import com.github.michalbednarski.intentslab.PackageNameAutocompleteAdapter;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.providerlab.AdvancedQueryActivity;
 import com.github.michalbednarski.intentslab.providerlab.proxy.ProxyProvider;
@@ -47,7 +48,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     private TextView mResponseCodeTextView;
     private Intent mEditedIntent;
     private UriAutocompleteAdapter mUriAutocompleteAdapter;
-    private TextView mPackageNameText;
+    private AutoCompleteTextView mPackageNameText;
 
 
     public IntentGeneralFragment() {
@@ -86,7 +87,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         mAddCategoryButton = (Button) v.findViewById(R.id.category_add);
         mCategoriesHeader = v.findViewById(R.id.categories_header);
         mResponseCodeTextView = (TextView) v.findViewById(R.id.response_code);
-        mPackageNameText = (TextView) v.findViewById(R.id.package_name);
+        mPackageNameText = (AutoCompleteTextView) v.findViewById(R.id.package_name);
 
         // Apparently using android:scrollHorizontally="true" does not work.
         // http://stackoverflow.com/questions/9011944/android-ice-cream-sandwich-edittext-disabling-spell-check-and-word-wrap
@@ -157,6 +158,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         // Set up autocomplete
         mUriAutocompleteAdapter = new UriAutocompleteAdapter(getActivity());
         mDataText.setAdapter(mUriAutocompleteAdapter);
+        mPackageNameText.setAdapter(new PackageNameAutocompleteAdapter(getActivity()));
 
         // Get edited intent for form filling
         mEditedIntent = getEditedIntent();
