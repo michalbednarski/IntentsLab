@@ -15,7 +15,6 @@ import android.os.Parcelable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
 import com.github.michalbednarski.intentslab.R;
-import com.github.michalbednarski.intentslab.bindservice.BindServiceManager;
 import com.github.michalbednarski.intentslab.bindservice.BoundServicesListActivity;
 import com.github.michalbednarski.intentslab.editor.BundleAdapter;
 import com.github.michalbednarski.intentslab.runas.RunAsInitReceiver;
@@ -106,7 +105,6 @@ public class SandboxManager {
         public int onStartCommand(Intent intent, int flags, int startId) {
             if (sService == null) {
                 sService = this;
-                BindServiceManager.executePendingBindServices(this);
             }
             if (isReady()) {
                 return START_NOT_STICKY;

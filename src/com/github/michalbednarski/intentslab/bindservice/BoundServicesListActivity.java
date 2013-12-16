@@ -13,6 +13,8 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
+import com.github.michalbednarski.intentslab.bindservice.manager.ServiceDescriptor;
 
 public class BoundServicesListActivity extends FragmentActivity {
 
@@ -47,13 +49,13 @@ public class BoundServicesListActivity extends FragmentActivity {
      * A placeholder fragment containing a simple view.
      */
     public static class BoundServicesFragment extends ListFragment {
-        private BindServiceManager.Helper[] mHelpers;
+        private ServiceDescriptor[] mServiceDescriptors;
         private MyAdapter mAdapter = new MyAdapter();
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            mHelpers = BindServiceManager.getBoundServices();
+            mServiceDescriptors = BindServiceManager.getBoundServices();
 
         }
 
@@ -67,7 +69,7 @@ public class BoundServicesListActivity extends FragmentActivity {
         private class MyAdapter extends BaseAdapter implements AdapterView.OnItemClickListener {
             @Override
             public int getCount() {
-                return mHelpers.length;
+                return mServiceDescriptors.length;
             }
 
             @Override
@@ -87,7 +89,7 @@ public class BoundServicesListActivity extends FragmentActivity {
                             parent.getContext().getSystemService(LAYOUT_INFLATER_SERVICE);
                     convertView = inflater.inflate(android.R.layout.simple_list_item_1, parent, false);
                 }
-                ((TextView) convertView).setText(mHelpers[position].getTitle());
+                ((TextView) convertView).setText(mServiceDescriptors[position].getTitle());
                 return convertView;
             }
 
@@ -95,7 +97,7 @@ public class BoundServicesListActivity extends FragmentActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 startActivity(
                         new Intent(getActivity(), BoundServiceActivity.class)
-                        .putExtra(BoundServiceActivity.EXTRA_SERVICE, mHelpers[position].mDescriptor)
+                        .putExtra(BoundServiceActivity.EXTRA_SERVICE, mServiceDescriptors[position])
                 );
             }
         }

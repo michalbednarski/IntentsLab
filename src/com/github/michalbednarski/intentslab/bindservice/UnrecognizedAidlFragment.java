@@ -1,16 +1,13 @@
 package com.github.michalbednarski.intentslab.bindservice;
 
 import android.os.Bundle;
-import android.os.DeadObjectException;
-import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 import com.github.michalbednarski.intentslab.R;
-import com.github.michalbednarski.intentslab.Utils;
+import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 
 /**
  * Created by mb on 16.10.13.
@@ -26,23 +23,7 @@ public class UnrecognizedAidlFragment extends Fragment {
         setRetainInstance(true);
 
         mServiceHelper = ((BoundServiceActivity) getActivity()).getBoundService();
-
-
-        final IBinder boundService = mServiceHelper.mBoundService;
-        String interfaceDescriptor;
-        try {
-            interfaceDescriptor = boundService.getInterfaceDescriptor();
-        } catch (DeadObjectException e) {
-            Toast.makeText(getActivity(), "Service disconnected", Toast.LENGTH_SHORT).show();
-            getActivity().finish();
-            return;
-        } catch (Exception e) {
-            e.printStackTrace();
-            mMessage = "queryInterfaceDescriptor: " + Utils.describeException(e);
-            return;
-        }
-
-        mMessage = "No AIDL found\ngetInterfaceDescriptor() = " + interfaceDescriptor;
+        mMessage = "No AIDL found\ngetInterfaceDescriptor() = " + mServiceHelper.getInterfaceDescriptor();
     }
 
     @Override

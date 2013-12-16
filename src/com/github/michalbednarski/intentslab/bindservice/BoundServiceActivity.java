@@ -3,6 +3,8 @@ package com.github.michalbednarski.intentslab.bindservice;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentActivity;
+import com.github.michalbednarski.intentslab.bindservice.manager.ServiceDescriptor;
+import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 
 /**
  * Created by mb on 01.10.13.
@@ -17,7 +19,7 @@ public class BoundServiceActivity extends FragmentActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        BindServiceDescriptor descriptor = getIntent().getParcelableExtra(EXTRA_SERVICE);
+        ServiceDescriptor descriptor = getIntent().getParcelableExtra(EXTRA_SERVICE);
         mBoundService = BindServiceManager.getBoundService(descriptor);
         if (mBoundService == null) {
             finish();

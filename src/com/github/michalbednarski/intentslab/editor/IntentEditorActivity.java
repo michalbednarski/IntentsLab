@@ -21,7 +21,8 @@ import android.widget.Toast;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.SavedItemsDatabase;
 import com.github.michalbednarski.intentslab.Utils;
-import com.github.michalbednarski.intentslab.bindservice.BindServiceManager;
+import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceDescriptor;
+import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.browser.ComponentInfoActivity;
 import com.github.michalbednarski.intentslab.browser.ExtendedPackageInfo;
 import com.github.michalbednarski.intentslab.runas.IRemoteInterface;
@@ -411,11 +412,9 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                             if (!SandboxManager.isSandboxInstalled(this)) {
                                 SandboxManager.requestSandboxInstall(this);
                             } else {
-                                BindServiceManager.bindServiceAndShowUI(this, mEditedIntent);
+                                BindServiceManager.prepareBinderAndShowUI(this, new BindServiceDescriptor(new Intent(mEditedIntent)));
                             }
                         }
-                            // TODO runIntent bindService
-
                     }
                     break;
 

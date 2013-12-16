@@ -16,9 +16,11 @@ public class ClassLoaderDescriptor implements Parcelable {
     }
 
     public ClassLoader getClassLoader(Context topContext) {
-        try {
-            return topContext.createPackageContext(mPackageName, Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY).getClassLoader();
-        } catch (PackageManager.NameNotFoundException ignored) {}
+        if (mPackageName != null) {
+            try {
+                return topContext.createPackageContext(mPackageName, Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY).getClassLoader();
+            } catch (PackageManager.NameNotFoundException ignored) {}
+        }
         return topContext.getClassLoader();
     }
 

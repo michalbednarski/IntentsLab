@@ -11,6 +11,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
+import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
+import com.github.michalbednarski.intentslab.bindservice.manager.SystemServiceDescriptor;
 import com.github.michalbednarski.intentslab.browser.BrowseComponentsActivity;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
 import com.github.michalbednarski.intentslab.editor.IntentEditorInterceptedActivity;
@@ -70,6 +72,13 @@ public class StartActivity extends Activity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 startActivity(new Intent(StartActivity.this, ActivityMonitorActivity.class));
+                return true;
+            }
+        });
+        menu.add("System service (experimental)").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                BindServiceManager.prepareBinderAndShowUI(StartActivity.this, new SystemServiceDescriptor("package"));
                 return true;
             }
         });

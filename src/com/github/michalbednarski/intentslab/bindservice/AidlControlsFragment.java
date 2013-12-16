@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.TextView;
+import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 
@@ -30,11 +31,11 @@ public class AidlControlsFragment extends ListFragment {
 
         mServiceHelper = ((BoundServiceActivity) getActivity()).getBoundService();
 
-        mServiceHelper.prepareAidlAndRunWhenReady(getActivity(), new Runnable() {
+        mServiceHelper.prepareAidlAndRunWhenReady(getActivity(), new BindServiceManager.AidlReadyCallback() {
             @Override
-            public void run() {
-                mAidlInterface = mServiceHelper.mAidlInterface;
-                if (mAidlInterface != null) {
+            public void onAidlReady(IAidlInterface anInterface) {
+                mAidlInterface = anInterface;
+                if (anInterface != null) {
                     createAdapter();
                 } else {
                     getFragmentManager()

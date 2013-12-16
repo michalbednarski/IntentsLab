@@ -10,6 +10,8 @@ import android.support.v4.app.DialogFragment;
 import android.util.Log;
 import android.widget.Toast;
 import com.github.michalbednarski.intentslab.Utils;
+import com.github.michalbednarski.intentslab.bindservice.manager.ServiceDescriptor;
+import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
@@ -27,7 +29,7 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
     private static final String STATE_METHOD_ARGUMENTS = "method-arguments";
 
     private IAidlInterface mAidlInterface;
-    private final int mMethodNumber;
+    private int mMethodNumber = -9999;
     private SandboxedMethodArguments mMethodArguments;
     private EditorLauncher mEditorLauncher;
     private InlineValueEditor[] mValueEditors;
@@ -36,24 +38,16 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
     /**
      * Required by framework empty constructor
      */
-    public InvokeAidlMethodDialog() {
-        Bundle args = getArguments();
-        try {
-            mAidlInterface = BindServiceManager.getBoundService(args.<BindServiceDescriptor>getParcelable(ARG_SERVICE)).mAidlInterface;
-        } catch (Exception e) {
-            mAidlInterface = null;
-        }
-        mMethodNumber = args.getInt(ARG_METHOD_NUMBER);
-    }
+    public InvokeAidlMethodDialog() {}
 
     public InvokeAidlMethodDialog(BindServiceManager.Helper serviceHelper, int methodNr) {
         Bundle args = new Bundle();
-        args.putParcelable(ARG_SERVICE, serviceHelper.mDescriptor);
+        args.putParcelable(ARG_SERVICE, serviceHelper.getDescriptor());
         args.putInt(ARG_METHOD_NUMBER, methodNr);
         setArguments(args);
 
         mMethodNumber = methodNr;
-        mAidlInterface = serviceHelper.mAidlInterface;
+        mAidlInterface = serviceHelper.getAidlIfAvailable();
     }
 
     @Override
@@ -66,7 +60,16 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (mAidlInterface == null) {
+        if (mAidlInterface == null && mMethodNumber == -9999) {
+            Bundle args = getArguments();
+            try {
+                mAidlInterface = BindServiceManager.getBoundService(args.<ServiceDescriptor>getParcelable(ARG_SERVICE)).getAidlIfAvailable();
+            } catch (Exception e) {
+                mAidlInterface = null;
+            }
+            mMethodNumber = args.getInt(ARG_METHOD_NUMBER);
+        }
+        if (mAidlInterface == null || !mAidlInterface.asBinder().isBinderAlive()) {
             dismissAllowingStateLoss();
             return;
         }
