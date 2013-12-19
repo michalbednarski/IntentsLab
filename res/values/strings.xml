@@ -216,5 +216,6 @@
         and use \"Wrap\" option
     </string>
     <string name="no_components">No components</string>
+    <string name="system_services">System services</string>
 
 </resources>

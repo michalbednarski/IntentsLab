@@ -7,6 +7,9 @@
         android:id="@+id/provider_lab"
         android:title="@string/provider_lab" />
     <item
+        android:id="@+id/system_services"
+        android:title="@string/system_services" />
+    <item
         android:id="@+id/menu_settings"
         android:title="@string/menu_settings" />
 </menu>

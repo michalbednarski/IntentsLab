@@ -1,18 +1,17 @@
 package com.github.michalbednarski.intentslab;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
-import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
-import com.github.michalbednarski.intentslab.bindservice.manager.SystemServiceDescriptor;
+import com.github.michalbednarski.intentslab.bindservice.SystemServicesDialog;
 import com.github.michalbednarski.intentslab.browser.BrowseComponentsActivity;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
 import com.github.michalbednarski.intentslab.editor.IntentEditorInterceptedActivity;
@@ -21,7 +20,7 @@ import com.github.michalbednarski.intentslab.providerlab.proxy.LogViewerActivity
 import com.github.michalbednarski.intentslab.runas.RemoteEntryPoint;
 import com.github.michalbednarski.intentslab.runas.RunAsInitReceiver;
 
-public class StartActivity extends Activity {
+public class StartActivity extends FragmentActivity {
 
     private ComponentName mInterceptActivityComponentName;
 
@@ -75,13 +74,6 @@ public class StartActivity extends Activity {
                 return true;
             }
         });
-        menu.add("System service (experimental)").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                BindServiceManager.prepareBinderAndShowUI(StartActivity.this, new SystemServiceDescriptor("package"));
-                return true;
-            }
-        });
         return true;
     }
 
@@ -119,6 +111,9 @@ public class StartActivity extends Activity {
                 ActivityCompat.invalidateOptionsMenu(this);
                 return true;
             }
+            case R.id.system_services:
+                (new SystemServicesDialog()).show(getSupportFragmentManager(), "systemServices");
+                return true;
             case R.id.provider_lab:
                 startActivity(new Intent(StartActivity.this, AdvancedQueryActivity.class));
                 return true;
