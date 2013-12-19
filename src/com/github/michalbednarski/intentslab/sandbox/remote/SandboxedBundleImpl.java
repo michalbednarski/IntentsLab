@@ -6,7 +6,6 @@ import android.os.RemoteException;
 import com.github.michalbednarski.intentslab.editor.BundleAdapter;
 import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedBundle;
-import com.github.michalbednarski.intentslab.sandbox.ParcelableValue;
 import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
 
 import java.util.Set;
@@ -37,11 +36,6 @@ public class SandboxedBundleImpl extends ISandboxedBundle.Stub {
     }
 
     @Override
-    public ParcelableValue get(String key) throws RemoteException {
-        return new ParcelableValue(mBundle.get(key));
-    }
-
-    @Override
     public String getAsString(String key) throws RemoteException {
         return mBundle.get(key).toString();
     }
@@ -49,11 +43,6 @@ public class SandboxedBundleImpl extends ISandboxedBundle.Stub {
     @Override
     public Bundle getWrapped(String key) throws RemoteException {
         return SandboxManager.wrapObject(mBundle.get(key));
-    }
-
-    @Override
-    public void put(String key, ParcelableValue value) throws RemoteException {
-        BundleAdapter.putInBundle(mBundle, key, value.value);
     }
 
     @Override

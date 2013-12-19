@@ -23,7 +23,6 @@ import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedBundle;
-import com.github.michalbednarski.intentslab.sandbox.ParcelableValue;
 import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
 import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 
@@ -337,7 +336,7 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
                     boolean keySetChange = false;
                     try {
                         keySetChange = !mSandboxedBundle.containsKey(key);
-                        mSandboxedBundle.put(key, new ParcelableValue(newValue));
+                        mSandboxedBundle.putWrapped(key, SandboxManager.wrapObject(newValue));
                     } catch (Exception e) {
                         e.printStackTrace(); // Cannot recover
                     }
