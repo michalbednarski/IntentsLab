@@ -1,6 +1,7 @@
 package com.github.michalbednarski.intentslab.runas;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
@@ -169,6 +170,44 @@ public class RunAsManager {
         }
 
         // Neither exists nor is alive
+        return null;
+    }
+
+    public static IRemoteInterface getRemoteInterfaceHavingPermission(Context context, String permission) {
+        // Try to get remote interface running as root
+        IRemoteInterface remoteInterface = sRemoteInterfaces.get(0);
+        if (remoteInterface != null && remoteInterface.asBinder().isBinderAlive()) {
+            return remoteInterface;
+        }
+
+        // Try to get remote interface running as shell (adb)
+        remoteInterface = getRemoteInterfaceForUidIfItHasPermission(context, 2000, permission);
+        if (remoteInterface != null) {
+            return remoteInterface;
+        }
+
+        // Try all other interfaces
+        for (int i = 0, j = sRemoteInterfaces.size(); i < j; i++) {
+            int uid = sRemoteInterfaces.keyAt(i);
+            if (uid == 2000) {
+                continue; // Skip adb shell, already tested
+            }
+            remoteInterface = getRemoteInterfaceForUidIfItHasPermission(context, uid, permission);
+            if (remoteInterface != null) {
+                return remoteInterface;
+            }
+        }
+
+        // Neither exists nor is alive
+        return null;
+    }
+
+    private static IRemoteInterface getRemoteInterfaceForUidIfItHasPermission(Context context, int uid, String permission) {
+        IRemoteInterface remoteInterface = sRemoteInterfaces.get(uid);
+        if (remoteInterface != null && remoteInterface.asBinder().isBinderAlive()
+                && context.checkPermission(permission, 0, uid) == PackageManager.PERMISSION_GRANTED) {
+            return remoteInterface;
+        }
         return null;
     }
 }

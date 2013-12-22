@@ -14,4 +14,6 @@ interface ISandbox {
     ISandboxedBundle sandboxBundle(in Bundle bundle, in ClassLoaderDescriptor classLoaderDescriptor);
 
     ISandboxedObject sandboxObject(in Bundle wrappedObject, in ClassLoaderDescriptor classLoaderDescriptor);
+
+    IBinder getApplicationToken();
 }

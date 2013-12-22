@@ -1,6 +1,7 @@
 package com.github.michalbednarski.intentslab.runas;
 
 import android.app.IActivityController;
+import android.app.IServiceConnection;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -26,6 +27,11 @@ class RemoteInterfaceImpl extends IRemoteInterface.Stub {
             result.putSerializable("exception", e.getTargetException());
         }
         return result;
+    }
+
+    @Override
+    public int bindService(IBinder sandboxApplicationToken, Intent intent, IServiceConnection conn) throws RemoteException {
+        return ActivityManagerWrapper.get().bindService(sandboxApplicationToken, intent, conn);
     }
 
     @Override
