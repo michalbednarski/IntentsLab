@@ -8,6 +8,7 @@ import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.*;
@@ -17,6 +18,7 @@ import android.widget.AdapterView.OnItemSelectedListener;
 import com.github.michalbednarski.intentslab.NameAutocompleteAdapter;
 import com.github.michalbednarski.intentslab.PackageNameAutocompleteAdapter;
 import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.providerlab.AdvancedQueryActivity;
 import com.github.michalbednarski.intentslab.providerlab.proxy.ProxyProvider;
 import com.github.michalbednarski.intentslab.providerlab.proxy.ProxyProviderForGrantUriPermission;
@@ -39,6 +41,10 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         NO_IMPLICIT_URI_ACTIONS.add(Intent.ACTION_GET_CONTENT);
     };
 
+    private static final String STATE_SHOW_ADVANCED = "intenteditor.general.showadvanced";
+
+    private boolean mShowAdvanced;
+
     private AutoCompleteTextView mDataText;
     private View mDataTextWrapper;
     private View mDataTextHeader;
@@ -49,9 +55,25 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     private Intent mEditedIntent;
     private UriAutocompleteAdapter mUriAutocompleteAdapter;
     private AutoCompleteTextView mPackageNameText;
+    private View mResultCodeWrapper;
+    private View mComponentTypeAndMethodSpinners;
+    private View mComponentHeader;
+    private View mComponentFieldWithButtons;
+    private View mPackageNameHeader;
 
 
     public IntentGeneralFragment() {
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            mShowAdvanced = savedInstanceState.getBoolean(STATE_SHOW_ADVANCED);
+        }
+
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -88,6 +110,12 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         mCategoriesHeader = v.findViewById(R.id.categories_header);
         mResponseCodeTextView = (TextView) v.findViewById(R.id.response_code);
         mPackageNameText = (AutoCompleteTextView) v.findViewById(R.id.package_name);
+
+        mResultCodeWrapper = v.findViewById(R.id.result_intent_wrapper);
+        mComponentTypeAndMethodSpinners = v.findViewById(R.id.component_and_method_spinners);
+        mComponentHeader = v.findViewById(R.id.component_header);
+        mComponentFieldWithButtons = v.findViewById(R.id.component_field_with_buttons);
+        mPackageNameHeader = v.findViewById(R.id.package_name_header);
 
         // Apparently using android:scrollHorizontally="true" does not work.
         // http://stackoverflow.com/questions/9011944/android-ice-cream-sandwich-edittext-disabling-spell-check-and-word-wrap
@@ -190,7 +218,8 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         mDataText.setText(mEditedIntent.getDataString());
         mPackageNameText.setText(mEditedIntent.getPackage());
 
-        showOrHideFieldsForResultIntent(v);
+        showOrHideFieldsForResultIntent();
+        showOrHideAdvancedFields();
         if (getComponentType() == IntentEditorConstants.RESULT) {
             mResponseCodeTextView.setText(String.valueOf(getIntentEditor().getMethodId()));
             mResponseCodeTextView.addTextChangedListener(new TextWatcher() {
@@ -694,12 +723,10 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     }
 
     // COMMON
-    private void showOrHideFieldsForResultIntent(View v) {
+    private void showOrHideFieldsForResultIntent() {
         boolean isResultIntent = getComponentType() == IntentEditorConstants.RESULT;
-        v.findViewById(R.id.component_and_method_spinners).setVisibility(isResultIntent ? View.GONE : View.VISIBLE);
-        v.findViewById(R.id.component_header).setVisibility(isResultIntent ? View.GONE : View.VISIBLE);
-        v.findViewById(R.id.component_field_with_buttons).setVisibility(isResultIntent ? View.GONE : View.VISIBLE);
-        v.findViewById(R.id.result_intent_wrapper).setVisibility(isResultIntent ? View.VISIBLE : View.GONE);
+        mResultCodeWrapper.setVisibility(isResultIntent ? View.VISIBLE : View.GONE);
+        mComponentTypeAndMethodSpinners.setVisibility(isResultIntent ? View.GONE : View.VISIBLE);
     }
 
     @Override
@@ -848,5 +875,48 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
             mDataText.setText("");
         }
         mUriAutocompleteAdapter.setIntentFilters(selectedIntentFilters.toArray(new IntentFilter[selectedIntentFilters.size()]));
+    }
+
+
+    // Advanced toggle
+    private void showOrHideAdvancedFields() {
+        boolean isResultIntent = getComponentType() == IntentEditorConstants.RESULT;
+
+
+        // Component, advanced only in result intent
+        boolean showComponent = !isResultIntent || mShowAdvanced || mEditedIntent.getComponent() != null;
+        mComponentHeader.setVisibility(showComponent ? View.VISIBLE : View.GONE);
+        mComponentFieldWithButtons.setVisibility(showComponent ? View.VISIBLE : View.GONE);
+
+        // Package name
+        boolean showPackage = mShowAdvanced || mEditedIntent.getPackage() != null;
+        mPackageNameText.setVisibility(showPackage ? View.VISIBLE : View.GONE);
+        mPackageNameHeader.setVisibility(showPackage ? View.VISIBLE : View.GONE);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.intent_editor_general, menu);
+    }
+
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        MenuItem advanced = menu.findItem(R.id.advanced);
+        advanced.setChecked(mShowAdvanced);
+        Utils.updateLegacyCheckedIcon(advanced);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case R.id.advanced:
+            updateEditedIntent(mEditedIntent);
+            mShowAdvanced = !mShowAdvanced;
+            showOrHideAdvancedFields();
+            ActivityCompat.invalidateOptionsMenu(getActivity());
+            return true;
+        default:
+            return false;
+        }
     }
 }

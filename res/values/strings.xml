@@ -217,5 +217,6 @@
     </string>
     <string name="no_components">No components</string>
     <string name="system_services">System services</string>
+    <string name="advanced">Advanced</string>
 
 </resources>
