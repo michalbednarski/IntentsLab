@@ -17,11 +17,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by mb on 01.10.13.
  */
 class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
+    private static final Pattern AOSP_MANUAL_AIDL_PATTERN = Pattern.compile("(android\\.(\\w+\\.)+)I(\\w+)");
     private final Object mObject;
     private final String mInterfaceDescriptor;
     private final SandboxedMethod[] mSandboxedMethods;
@@ -37,7 +40,17 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
         try {
             // Load interface class
             mClassLoader = fromPackage.getClassLoader(service);
-            final Class<?> stub = mClassLoader.loadClass(mInterfaceDescriptor + "$Stub");
+            Class<?> stub = null;
+            try {
+                stub = mClassLoader.loadClass(mInterfaceDescriptor + "$Stub");
+            } catch (ClassNotFoundException e) {
+                Matcher matcher = AOSP_MANUAL_AIDL_PATTERN.matcher(mInterfaceDescriptor);
+                if (matcher.find()) {
+                    stub = mClassLoader.loadClass(matcher.group(1) + matcher.group(3) + "Native");
+
+                }
+            }
+
             mObject = stub.getMethod("asInterface", IBinder.class).invoke(null, binder);
 
             // Get it's methods
