@@ -119,8 +119,6 @@ public class BindServiceDescriptor extends ServiceDescriptor {
         }
 
         @Override
-        public void onServiceDisconnected(ComponentName name) {
-            mHelper.dispatchUnbound();
-        }
+        public void onServiceDisconnected(ComponentName name) {}
     }
 }

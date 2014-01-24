@@ -100,12 +100,6 @@ public class BindServiceManager {
             mBinderReadyCallbacks = null;
         }
 
-        void dispatchUnbound() {
-            //
-            mBoundService = null;
-        }
-
-
         public void unbind() {
             if (mBound) {
                 mConnectionManager.unbind();
