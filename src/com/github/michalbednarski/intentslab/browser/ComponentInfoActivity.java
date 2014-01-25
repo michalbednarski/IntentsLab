@@ -19,12 +19,12 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import com.github.michalbednarski.intentslab.AppInfoActivity;
 import com.github.michalbednarski.intentslab.CatchBroadcastService;
 import com.github.michalbednarski.intentslab.FormattedTextBuilder;
 import com.github.michalbednarski.intentslab.R;
-import com.github.michalbednarski.intentslab.XMLViewerActivity;
-import com.github.michalbednarski.intentslab.AppInfoActivity;
+import com.github.michalbednarski.intentslab.SingleFragmentActivity;
+import com.github.michalbednarski.intentslab.XMLViewerFragment;
 import com.github.michalbednarski.intentslab.browser.ExtendedPackageInfo.ExtendedComponentInfo;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
 import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
@@ -154,9 +154,10 @@ public class ComponentInfoActivity extends Activity {
                                 @Override
                                 public void onClick(View widget) {
                                     context.startActivity(
-                                            new Intent(context, XMLViewerActivity.class)
-                                                    .putExtra(XMLViewerActivity.EXTRA_PACKAGE_NAME, packageName)
-                                                    .putExtra(XMLViewerActivity.EXTRA_RESOURCE_ID, resId)
+                                            new Intent(context, SingleFragmentActivity.class)
+                                                    .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, XMLViewerFragment.class.getName())
+                                                    .putExtra(XMLViewerFragment.ARG_PACKAGE_NAME, packageName)
+                                                    .putExtra(XMLViewerFragment.ARG_RESOURCE_ID, resId)
                                     );
                                 }
                             });

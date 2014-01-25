@@ -191,9 +191,10 @@ public class XmlPreviewBuilder {
                                     @Override
                                     public void onClick(View widget) {
                                         widget.getContext().startActivity(
-                                                new Intent(widget.getContext(), XMLViewerActivity.class)
-                                                .putExtra(XMLViewerActivity.EXTRA_PACKAGE_NAME, attrOwnerPackageName)
-                                                .putExtra(XMLViewerActivity.EXTRA_RESOURCE_ID, resourceId)
+                                                new Intent(widget.getContext(), SingleFragmentActivity.class)
+                                                .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, XMLViewerFragment.class.getName())
+                                                .putExtra(XMLViewerFragment.ARG_PACKAGE_NAME, attrOwnerPackageName)
+                                                .putExtra(XMLViewerFragment.ARG_RESOURCE_ID, resourceId)
                                         );
                                     }
                                 });
