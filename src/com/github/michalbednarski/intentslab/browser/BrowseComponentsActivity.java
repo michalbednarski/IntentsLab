@@ -1,10 +1,15 @@
 package com.github.michalbednarski.intentslab.browser;
 
 import android.annotation.TargetApi;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.view.MenuItem;
+import android.view.View;
+import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 
 public class BrowseComponentsActivity extends FragmentActivity {
 
@@ -20,6 +25,10 @@ public class BrowseComponentsActivity extends FragmentActivity {
             onCreateAndroidSDK11AndUp();
         }
 
+        setContentView(R.layout.master_detail_base);
+
+        boolean showDetail = false;
+
         if (savedInstanceState == null) {
             Bundle args = new Bundle();
             Fetcher fetcher;
@@ -31,8 +40,11 @@ public class BrowseComponentsActivity extends FragmentActivity {
             args.putParcelable(BrowseComponentsFragment.ARG_FETCHER, fetcher);
             BrowseComponentsFragment fragment = new BrowseComponentsFragment();
             fragment.setArguments(args);
-            getSupportFragmentManager().beginTransaction().add(android.R.id.content, fragment).commit();
+            getSupportFragmentManager().beginTransaction().add(R.id.master, fragment).commit();
+        } else {
+            showDetail = haveDetail();
         }
+        findViewById(R.id.detail).setVisibility(showDetail ? View.VISIBLE : View.GONE);
     }
 
     @TargetApi(11)
@@ -49,5 +61,36 @@ public class BrowseComponentsActivity extends FragmentActivity {
                 return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private boolean haveDetail() {
+        return getSupportFragmentManager().findFragmentById(R.id.detail) != null;
+    }
+
+    private boolean usingTabletView() {
+        return getResources().getBoolean(R.bool.use_master_detail);
+    }
+
+    /**
+     * Open given fragment in detail panel or new activity
+     */
+    public void openFragment(Class<? extends Fragment> fragmentClass, Bundle arguments) {
+        if (usingTabletView()) {
+            Fragment fragment;
+            try {
+                fragment = fragmentClass.newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            fragment.setArguments(arguments);
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.detail, fragment)
+                    .commit();
+            findViewById(R.id.detail).setVisibility(View.VISIBLE);
+        } else {
+            arguments.putString(SingleFragmentActivity.EXTRA_FRAGMENT, fragmentClass.getName());
+            startActivity(new Intent(this, SingleFragmentActivity.class).replaceExtras(arguments));
+        }
     }
 }

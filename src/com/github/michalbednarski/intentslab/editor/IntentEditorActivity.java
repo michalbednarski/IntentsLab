@@ -20,10 +20,11 @@ import android.view.MenuItem;
 import android.widget.Toast;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.SavedItemsDatabase;
+import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceDescriptor;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
-import com.github.michalbednarski.intentslab.browser.ComponentInfoActivity;
+import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
 import com.github.michalbednarski.intentslab.browser.ExtendedPackageInfo;
 import com.github.michalbednarski.intentslab.runas.IRemoteInterface;
 import com.github.michalbednarski.intentslab.runas.RunAsManager;
@@ -222,10 +223,11 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
             case R.id.component_info: {
                 ComponentName component = mEditedIntent.getComponent();
                 startActivity(
-                        new Intent(this, ComponentInfoActivity.class)
-                                .putExtra(ComponentInfoActivity.EXTRA_PACKAGE_NAME, component.getPackageName())
-                                .putExtra(ComponentInfoActivity.EXTRA_COMPONENT_NAME, component.getClassName())
-                                .putExtra(ComponentInfoActivity.EXTRA_LAUNCHED_FROM_INTENT_EDITOR, true)
+                        new Intent(this, SingleFragmentActivity.class)
+                                .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, ComponentInfoFragment.class.getName())
+                                .putExtra(ComponentInfoFragment.ARG_PACKAGE_NAME, component.getPackageName())
+                                .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, component.getClassName())
+                                .putExtra(ComponentInfoFragment.ARG_LAUNCHED_FROM_INTENT_EDITOR, true)
                 );
             }
             return true;

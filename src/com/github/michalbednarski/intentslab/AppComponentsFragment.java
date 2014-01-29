@@ -3,7 +3,11 @@ package com.github.michalbednarski.intentslab;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.*;
+import android.content.pm.ActivityInfo;
+import android.content.pm.ComponentInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ProviderInfo;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -16,8 +20,8 @@ import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.FrameLayout;
 import android.widget.TextView;
-import com.github.michalbednarski.intentslab.browser.ComponentInfoActivity;
-import com.github.michalbednarski.intentslab.providerlab.ProviderInfoActivity;
+import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
+import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -374,10 +378,11 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
             case SECTION_SERVICES: {
                 ComponentInfo componentInfo = getComponentAt(groupPosition, childPosition);
                 startActivity(
-                        new Intent(getActivity(), ComponentInfoActivity.class)
-                        .putExtra(ComponentInfoActivity.EXTRA_PACKAGE_NAME, mPackageName)
-                        .putExtra(ComponentInfoActivity.EXTRA_COMPONENT_NAME, componentInfo.name)
-                        .putExtra(ComponentInfoActivity.EXTRA_LAUNCHED_FROM_APP_INFO, true)
+                        new Intent(getActivity(), SingleFragmentActivity.class)
+                        .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, ComponentInfoFragment.class.getName())
+                        .putExtra(ComponentInfoFragment.ARG_PACKAGE_NAME, mPackageName)
+                        .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, componentInfo.name)
+                        .putExtra(ComponentInfoFragment.ARG_LAUNCHED_FROM_APP_INFO, true)
                 );
                 return true;
             }
@@ -385,10 +390,11 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
             {
                 ProviderInfo providerInfo = mProviders[childPosition];
                 startActivity(
-                        new Intent(getActivity(), ProviderInfoActivity.class)
-                        .putExtra(ComponentInfoActivity.EXTRA_PACKAGE_NAME, mPackageName)
-                        .putExtra(ComponentInfoActivity.EXTRA_COMPONENT_NAME, providerInfo.name)
-                        .putExtra(ComponentInfoActivity.EXTRA_LAUNCHED_FROM_APP_INFO, true)
+                        new Intent(getActivity(), SingleFragmentActivity.class)
+                        .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, ProviderInfoFragment.class.getName())
+                        .putExtra(ComponentInfoFragment.ARG_PACKAGE_NAME, mPackageName)
+                        .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, providerInfo.name)
+                        .putExtra(ComponentInfoFragment.ARG_LAUNCHED_FROM_APP_INFO, true)
                 );
                 return true;
             }

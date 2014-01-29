@@ -36,17 +36,15 @@
                         android:id="@+id/title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="[title]"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
-                        tools:ignore="HardcodedText"/>
+                        tools:text="[title]"
+                        android:textAppearance="?android:attr/textAppearanceMedium"/>
 
                     <TextView
                         android:id="@+id/component"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="[com.pon/.ent]"
-                        android:textAppearance="?android:attr/textAppearanceSmall"
-                        tools:ignore="HardcodedText"/>
+                        tools:text="[com.pon/.ent]"
+                        android:textAppearance="?android:attr/textAppearanceSmall"/>
                 </LinearLayout>
             </LinearLayout>
 
@@ -55,8 +53,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingLeft="3dp"
-                android:text="TextView"
-                tools:ignore="HardcodedText"/>
+                tools:text="TextView"/>
 
         </LinearLayout>
     </ScrollView>
@@ -69,9 +66,9 @@
         <Button
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:onClick="goToIntentEditor"
             android:text="@string/go_to_intent_editor"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:id="@+id/go_to_intent_editor"/>
 
         <Button
             android:layout_width="0dp"
@@ -79,7 +76,8 @@
             android:text="Receive broadcast"
             android:id="@+id/receive_broadcast"
             android:layout_weight="1"
-            android:onClick="receiveBroadcast"/>
+            android:visibility="gone"
+            tools:visibility="visible"/>
     </LinearLayout>
 
 </LinearLayout>

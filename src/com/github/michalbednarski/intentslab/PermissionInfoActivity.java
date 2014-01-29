@@ -4,14 +4,25 @@ import android.annotation.SuppressLint;
 import android.app.ListActivity;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.*;
+import android.content.pm.ActivityInfo;
+import android.content.pm.ComponentInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PermissionGroupInfo;
+import android.content.pm.PermissionInfo;
+import android.content.pm.ProviderInfo;
+import android.content.pm.ServiceInfo;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.*;
-import com.github.michalbednarski.intentslab.browser.ComponentInfoActivity;
-import com.github.michalbednarski.intentslab.providerlab.ProviderInfoActivity;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
+import android.widget.ListAdapter;
+import android.widget.TextView;
+import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
+import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -207,16 +218,16 @@ public class PermissionInfoActivity extends ListActivity implements AdapterView.
         if (mListEntries[listId] == null) {
             // Component, jump to component info
             ComponentInfo componentInfo = mEnforcingComponents.get(positionInSubList);
-            Intent intent;
+            Intent intent = new Intent(this, SingleFragmentActivity.class);
             if (componentInfo instanceof ProviderInfo) {
-                intent = new Intent(this, ProviderInfoActivity.class);
+                intent.putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, ProviderInfoFragment.class.getName());
             } else {
-                intent = new Intent(this, ComponentInfoActivity.class);
+                intent.putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, ComponentInfoFragment.class.getName());
             }
             startActivity(
                     intent
-                    .putExtra(ComponentInfoActivity.EXTRA_PACKAGE_NAME, componentInfo.packageName)
-                    .putExtra(ComponentInfoActivity.EXTRA_COMPONENT_NAME, componentInfo.name)
+                    .putExtra(ComponentInfoFragment.ARG_PACKAGE_NAME, componentInfo.packageName)
+                    .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, componentInfo.name)
             );
         } else {
             // Package, show our package info

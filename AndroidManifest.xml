@@ -53,10 +53,6 @@
             android:label="@string/received_broadcasts"/>
 
         <activity android:name=".PrefsActivity"/>
-        <activity
-            android:name=".browser.ComponentInfoActivity"
-            android:label="@string/component_info"/>
-        <activity android:name=".providerlab.ProviderInfoActivity"/>
         <activity android:name=".providerlab.QueryResultActivity"/>
         <activity
             android:name=".SavedItemsActivity"

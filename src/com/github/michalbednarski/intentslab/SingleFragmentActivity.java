@@ -4,6 +4,8 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
+import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
+import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
 
 /**
  * Activity displaying single fragment
@@ -12,8 +14,11 @@ public class SingleFragmentActivity extends FragmentActivity {
 
     public static final String EXTRA_FRAGMENT = "singleFragmentActivity.theFragmentClass";
 
+    @SuppressWarnings("unchecked")
     private static final Class<? extends Fragment>[] WHITE_LIST = new Class[] {
-            XMLViewerFragment.class
+            XMLViewerFragment.class,
+            ComponentInfoFragment.class,
+            ProviderInfoFragment.class
     };
 
 

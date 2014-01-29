@@ -1,21 +1,23 @@
 package com.github.michalbednarski.intentslab.browser;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.IntentFilter.AuthorityEntry;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.PatternMatcher;
+import android.support.v4.app.Fragment;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,32 +27,49 @@ import com.github.michalbednarski.intentslab.FormattedTextBuilder;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.XMLViewerFragment;
-import com.github.michalbednarski.intentslab.browser.ExtendedPackageInfo.ExtendedComponentInfo;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
 import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
 
-import static com.github.michalbednarski.intentslab.FormattedTextBuilder.ValueSemantic;
-
-public class ComponentInfoActivity extends Activity {
-    public static final String EXTRA_PACKAGE_NAME = "package";
-    public static final String EXTRA_COMPONENT_NAME = "component";
+/**
+ * Fragment used for displaying component (activity, broadcast or service) info.
+ *
+ * For content providers use {@link com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment}
+ *
+ * Can be used in {@link com.github.michalbednarski.intentslab.SingleFragmentActivity}
+ */
+public class ComponentInfoFragment extends Fragment {
+    public static final String ARG_PACKAGE_NAME = "package";
+    public static final String ARG_COMPONENT_NAME = "component";
 
     /**
      * If this extra is true, "Go to intent editor" button will just finish activity
      */
-    public static final String EXTRA_LAUNCHED_FROM_INTENT_EDITOR = "componentInfo.launchedFromIntentEditor";
+    public static final String ARG_LAUNCHED_FROM_INTENT_EDITOR = "componentInfo.launchedFromIntentEditor";
 
     /**
      * If this extra is true, "App info" option will just finish activity
      */
-    public static final String EXTRA_LAUNCHED_FROM_APP_INFO = "componentInfo.launchedFromAppInfo";
+    public static final String ARG_LAUNCHED_FROM_APP_INFO = "componentInfo.launchedFromAppInfo";
 
-    private static final String TAG = "ComponentInfoActivity";
+    private static final String TAG = "ComponentInfoFragment";
 
     private String mPackageName;
     private String mComponentName;
 
-    private ExtendedComponentInfo mExtendedComponentInfo;
+    private ExtendedPackageInfo.ExtendedComponentInfo mExtendedComponentInfo;
+
+
+    // Views
+    private TextView mTitleTextView;
+    private TextView mComponentTextView;
+    private ImageView mIconView;
+    private TextView mDescriptionTextView;
+    private View mReceiveBroadcastButton;
+
+    // Contents
+    private CharSequence mTitleText;
+    private CharSequence mDescription;
+    private boolean mShowReceiveBroadcast;
 
     static CharSequence dumpIntentFilter(IntentFilter filter, Resources res) {
         FormattedTextBuilder ftb = new FormattedTextBuilder();
@@ -82,7 +101,7 @@ public class ComponentInfoActivity extends Activity {
         }
 
         for (int i = 0, j = filter.countDataAuthorities(); i < j; i++) {
-            AuthorityEntry authority = filter.getDataAuthority(i);
+            IntentFilter.AuthorityEntry authority = filter.getDataAuthority(i);
             ftb.appendColoured("\n  <data", tagColor);
             ftb.appendColoured(" a:host=", attributeNameColor);
             ftb.appendColoured("\"" + authority.getHost() + "\"", attributeValueColor);
@@ -177,52 +196,41 @@ public class ComponentInfoActivity extends Activity {
         return text.getText();
     }
 
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Intent intent = getIntent();
-        mPackageName = intent.getStringExtra(EXTRA_PACKAGE_NAME);
-        mComponentName = intent.getStringExtra(EXTRA_COMPONENT_NAME);
+        setHasOptionsMenu(true);
+
+        Bundle intent = getArguments();
+        mPackageName = intent.getString(ARG_PACKAGE_NAME);
+        mComponentName = intent.getString(ARG_COMPONENT_NAME);
 
 
-        final ExtendedPackageInfo epi = new ExtendedPackageInfo(this, mPackageName, PackageManager.GET_META_DATA);
+        final ExtendedPackageInfo epi = new ExtendedPackageInfo(getActivity(), mPackageName, PackageManager.GET_META_DATA);
 
         epi.runWhenReady(new Runnable() {
 
             @Override
             public void run() {
-                if (isFinishing()) {
-                    return;
-                }
-
                 // Get loaded component info
                 mExtendedComponentInfo = epi.getComponentInfo(mComponentName);
                 if (mExtendedComponentInfo == null) {
                     Log.e(TAG, "component not found in manifest");
                     Log.e(TAG, "packageName=" + mPackageName);
                     Log.e(TAG, "componentName=" + mComponentName);
-                    Toast.makeText(ComponentInfoActivity.this, R.string.component_not_found, Toast.LENGTH_SHORT).show();
-                    finish();
+                    Toast.makeText(getActivity(), R.string.component_not_found, Toast.LENGTH_SHORT).show();
+                    //finish(); // TODO: Show message directly in fragment instead of Toast if in tablet view
                     return;
                 }
 
-                PackageManager packageManager = getPackageManager();
-
-                setContentView(R.layout.activity_component_info);
+                PackageManager packageManager = getActivity().getPackageManager();
 
                 // Header icon and component name
-                ((TextView) findViewById(R.id.title)).setText(
-                        mExtendedComponentInfo.systemComponentInfo.loadLabel(packageManager)
-                );
+                mTitleText = mExtendedComponentInfo.systemComponentInfo.loadLabel(packageManager);
 
-                ((TextView) findViewById(R.id.component)).setText(
-                        new ComponentName(mPackageName, mComponentName).flattenToShortString()
-                );
 
-                ((ImageView) findViewById(R.id.icon)).setImageDrawable(
-                        mExtendedComponentInfo.systemComponentInfo.loadIcon(packageManager)
-                );
 
                 // Description text
                 FormattedTextBuilder text = new FormattedTextBuilder();
@@ -233,7 +241,7 @@ public class ComponentInfoActivity extends Activity {
                 } else {
                     String permission = mExtendedComponentInfo.getPermission();
                     if (permission != null) {
-                        text.appendValue(getString(R.string.permission_required_title), permission, true, ValueSemantic.PERMISSION);
+                        text.appendValue(getString(R.string.permission_required_title), permission, true, FormattedTextBuilder.ValueSemantic.PERMISSION);
                     }
                 }
 
@@ -249,73 +257,133 @@ public class ComponentInfoActivity extends Activity {
                     }
                 }
 
-                text.appendFormattedText(dumpMetaData(ComponentInfoActivity.this, mPackageName, mExtendedComponentInfo.systemComponentInfo.metaData));
+                text.appendFormattedText(dumpMetaData(getActivity(), mPackageName, mExtendedComponentInfo.systemComponentInfo.metaData));
 
                 // Put text in TextView
-                TextView textView = (TextView) findViewById(R.id.description);
-                textView.setMovementMethod(LinkMovementMethod.getInstance());
-                textView.setText(text.getText());
+                mDescription = text.getText();
+
 
                 // Show or hide "Receive broadcast" button
-                {
-                    final boolean showReceiveBroadcast =
-                            mExtendedComponentInfo.componentType == IntentEditorConstants.BROADCAST &&
-                            mExtendedComponentInfo.intentFilters != null &&
-                            mExtendedComponentInfo.intentFilters.length != 0;
-                    View receiveBroadcastButton = findViewById(R.id.receive_broadcast);
-                    receiveBroadcastButton.setVisibility(showReceiveBroadcast ? View.VISIBLE : View.GONE);
-                    receiveBroadcastButton.setEnabled(showReceiveBroadcast);
-                    if (showReceiveBroadcast) {
-                        receiveBroadcastButton.setOnLongClickListener(new View.OnLongClickListener() {
-                            @Override
-                            public boolean onLongClick(View v) {
-                                CatchBroadcastService.startReceiving(ComponentInfoActivity.this, mExtendedComponentInfo.intentFilters, true);
-                                return true;
-                            }
-                        });
-                    }
+                mShowReceiveBroadcast = mExtendedComponentInfo.componentType == IntentEditorConstants.BROADCAST &&
+                        mExtendedComponentInfo.intentFilters != null &&
+                        mExtendedComponentInfo.intentFilters.length != 0;
+
+                if (haveView()) {
+                    fillViews();
                 }
             }
         });
     }
 
+    private boolean haveView() {
+        return mTitleTextView != null;
+    }
+
+    private boolean haveContentLoaded() {
+        return mDescription != null;
+    }
+
+    private void fillViews() {
+        assert haveView() && haveContentLoaded();
+
+        mTitleTextView.setText(mTitleText);
+
+        mComponentTextView.setText(
+                new ComponentName(mPackageName, mComponentName).flattenToShortString()
+        );
+
+        mIconView.setImageDrawable(
+                mExtendedComponentInfo.systemComponentInfo.loadIcon(getActivity().getPackageManager())
+        );
+
+        mDescriptionTextView.setText(mDescription);
+
+        mReceiveBroadcastButton.setVisibility(mShowReceiveBroadcast ? View.VISIBLE : View.GONE);
+        mReceiveBroadcastButton.setEnabled(mShowReceiveBroadcast);
+    }
+
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.component_info, menu);
-        return true;
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+        View v = inflater.inflate(R.layout.activity_component_info, container, false);
+
+        // Header, icon, component name and description
+        mTitleTextView = (TextView) v.findViewById(R.id.title);
+        mComponentTextView = (TextView) v.findViewById(R.id.component);
+        mIconView = (ImageView) v.findViewById(R.id.icon);
+        mDescriptionTextView = (TextView) v.findViewById(R.id.description);
+        mDescriptionTextView.setMovementMethod(LinkMovementMethod.getInstance());
+
+        // Go to intent editor button
+        v.findViewById(R.id.go_to_intent_editor).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (getArguments().getBoolean(ARG_LAUNCHED_FROM_INTENT_EDITOR, false)) {
+                    getActivity().finish();
+                    return;
+                }
+                startActivity(
+                        new Intent(getActivity(), IntentEditorActivity.class)
+                                .putExtra("intent", new Intent().setClassName(mPackageName, mComponentName))
+                                .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, mExtendedComponentInfo.componentType)
+                                .putExtra(IntentEditorActivity.EXTRA_INTENT_FILTERS, mExtendedComponentInfo.intentFilters)
+                );
+            }
+        });
+
+        // Receive broadcast button
+        mReceiveBroadcastButton = v.findViewById(R.id.receive_broadcast);
+        mReceiveBroadcastButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                CatchBroadcastService.startReceiving(getActivity(), mExtendedComponentInfo.intentFilters, false);
+            }
+        });
+        mReceiveBroadcastButton.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                CatchBroadcastService.startReceiving(getActivity(), mExtendedComponentInfo.intentFilters, true);
+                return true;
+            }
+        });
+
+        // Fill it if have content
+        if (haveContentLoaded()) {
+            fillViews();
+        }
+
+        return v;
+    }
+
+    @Override
+    public void onDestroyView() {
+        mTitleTextView = null;
+        mComponentTextView = null;
+        mIconView = null;
+        mDescriptionTextView = null;
+        mReceiveBroadcastButton = null;
+        super.onDestroyView();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.component_info, menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.package_info:
-                if (getIntent().getBooleanExtra(EXTRA_LAUNCHED_FROM_APP_INFO, false)) {
-                    finish();
+                if (getArguments().getBoolean(ARG_LAUNCHED_FROM_APP_INFO, false)) {
+                    getActivity().finish();
                 } else {
                     startActivity(
-                            new Intent(this, AppInfoActivity.class)
+                            new Intent(getActivity(), AppInfoActivity.class)
                                     .putExtra(AppInfoActivity.EXTRA_PACKAGE_NAME, mPackageName)
                     );
                 }
                 return true;
         }
-        return super.onOptionsItemSelected(item);
-    }
-
-    public void goToIntentEditor(View view) {
-        if (getIntent().getBooleanExtra(EXTRA_LAUNCHED_FROM_INTENT_EDITOR, false)) {
-            finish();
-            return;
-        }
-        startActivity(
-                new Intent(this, IntentEditorActivity.class)
-                        .putExtra("intent", new Intent().setClassName(mPackageName, mComponentName))
-                        .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, mExtendedComponentInfo.componentType)
-                        .putExtra(IntentEditorActivity.EXTRA_INTENT_FILTERS, mExtendedComponentInfo.intentFilters)
-        );
-    }
-
-    public void receiveBroadcast(View view) {
-        CatchBroadcastService.startReceiving(this, mExtendedComponentInfo.intentFilters, false);
+        return false;
     }
 }

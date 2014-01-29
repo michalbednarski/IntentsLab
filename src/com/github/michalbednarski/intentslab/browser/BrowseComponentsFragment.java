@@ -25,7 +25,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import com.github.michalbednarski.intentslab.AppInfoActivity;
 import com.github.michalbednarski.intentslab.R;
-import com.github.michalbednarski.intentslab.providerlab.ProviderInfoActivity;
+import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
 
 /**
  * Fragment for displaying components or other data provided by {@link Fetcher}
@@ -250,14 +250,17 @@ public class BrowseComponentsFragment extends Fragment {
             );
             return;
         }
-        Intent intent = new Intent(
-                getActivity(),
+
+
+        Bundle arguments = new Bundle();
+        arguments.putString(ComponentInfoFragment.ARG_PACKAGE_NAME, componentInfo.packageName);
+        arguments.putString(ComponentInfoFragment.ARG_COMPONENT_NAME, componentInfo.name);
+        ((BrowseComponentsActivity) getActivity()).openFragment(
                 (componentInfo instanceof ProviderInfo ?
-                        ProviderInfoActivity.class :
-                        ComponentInfoActivity.class));
-        intent.putExtra(ComponentInfoActivity.EXTRA_PACKAGE_NAME, componentInfo.packageName);
-        intent.putExtra(ComponentInfoActivity.EXTRA_COMPONENT_NAME, componentInfo.name);
-        startActivity(intent);
+                        ProviderInfoFragment.class :
+                        ComponentInfoFragment.class),
+                arguments
+        );
     }
 
     private class ExpandableAdapter extends BaseExpandableListAdapter implements ExpandableListView.OnChildClickListener {

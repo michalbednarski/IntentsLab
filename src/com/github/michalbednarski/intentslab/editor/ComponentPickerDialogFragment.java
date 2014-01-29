@@ -21,8 +21,9 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.Utils;
-import com.github.michalbednarski.intentslab.browser.ComponentInfoActivity;
+import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,10 +123,11 @@ public class ComponentPickerDialogFragment extends DialogFragment implements OnI
         ResolveInfo info = mChoices.get(position);
         boolean isService = info.activityInfo == null;
         startActivity(
-                new Intent(getActivity(), ComponentInfoActivity.class)
-                .putExtra(ComponentInfoActivity.EXTRA_PACKAGE_NAME, isService ? info.serviceInfo.packageName : info.activityInfo.packageName)
-                .putExtra(ComponentInfoActivity.EXTRA_COMPONENT_NAME, isService ? info.serviceInfo.name : info.activityInfo.name)
-                .putExtra(ComponentInfoActivity.EXTRA_LAUNCHED_FROM_INTENT_EDITOR, true)
+                new Intent(getActivity(), SingleFragmentActivity.class)
+                .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, ComponentInfoFragment.class.getName())
+                .putExtra(ComponentInfoFragment.ARG_PACKAGE_NAME, isService ? info.serviceInfo.packageName : info.activityInfo.packageName)
+                .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, isService ? info.serviceInfo.name : info.activityInfo.name)
+                .putExtra(ComponentInfoFragment.ARG_LAUNCHED_FROM_INTENT_EDITOR, true)
         );
         return true;
     }

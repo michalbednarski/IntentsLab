@@ -1,7 +1,6 @@
 package com.github.michalbednarski.intentslab.providerlab;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
@@ -12,38 +11,48 @@ import android.content.pm.ProviderInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.github.michalbednarski.intentslab.AppInfoActivity;
 import com.github.michalbednarski.intentslab.FormattedTextBuilder;
 import com.github.michalbednarski.intentslab.R;
-import com.github.michalbednarski.intentslab.browser.ComponentInfoActivity;
-
-import static com.github.michalbednarski.intentslab.FormattedTextBuilder.ValueSemantic;
+import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
 
 /**
+ * Fragment for displaying provider info
  *
+ * Accepts same arguments as {@link com.github.michalbednarski.intentslab.browser.ComponentInfoFragment}
  */
-public class ProviderInfoActivity extends Activity {
+public class ProviderInfoFragment extends Fragment {
     private static final String TAG = "ProviderInfoActivity";
 
     String mPackageName, mComponentName;
     private ProviderInfo mProviderInfo = null;
 
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
 
-        setContentView(R.layout.activity_provider_info);
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        mPackageName = getIntent().getStringExtra(ComponentInfoActivity.EXTRA_PACKAGE_NAME);
-        mComponentName = getIntent().getStringExtra(ComponentInfoActivity.EXTRA_COMPONENT_NAME);
+        View view = inflater.inflate(R.layout.activity_provider_info, container, false);
+
+        mPackageName = getArguments().getString(ComponentInfoFragment.ARG_PACKAGE_NAME);
+        mComponentName = getArguments().getString(ComponentInfoFragment.ARG_COMPONENT_NAME);
 
         // Fill mProviderInfo
         try {
@@ -54,24 +63,25 @@ public class ProviderInfoActivity extends Activity {
             }
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
-            Toast.makeText(this, R.string.component_not_found, Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+            Toast.makeText(getActivity(), R.string.component_not_found, Toast.LENGTH_SHORT).show();
+            //finish();
+            return null;
         }
 
-        PackageManager packageManager = getPackageManager();
+        PackageManager packageManager = getActivity().getPackageManager();
 
         // Header icon and text
-        ((TextView) findViewById(R.id.title)).setText(
+        ((TextView) view.findViewById(R.id.title)).setText(
                 mProviderInfo.loadLabel(packageManager)
         );
-        ((TextView) findViewById(R.id.component)).setText(
+        ((TextView) view.findViewById(R.id.component)).setText(
                 new ComponentName(mPackageName, mComponentName).flattenToShortString()
         );
-        ((ImageView) findViewById(R.id.icon)).setImageDrawable(
+        ((ImageView) view.findViewById(R.id.icon)).setImageDrawable(
                 mProviderInfo.loadIcon(packageManager)
         );
 
+        // Start building description
         FormattedTextBuilder text = new FormattedTextBuilder();
 
         // Authority
@@ -79,8 +89,7 @@ public class ProviderInfoActivity extends Activity {
             text.appendValue("Authority", mProviderInfo.authority);
         }
 
-        // Permissions
-        // Description: permission/exported
+        // Permission/exported
         if (!mProviderInfo.exported) {
             text.appendHeader(getString(R.string.component_not_exported));
         } else {
@@ -88,65 +97,77 @@ public class ProviderInfoActivity extends Activity {
                 if (mProviderInfo.writePermission == null) {
                     text.appendHeader(getString(R.string.provider_rw_world_accessible));
                 } else {
-                    text.appendValue(getString(R.string.provider_w_only_permission), mProviderInfo.writePermission, true, ValueSemantic.PERMISSION);
+                    text.appendValue(getString(R.string.provider_w_only_permission), mProviderInfo.writePermission, true, FormattedTextBuilder.ValueSemantic.PERMISSION);
                 }
             } else if (mProviderInfo.readPermission.equals(mProviderInfo.writePermission)) {
-                text.appendValue(getString(R.string.provider_rw_permission), mProviderInfo.readPermission, true, ValueSemantic.PERMISSION);
+                text.appendValue(getString(R.string.provider_rw_permission), mProviderInfo.readPermission, true, FormattedTextBuilder.ValueSemantic.PERMISSION);
             } else {
-                text.appendValue(getString(R.string.provider_r_permission), mProviderInfo.readPermission, true, ValueSemantic.PERMISSION);
+                text.appendValue(getString(R.string.provider_r_permission), mProviderInfo.readPermission, true, FormattedTextBuilder.ValueSemantic.PERMISSION);
                 if (mProviderInfo.writePermission == null) {
                     text.appendValuelessKeyContinuingGroup(getResources().getText(R.string.provider_no_w_permission));
                 } else {
-                    text.appendValue(getString(R.string.provider_w_permission), mProviderInfo.writePermission, false, ValueSemantic.PERMISSION);
+                    text.appendValue(getString(R.string.provider_w_permission), mProviderInfo.writePermission, false, FormattedTextBuilder.ValueSemantic.PERMISSION);
                 }
             }
         }
 
-
         // <meta-data>
-        text.appendFormattedText(ComponentInfoActivity.dumpMetaData(this, mPackageName, mProviderInfo.metaData));
+        text.appendFormattedText(ComponentInfoFragment.dumpMetaData(getActivity(), mPackageName, mProviderInfo.metaData));
 
-        // Put text in TextView
-        TextView textView = (TextView) findViewById(R.id.description);
+        // Put description in TextView
+        TextView textView = (TextView) view.findViewById(R.id.description);
         textView.setMovementMethod(LinkMovementMethod.getInstance());
         textView.setText(text.getText());
+
+        // Set button action
+        view.findViewById(R.id.go_to_provider_lab).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                goToProviderLab();
+            }
+        });
+
+        // Return view
+        return view;
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.component_info, menu);
-        return true;
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.component_info, menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.package_info:
-                if (getIntent().getBooleanExtra(ComponentInfoActivity.EXTRA_LAUNCHED_FROM_APP_INFO, false)) {
-                    finish();
+                if (getArguments().getBoolean(ComponentInfoFragment.ARG_LAUNCHED_FROM_APP_INFO, false)) {
+                    getActivity().finish();
                 } else {
                     startActivity(
-                            new Intent(this, AppInfoActivity.class)
+                            new Intent(getActivity(), AppInfoActivity.class)
                                     .putExtra(AppInfoActivity.EXTRA_PACKAGE_NAME, mPackageName)
                     );
                 }
                 return true;
         }
-        return super.onOptionsItemSelected(item);
+        return false;
     }
 
     @TargetApi(Build.VERSION_CODES.GINGERBREAD)
     private void fillProviderInfo() throws PackageManager.NameNotFoundException {
-        mProviderInfo = getPackageManager().getProviderInfo(new ComponentName(mPackageName, mComponentName),
+        mProviderInfo = getActivity().getPackageManager().getProviderInfo(
+                new ComponentName(mPackageName, mComponentName),
                 PackageManager.GET_DISABLED_COMPONENTS |
-                PackageManager.GET_META_DATA
+                        PackageManager.GET_META_DATA
         );
     }
+
     private void fillProviderInfoLegacy() throws PackageManager.NameNotFoundException {
-        PackageInfo packageInfo = getPackageManager().getPackageInfo(mPackageName,
+        PackageInfo packageInfo = getActivity().getPackageManager().getPackageInfo(
+                mPackageName,
                 PackageManager.GET_PROVIDERS |
-                PackageManager.GET_DISABLED_COMPONENTS |
-                PackageManager.GET_META_DATA
+                        PackageManager.GET_DISABLED_COMPONENTS |
+                        PackageManager.GET_META_DATA
         );
         for (ProviderInfo provider : packageInfo.providers) {
             if (provider.name.equals(mComponentName)) {
@@ -160,9 +181,9 @@ public class ProviderInfoActivity extends Activity {
     /**
      * Open provider lab for trying given authority
      */
-    public void openProviderLab(String authority) {
+    void openProviderLab(String authority) {
         startActivity(
-                new Intent(this, AdvancedQueryActivity.class)
+                new Intent(getActivity(), AdvancedQueryActivity.class)
                 .setData(Uri.parse("content://" + authority + "/"))
         );
     }
@@ -172,7 +193,7 @@ public class ProviderInfoActivity extends Activity {
      *
      * Triggered by provider lab button
      */
-    public void goToProviderLab(View view) {
+    void goToProviderLab() {
         String authority = mProviderInfo.authority;
         if (authority == null) {
             Log.e(TAG, "Missing authority");
@@ -182,7 +203,7 @@ public class ProviderInfoActivity extends Activity {
         if (authorities.length == 1) {
             openProviderLab(authority);
         } else {
-            new AlertDialog.Builder(this)
+            new AlertDialog.Builder(getActivity())
                     .setTitle("Choose authority")
                     .setItems(authorities, new DialogInterface.OnClickListener() {
                         @Override
