@@ -29,20 +29,6 @@ public interface Editor {
      */
     public boolean canEdit(Object value);
 
-    /* *
-     * Opens non-activity editor for editing value
-     * /
-    public void edit(String key, Object value, EditorCallback editorCallback, Context context);*/
-
-    /**
-     * Interface for returning results from non-activity editor
-     *
-     * @ see #edit(String, Object, EditorCallback, Context)
-     */
-    public interface EditorCallback {
-        void sendEditorResult(Object newValue);
-    }
-
     /**
      * Pointer to editor implemented in external activity
      *
@@ -55,11 +41,6 @@ public interface Editor {
          * EXTRA_KEY and EXTRA_VALUE will be added to it
          */
         public abstract Intent getEditorIntent(Context context);
-
-        /*@Override
-        public final void edit(String key, Object value, EditorCallback editorCallback, Context context) {
-            throw new RuntimeException("EditorActivity is magic, don't use edit method with it");
-        }*/
     }
 
     public static interface DialogFragmentEditor extends Editor {
