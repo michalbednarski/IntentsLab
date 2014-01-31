@@ -1,13 +1,13 @@
 package com.github.michalbednarski.intentslab.sandbox.remote;
 
 import android.app.Service;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedObject;
+import com.github.michalbednarski.intentslab.sandbox.InvokeMethodResult;
 import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
@@ -89,8 +89,10 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
         return mSandboxedMethods;
     }
 
+
     @Override
-    public Bundle invokeMethod(int methodNumber, SandboxedMethodArguments remoteObjects, Bundle outExtras) throws RemoteException {
+    public InvokeMethodResult invokeMethod(int methodNumber, SandboxedMethodArguments remoteObjects) throws RemoteException {
+        InvokeMethodResult requestResult = new InvokeMethodResult();
         Object[] arguments = new Object[remoteObjects.arguments.length];
 
         for (int i = 0; i < remoteObjects.arguments.length; i++) {
@@ -105,14 +107,14 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
         }
         try {
             Object result = mMethods[methodNumber].invoke(mObject, arguments);
-            outExtras.putString("string", String.valueOf(result));
-            return SandboxManager.wrapObject(result);
+            requestResult.sandboxedReturnValue = SandboxManager.wrapObject(result);
+            requestResult.returnValueAsString = String.valueOf(result);
         } catch (InvocationTargetException e) {
-            outExtras.putSerializable("targetException", e.getTargetException());
+            requestResult.exception = Utils.describeException(e.getTargetException());
         } catch (Exception e) {
-            outExtras.putSerializable("exception", e);
+            requestResult.exception = "[Internal] " + Utils.describeException(e);
         }
-        return null;
+        return requestResult;
     }
 
     static class UnknownInterfaceException extends Exception {}

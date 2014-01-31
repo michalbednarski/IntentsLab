@@ -9,10 +9,10 @@ import android.os.RemoteException;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
 import android.widget.Toast;
-import com.github.michalbednarski.intentslab.Utils;
-import com.github.michalbednarski.intentslab.bindservice.manager.ServiceDescriptor;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
+import com.github.michalbednarski.intentslab.bindservice.manager.ServiceDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
+import com.github.michalbednarski.intentslab.sandbox.InvokeMethodResult;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
@@ -165,22 +165,13 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
 
     private void invokeAidlMethod() {
         try {
-            Bundle outExtras = new Bundle();
-            final Bundle result = mAidlInterface.invokeMethod(mMethodNumber, mMethodArguments, outExtras);
-            if (result != null) { // True if there weren't error
-                Toast.makeText(getActivity(), outExtras.getString("string"), Toast.LENGTH_LONG).show();
+            InvokeMethodResult result = mAidlInterface.invokeMethod(mMethodNumber, mMethodArguments);
+            if (result.exception == null) { // True if there weren't error
+                Toast.makeText(getActivity(), result.returnValueAsString, Toast.LENGTH_LONG).show();
                 return;
             } else {
-                Throwable e = (Throwable) outExtras.getSerializable("targetException");
-                if (e != null) {
-                    Utils.toastException(getActivity(), e);
-                    return;
-                }
-                e = (Throwable) outExtras.getSerializable("exception");
-                if (e != null) {
-                    Utils.toastException(getActivity(), "Reflection", e);
-                    return;
-                }
+                Toast.makeText(getActivity(), result.exception, Toast.LENGTH_LONG).show();
+                return;
             }
         } catch (RemoteException e) {
             e.printStackTrace();

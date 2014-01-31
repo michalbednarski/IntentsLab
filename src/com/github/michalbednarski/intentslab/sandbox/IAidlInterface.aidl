@@ -1,5 +1,6 @@
 package com.github.michalbednarski.intentslab.sandbox;
 
+import com.github.michalbednarski.intentslab.sandbox.InvokeMethodResult;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
@@ -12,7 +13,7 @@ interface IAidlInterface {
 
     SandboxedMethod[] getMethods();
 
-    Bundle invokeMethod(int methodNumber, in SandboxedMethodArguments remoteObjects, out Bundle outExtras);
+    InvokeMethodResult invokeMethod(int methodNumber, in SandboxedMethodArguments remoteObjects);
 
 
 }
