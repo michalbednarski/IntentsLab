@@ -1,7 +1,10 @@
 package com.github.michalbednarski.intentslab.sandbox;
 
+import android.os.IInterface;
 import android.os.Parcel;
 import android.os.Parcelable;
+
+import java.util.Arrays;
 
 /**
  * {@link java.lang.Class} that can be used across processes
@@ -19,12 +22,28 @@ public class SandboxedType implements Parcelable {
             Void.TYPE
     };
 
-    public Class<?> aClass;
-    public String typeName;
+    public final Class<?> aClass;
+    public final String typeName;
+    public final Type type;
+
+    public enum Type {
+        UNKNOWN,
+        PRIMITIVE,
+        OBJECT,
+        AIDL_INTERFACE
+    }
 
 
     public SandboxedType(Class<?> aClass) {
         this.aClass = aClass;
+        this.typeName = aClass.getName();
+        for (int i = 0; i < PRIMITIVE_TYPES.length; i++) {
+            if (aClass == PRIMITIVE_TYPES[i]) {
+                type = Type.PRIMITIVE;
+                return;
+            }
+        }
+        type = Arrays.asList(aClass.getInterfaces()).contains(IInterface.class) ? Type.AIDL_INTERFACE : Type.OBJECT;
     }
 
     public static SandboxedType[] wrapClassesArray(Class<?>[] classes) {
@@ -37,9 +56,6 @@ public class SandboxedType implements Parcelable {
     }
 
     public String toString() {
-        if (aClass != null && aClass != ISandboxedObject.class) {
-            return aClass.getName();
-        }
         return typeName;
     }
 
@@ -56,33 +72,38 @@ public class SandboxedType implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeInt(type.ordinal());
+
         // Primitive type?
-        for (int j = 0; j < SandboxedType.PRIMITIVE_TYPES.length; j++) {
-            if (aClass == SandboxedType.PRIMITIVE_TYPES[j]) {
-                dest.writeInt(j);
-                return;
+        if (type == Type.PRIMITIVE) {
+            for (int j = 0; j < SandboxedType.PRIMITIVE_TYPES.length; j++) {
+                if (aClass == SandboxedType.PRIMITIVE_TYPES[j]) {
+                    dest.writeInt(j);
+                    return;
+                }
             }
+            assert false; // Should never happen
         }
 
         // Write type
-        dest.writeInt(-1);
-        dest.writeString(typeName != null ? typeName : aClass.getName());
+        dest.writeString(typeName);
     }
 
     SandboxedType(Parcel source) {
-        int typeId = source.readInt();
+        type = Type.values()[source.readInt()];
 
         // Primitive type?
-        if (typeId >= 0) {
-            aClass = SandboxedType.PRIMITIVE_TYPES[typeId];
+        if (type == Type.PRIMITIVE) {
+            aClass = SandboxedType.PRIMITIVE_TYPES[source.readInt()];
+            typeName = aClass.getName();
         } else {
             // Not primitive
             typeName = source.readString();
+            Class<?> tmpClass = null;
             try {
-                aClass =  Class.forName(typeName);
-            } catch (ClassNotFoundException e) {
-                aClass = ISandboxedObject.class;
-            }
+                tmpClass = Class.forName(typeName);
+            } catch (ClassNotFoundException ignored) {}
+            aClass = tmpClass;
         }
     }
 
