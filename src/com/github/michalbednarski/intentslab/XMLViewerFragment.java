@@ -204,8 +204,11 @@ public class XMLViewerFragment extends Fragment {
      * Get manifest for given package
      */
     public static XmlResourceParser getManifest(Context context, String packageName) throws IOException, PackageManager.NameNotFoundException {
+        // "android" package is special, we will always use workaround for it
+        final boolean isSystemPackage = "android".equals(packageName);
+
         // Check once if bug occurs on device
-        if (!sThemeManifestBugProbed) {
+        if (!sThemeManifestBugProbed && !isSystemPackage) {
             sHasThemeManifestBug = probeManifestThemeBug(context);
             sThemeManifestBugProbed = true;
         }
@@ -215,10 +218,13 @@ public class XMLViewerFragment extends Fragment {
         AssetManager assets = packageContext.getAssets();
 
         // Workaround bug if it exists
-        if (sHasThemeManifestBug) {
+        if (sHasThemeManifestBug || isSystemPackage) {
             try {
                 final Method getCookieName = AssetManager.class.getDeclaredMethod("getCookieName", int.class);
-                final String resourcesPath = packageContext.getPackageResourcePath();
+                String resourcesPath = packageContext.getPackageResourcePath();
+                if (resourcesPath == null && isSystemPackage) {
+                    resourcesPath = "/system/framework/framework-res.apk";
+                }
                 int cookie = 1;
                 for (; cookie < 100; cookie++) { // Should throw exception before reaching value if something goes wrong
                     if (resourcesPath.equals(getCookieName.invoke(assets, cookie))) {
