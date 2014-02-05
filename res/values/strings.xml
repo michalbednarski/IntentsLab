@@ -103,6 +103,8 @@
     <!-- Component Info -->
     <string name="component_info">Component info</string>
     <string name="component_not_found">Component not found</string>
+    <string name="component_disabled">Component disabled</string>
+    <string name="component_in_disabled_application">Component in disabled application</string>
     <string name="component_not_exported">Component not exported</string>
     <string name="permission_required_title">Permission</string>
     <!-- [[Permission]]: [permission attribute value] -->

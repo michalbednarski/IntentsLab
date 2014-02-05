@@ -1,5 +1,6 @@
 package com.github.michalbednarski.intentslab.browser;
 
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -196,6 +197,12 @@ public class ComponentInfoFragment extends Fragment {
         return text.getText();
     }
 
+    @SuppressLint("InlinedApi")
+    public static boolean isComponentDisabledState(int state, boolean defaultEnabled) {
+        return state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED ||
+                state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER ||
+                (state == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && !defaultEnabled);
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -234,6 +241,16 @@ public class ComponentInfoFragment extends Fragment {
 
                 // Description text
                 FormattedTextBuilder text = new FormattedTextBuilder();
+
+                // Description: disabled
+                if (isComponentDisabledState(
+                        packageManager.getComponentEnabledSetting(new ComponentName(mPackageName, mComponentName)),
+                        mExtendedComponentInfo.systemComponentInfo.enabled
+                        )) {
+                    text.appendHeader(getString(R.string.component_disabled));
+                } else if (!mExtendedComponentInfo.systemComponentInfo.applicationInfo.enabled) {
+                    text.appendHeader(getString(R.string.component_in_disabled_application));
+                }
 
                 // Description: permission/exported
                 if (!mExtendedComponentInfo.systemComponentInfo.exported) {
