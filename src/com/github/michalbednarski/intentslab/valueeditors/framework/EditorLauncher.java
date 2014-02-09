@@ -13,6 +13,7 @@ import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.editor.BundleAdapter;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
+import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 import com.github.michalbednarski.intentslab.valueeditors.ArrayEditorActivity;
 import com.github.michalbednarski.intentslab.valueeditors.BundleEditorActivity;
 import com.github.michalbednarski.intentslab.valueeditors.EnumEditor;
@@ -83,13 +84,13 @@ public class EditorLauncher {
     }
 
     /**
-     * EditorLauncher Callback with support for {@link #launchEditorForSandboxedObject(String, String, android.os.Bundle)}
+     * EditorLauncher Callback with support for {@link #launchEditorForSandboxedObject(String, String, SandboxedObject)}
      *
      * This is interface implemented by caller of launchEditor
      * returning data after edit, passed to constructor
      */
     public interface EditorLauncherWithSandboxCallback extends EditorLauncherCallback {
-        void onSandboxedEditorResult(String key, Bundle newWrappedValue);
+        void onSandboxedEditorResult(String key, SandboxedObject newWrappedValue);
     }
 
 
@@ -173,13 +174,13 @@ public class EditorLauncher {
     /**
      * Start an editor or show Toast message if no applicable editor is available
      *
-     * Results are returned to {@link EditorLauncherWithSandboxCallback#onSandboxedEditorResult(String, android.os.Bundle)}
+     * Results are returned to {@link EditorLauncherWithSandboxCallback#onSandboxedEditorResult(String, com.github.michalbednarski.intentslab.sandbox.SandboxedObject)}
      *
      * @param key Key, returned to onEditorResult
      * @param title Title that may be displayed on editor
-     * @param wrappedValue Value to be edited wrapped by {@link com.github.michalbednarski.intentslab.sandbox.SandboxManager#wrapObject(Object)}
+     * @param wrappedValue Wrapped value to be edited
      */
-    public void launchEditorForSandboxedObject(final String key, String title, Bundle wrappedValue) {
+    public void launchEditorForSandboxedObject(final String key, String title, SandboxedObject wrappedValue) {
         // Build intent
         Intent editorIntent = new Intent(mFragment.getActivity(), ObjectEditorActivity.class);
         editorIntent.putExtra(Editor.EXTRA_TITLE, title);
@@ -314,7 +315,7 @@ public class EditorLauncher {
                     Object newValue = data.getExtras().get(Editor.EXTRA_VALUE);
                     if (requestInfo.isSandboxed) {
                         ((EditorLauncherWithSandboxCallback) mEditorLauncher.mEditorLauncherCallback)
-                                .onSandboxedEditorResult(key, (Bundle) newValue);
+                                .onSandboxedEditorResult(key, (SandboxedObject) newValue);
                     } else {
                         mEditorLauncher.mEditorLauncherCallback.onEditorResult(key, requestInfo.deepCastIfNeeded(newValue));
                     }

@@ -12,6 +12,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 import com.github.michalbednarski.intentslab.valueeditors.framework.Editor;
 import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 
@@ -53,7 +54,7 @@ public class ObjectEditorActivity extends FragmentActivity implements ObjectEdit
         // Init EditorLauncher and ObjectEditorHelper
         EditorLauncher editorLauncher = new EditorLauncher(this, "PaScEdLa");
         if (sandboxed) {
-            final SandboxedObjectEditorHelper helper = new SandboxedObjectEditorHelper(this, (Bundle) object, editorLauncher, this);
+            final SandboxedObjectEditorHelper helper = new SandboxedObjectEditorHelper(this, (SandboxedObject) object, editorLauncher, this);
             editorLauncher.setCallback(helper);
             mObjectEditorHelper = helper;
             helper.initializeAndRunWhenReady(new Runnable() {

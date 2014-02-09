@@ -1,6 +1,5 @@
 package com.github.michalbednarski.intentslab.sandbox;
 
-import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -8,7 +7,7 @@ import android.os.Parcelable;
  * Result of {@link IAidlInterface#invokeMethod(int, SandboxedMethodArguments)}
  */
 public class InvokeMethodResult implements Parcelable {
-    public Bundle sandboxedReturnValue;
+    public SandboxedObject sandboxedReturnValue;
     public String returnValueAsString;
     public String exception;
 
@@ -25,7 +24,7 @@ public class InvokeMethodResult implements Parcelable {
             dest.writeString(exception);
         } else if (sandboxedReturnValue != null) {
             dest.writeInt(1);
-            dest.writeBundle(sandboxedReturnValue);
+            sandboxedReturnValue.writeToParcel(dest, 0);
             dest.writeString(returnValueAsString);
         } else {
             dest.writeInt(0);
@@ -38,7 +37,7 @@ public class InvokeMethodResult implements Parcelable {
             InvokeMethodResult result = new InvokeMethodResult();
             switch (source.readInt()) {
                 case 1:
-                    result.sandboxedReturnValue = source.readBundle();
+                    result.sandboxedReturnValue = SandboxedObject.CREATOR.createFromParcel(source);
                     result.returnValueAsString = source.readString();
                     break;
                 case 2:

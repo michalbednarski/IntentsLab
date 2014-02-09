@@ -12,7 +12,7 @@ import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.ISandbox;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedBundle;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedObject;
-import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
+import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 
 import java.lang.reflect.Field;
 
@@ -41,11 +41,10 @@ class SandboxImpl extends ISandbox.Stub {
     }
 
     @Override
-    public ISandboxedObject sandboxObject(Bundle wrappedObject, ClassLoaderDescriptor classLoaderDescriptor) throws RemoteException {
+    public ISandboxedObject sandboxObject(SandboxedObject wrappedObject, ClassLoaderDescriptor classLoaderDescriptor) throws RemoteException {
 
         final ClassLoader classLoader = classLoaderDescriptor.getClassLoader(mService);
-        wrappedObject.setClassLoader(classLoader);
-        return new SandboxedObjectImpl(SandboxManager.unwrapObject(wrappedObject), classLoader);
+        return new SandboxedObjectImpl(wrappedObject.unwrap(classLoader), classLoader);
     }
 
     @Override

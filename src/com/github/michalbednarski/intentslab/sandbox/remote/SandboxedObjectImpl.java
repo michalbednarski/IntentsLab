@@ -1,10 +1,9 @@
 package com.github.michalbednarski.intentslab.sandbox.remote;
 
-import android.os.Bundle;
 import android.os.RemoteException;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedObject;
-import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedClassField;
+import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
 import com.github.michalbednarski.intentslab.valueeditors.object.GettersInvoker;
 
@@ -29,8 +28,8 @@ class SandboxedObjectImpl extends ISandboxedObject.Stub {
     }
 
     @Override
-    public Bundle getWrappedObject() throws RemoteException {
-        return SandboxManager.wrapObject(mObject);
+    public SandboxedObject getWrappedObject() throws RemoteException {
+        return new SandboxedObject(mObject);
     }
 
     @Override
@@ -82,9 +81,9 @@ class SandboxedObjectImpl extends ISandboxedObject.Stub {
     }
 
     @Override
-    public Bundle getFieldValue(String fieldName) throws RemoteException {
+    public SandboxedObject getFieldValue(String fieldName) throws RemoteException {
         try {
-            return SandboxManager.wrapObject(getField(fieldName).get(mObject));
+            return new SandboxedObject(getField(fieldName).get(mObject));
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
@@ -100,10 +99,9 @@ class SandboxedObjectImpl extends ISandboxedObject.Stub {
     }
 
     @Override
-    public void setFieldValue(String fieldName, Bundle value) throws RemoteException {
-        value.setClassLoader(mClassLoader);
+    public void setFieldValue(String fieldName, SandboxedObject value) throws RemoteException {
         try {
-            getField(fieldName).set(mObject, SandboxManager.unwrapObject(value));
+            getField(fieldName).set(mObject, value.unwrap(mClassLoader));
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }

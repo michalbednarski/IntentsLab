@@ -8,9 +8,9 @@ import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.InvokeMethodResult;
-import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
+import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
 
 import java.lang.reflect.InvocationTargetException;
@@ -107,7 +107,7 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
         }
         try {
             Object result = mMethods[methodNumber].invoke(mObject, arguments);
-            requestResult.sandboxedReturnValue = SandboxManager.wrapObject(result);
+            requestResult.sandboxedReturnValue = new SandboxedObject(result);
             requestResult.returnValueAsString = String.valueOf(result);
         } catch (InvocationTargetException e) {
             requestResult.exception = Utils.describeException(e.getTargetException());

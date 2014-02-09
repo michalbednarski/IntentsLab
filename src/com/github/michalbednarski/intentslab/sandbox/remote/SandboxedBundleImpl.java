@@ -6,7 +6,7 @@ import android.os.RemoteException;
 import com.github.michalbednarski.intentslab.editor.BundleAdapter;
 import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedBundle;
-import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
+import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 
 import java.util.Set;
 
@@ -41,14 +41,13 @@ public class SandboxedBundleImpl extends ISandboxedBundle.Stub {
     }
 
     @Override
-    public Bundle getWrapped(String key) throws RemoteException {
-        return SandboxManager.wrapObject(mBundle.get(key));
+    public SandboxedObject getWrapped(String key) throws RemoteException {
+        return new SandboxedObject(mBundle.get(key));
     }
 
     @Override
-    public void putWrapped(String key, Bundle wrappedValue) throws RemoteException {
-        wrappedValue.setClassLoader(mClassLoader);
-        BundleAdapter.putInBundle(mBundle, key, SandboxManager.unwrapObject(wrappedValue));
+    public void putWrapped(String key, SandboxedObject wrappedValue) throws RemoteException {
+        BundleAdapter.putInBundle(mBundle, key, wrappedValue.unwrap(mClassLoader));
     }
 
     @Override

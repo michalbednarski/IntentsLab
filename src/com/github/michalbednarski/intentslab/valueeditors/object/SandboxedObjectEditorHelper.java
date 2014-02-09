@@ -2,7 +2,6 @@ package com.github.michalbednarski.intentslab.valueeditors.object;
 
 import android.content.Context;
 import android.os.BadParcelableException;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -10,6 +9,7 @@ import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedClassField;
+import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 
 import java.lang.reflect.Modifier;
@@ -21,7 +21,7 @@ import java.util.HashMap;
  */
 class SandboxedObjectEditorHelper implements EditorLauncher.EditorLauncherWithSandboxCallback, ObjectEditorHelper {
     private final Context mContext;
-    private Bundle mWrappedObject;
+    private SandboxedObject mWrappedObject;
     private final EditorLauncher mEditorLauncher;
     private final ObjectEditorHelperCallback mObjectEditorHelperCallback;
     private ISandboxedObject mSandboxedObject;
@@ -94,7 +94,7 @@ class SandboxedObjectEditorHelper implements EditorLauncher.EditorLauncherWithSa
     };
 
 
-    SandboxedObjectEditorHelper(Context context, Bundle wrappedObject, EditorLauncher editorLauncher, ObjectEditorHelperCallback objectEditorHelperCallback) {
+    SandboxedObjectEditorHelper(Context context, SandboxedObject wrappedObject, EditorLauncher editorLauncher, ObjectEditorHelperCallback objectEditorHelperCallback) {
         mContext = context;
         mWrappedObject = wrappedObject;
         mEditorLauncher = editorLauncher;
@@ -137,7 +137,7 @@ class SandboxedObjectEditorHelper implements EditorLauncher.EditorLauncherWithSa
     }
 
     @Override
-    public void onSandboxedEditorResult(String key, Bundle newWrappedValue) {
+    public void onSandboxedEditorResult(String key, SandboxedObject newWrappedValue) {
         final InlineValueEditor valueEditor = mValueEditors.get(key);
         final Accessors accessors = (Accessors) valueEditor.getAccessors();
         assert accessors.mValueIsSandboxed;
@@ -169,10 +169,10 @@ class SandboxedObjectEditorHelper implements EditorLauncher.EditorLauncherWithSa
             mFieldName = fieldName;
 
             // Get value
-            final Bundle wrappedValue = mSandboxedObject.getFieldValue(mFieldName);
+            final SandboxedObject wrappedValue = mSandboxedObject.getFieldValue(mFieldName);
             try {
                 // Try to unwrap, if successful use that value
-                mCachedValue = SandboxManager.unwrapObject(wrappedValue);
+                mCachedValue = wrappedValue.unwrap(null);
             } catch (BadParcelableException e) {
                 // Unwrap failed, use sandbox
                 mValueIsSandboxed = true;
@@ -188,7 +188,7 @@ class SandboxedObjectEditorHelper implements EditorLauncher.EditorLauncherWithSa
 
         @Override
         public void setValue(Object newValue) {
-            assert !mValueIsSandboxed || newValue instanceof Bundle;
+            assert !mValueIsSandboxed || newValue instanceof SandboxedObject;
             mCachedValue = newValue;
             mValueSynchronizedWith = VALUE_NOT_SYNCHRONIZED;
 
@@ -204,9 +204,9 @@ class SandboxedObjectEditorHelper implements EditorLauncher.EditorLauncherWithSa
         }
 
         void syncValue() throws RemoteException {
-            final Bundle newWrappedValue = mValueIsSandboxed ?
-                    ((Bundle) mCachedValue) :
-                    SandboxManager.wrapObject(mCachedValue);
+            final SandboxedObject newWrappedValue = mValueIsSandboxed ?
+                    ((SandboxedObject) mCachedValue) :
+                    new SandboxedObject(mCachedValue);
             mSandboxedObject.setFieldValue(mFieldName, newWrappedValue);
             mValueSynchronizedWith = mSandboxedObject.asBinder();
         }
@@ -214,7 +214,7 @@ class SandboxedObjectEditorHelper implements EditorLauncher.EditorLauncherWithSa
         @Override
         public void startEditor() {
             if (mValueIsSandboxed) {
-                mEditorLauncher.launchEditorForSandboxedObject(mFieldName, mFieldName, (Bundle) mCachedValue);
+                mEditorLauncher.launchEditorForSandboxedObject(mFieldName, mFieldName, (SandboxedObject) mCachedValue);
             } else {
                 mEditorLauncher.launchEditor(mFieldName, mCachedValue);
             }
@@ -233,7 +233,7 @@ class SandboxedObjectEditorHelper implements EditorLauncher.EditorLauncherWithSa
     }
 
     @Override
-    public Bundle getObject() {
+    public SandboxedObject getObject() {
         assert !mShutDown;
         if (mSandboxedObject != null) {
             try {

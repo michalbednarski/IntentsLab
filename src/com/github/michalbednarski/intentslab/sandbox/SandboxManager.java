@@ -7,20 +7,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.os.BadParcelableException;
-import android.os.Bundle;
 import android.os.IBinder;
-import android.os.IInterface;
-import android.os.Parcelable;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.bindservice.BoundServicesListActivity;
-import com.github.michalbednarski.intentslab.editor.BundleAdapter;
-import com.github.michalbednarski.intentslab.runas.RunAsInitReceiver;
 
-import java.io.Serializable;
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 
 /**
@@ -148,73 +140,6 @@ public class SandboxManager {
 
         public IBinder onBind(Intent intent) {
             return null;
-        }
-    }
-
-
-    private static boolean hasIBinderConstructor(Object o) {
-        try {
-            o.getClass().getDeclaredConstructor(IBinder.class);
-        } catch (NoSuchMethodException e) {
-            return false;
-        }
-        return true;
-    }
-
-    private static final String KEY_WRAPPED_VALUE = "v";
-    private static final String KEY_WRAPPED_VALUE_TYPE = "t";
-    private static final String KEY_WRAPPED_CLASS_NAME = "c";
-    private static final int WRAPPED_VALUE_TYPE_AIDL = 1;
-
-    public static Bundle wrapObject(Object o) {
-        Bundle b = new Bundle();
-        if (o instanceof IInterface && !(o instanceof Parcelable) && !(o instanceof Serializable) && hasIBinderConstructor(o)) {
-            b.putInt(KEY_WRAPPED_VALUE_TYPE, WRAPPED_VALUE_TYPE_AIDL);
-            String name = o.getClass().getName();
-            b.putString(KEY_WRAPPED_CLASS_NAME, name);
-            RunAsInitReceiver.putBinderInBundle(b, KEY_WRAPPED_VALUE, ((IInterface) o).asBinder());
-        } else {
-            BundleAdapter.putInBundle(b, KEY_WRAPPED_VALUE, o);
-        }
-        return b;
-    }
-
-    public static Object unwrapObject(Bundle b) {
-        return unwrapObject(b, null);
-    }
-
-    public static Object unwrapObject(Bundle b, ClassLoader classLoader) {
-        if (classLoader != null) {
-            b.setClassLoader(classLoader);
-        }
-        int type = b.getInt(KEY_WRAPPED_VALUE_TYPE);
-        if (type == WRAPPED_VALUE_TYPE_AIDL) {
-            try {
-                if (classLoader == null) {
-                    throw new CannotLoadAidlException("There is no ClassLoader");
-                }
-                Constructor<?> constructor =
-                        classLoader
-                        .loadClass(b.getString(KEY_WRAPPED_CLASS_NAME))
-                        .getDeclaredConstructor(IBinder.class);
-                constructor.setAccessible(true);
-                return constructor.newInstance(b.get(KEY_WRAPPED_VALUE));
-            } catch (ClassNotFoundException e) {
-                throw new CannotLoadAidlException(e);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return b.get(KEY_WRAPPED_VALUE);
-    }
-
-    public static class CannotLoadAidlException extends BadParcelableException {
-        CannotLoadAidlException(Exception cause) {
-            super(cause);
-        }
-
-        public CannotLoadAidlException(String message) {
-            super(message);
         }
     }
 }

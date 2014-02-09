@@ -24,6 +24,7 @@ import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedBundle;
 import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
+import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 
 import java.lang.reflect.InvocationTargetException;
@@ -307,14 +308,14 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
 		if (position != mKeysCount) {
             String key = mKeys[position];
             if (mUseSandbox) {
-                Bundle wrappedValue;
+                SandboxedObject wrappedValue;
                 try {
                     wrappedValue = mSandboxedBundle.getWrapped(key);
                 } catch (RemoteException e) {
                     return;
                 }
                 try {
-                    mEditorLauncher.launchEditor(key, SandboxManager.unwrapObject(wrappedValue));
+                    mEditorLauncher.launchEditor(key, wrappedValue.unwrap(null));
                 } catch (BadParcelableException e) {
                     mEditorLauncher.launchEditorForSandboxedObject(key, key, wrappedValue);
                 }
@@ -336,7 +337,7 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
                     boolean keySetChange = false;
                     try {
                         keySetChange = !mSandboxedBundle.containsKey(key);
-                        mSandboxedBundle.putWrapped(key, SandboxManager.wrapObject(newValue));
+                        mSandboxedBundle.putWrapped(key, new SandboxedObject(newValue));
                     } catch (Exception e) {
                         e.printStackTrace(); // Cannot recover
                     }
@@ -359,7 +360,7 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
     }
 
     @Override
-    public void onSandboxedEditorResult(final String key, final Bundle newWrappedValue) {
+    public void onSandboxedEditorResult(final String key, final SandboxedObject newWrappedValue) {
         sandboxBundle(false, new Runnable() {
             @Override
             public void run() {
