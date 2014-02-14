@@ -14,6 +14,7 @@ import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.editor.BundleAdapter;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
+import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
 import com.github.michalbednarski.intentslab.valueeditors.ArrayEditorActivity;
 import com.github.michalbednarski.intentslab.valueeditors.BundleEditorActivity;
 import com.github.michalbednarski.intentslab.valueeditors.EnumEditor;
@@ -144,6 +145,34 @@ public class EditorLauncher {
      * @param value Value to be edited
      */
     public void launchEditor(final String key, String title, Object value) {
+        launchEditor(key, title, value, null);
+    }
+
+    /**
+     * Start an editor or show Toast message if no applicable editor is available
+     *
+     * Results are returned to {@link EditorLauncherCallback#onEditorResult(String, Object) your onEditorResult method}
+     *
+     * @param key Key, returned to onEditorResult
+     * @param title Title that may be displayed on editor
+     * @param value Value to be edited
+     * @param type Type of value
+     */
+    public void launchEditor(final String key, String title, Object value, Class<?> type) {
+        // Create new if value is null
+        if (value == null && type != null) {
+            CreateNewDialog d = new CreateNewDialog();
+            Bundle args = new Bundle();
+            args.putString(ValueEditorDialogFragment.EXTRA_KEY, key);
+            args.putParcelable(CreateNewDialog.ARG_SANDBOXED_TYPE, new SandboxedType(type));
+            args.putBoolean(CreateNewDialog.ARG_ALLOW_SANDBOX, false);
+            d.setArguments(args);
+            d.setTargetFragment(mFragment, 0);
+            d.show(mFragment.getActivity().getSupportFragmentManager(), "DFNewFor" + key);
+            return;
+        }
+
+        // Find applicable editor
         for (Editor editor : EDITOR_REGISTRY) {
             if (editor.canEdit(value)) {
                 if (editor instanceof Editor.EditorActivity) {

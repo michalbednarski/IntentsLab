@@ -79,7 +79,7 @@ class LocalObjectEditorHelper implements EditorLauncher.EditorLauncherCallback, 
 
                                 @Override
                                 public void startEditor() {
-                                    mEditorLauncher.launchEditor(field.getName(), getValue());
+                                    mEditorLauncher.launchEditor(field.getName(), field.getName(), getValue(), field.getType());
                                 }
                             }
                     );

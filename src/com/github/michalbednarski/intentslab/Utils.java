@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -184,5 +185,24 @@ public class Utils {
                             R.drawable.ic_menu_checked :
                             R.drawable.ic_menu_unchecked);
         }
+    }
+
+    public static int[] shrinkIntArray(int[] original, int toCount) {
+        assert original.length >= toCount;
+        if (original.length == toCount) {
+            return original;
+        }
+        int[] newArray = new int[toCount];
+        System.arraycopy(original, 0, newArray, 0, toCount);
+        return newArray;
+    }
+
+    public static int[] toIntArray(List<Integer> list) {
+        int[] array = new int[list.size()];
+        int index = 0;
+        for (Integer integer : list) {
+            array[index++] = integer;
+        }
+        return array;
     }
 }
