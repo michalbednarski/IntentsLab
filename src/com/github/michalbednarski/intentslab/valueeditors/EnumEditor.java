@@ -26,7 +26,7 @@ public class EnumEditor extends ValueEditorDialogFragment {
                 .setItems(names, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        sendResultAndDismiss(enumConstants[which]);
+                        sendResult(enumConstants[which]);
                     }
                 })
                 .create();

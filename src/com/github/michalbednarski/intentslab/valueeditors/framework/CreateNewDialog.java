@@ -192,7 +192,7 @@ public class CreateNewDialog extends ValueEditorDialogFragment {
 
                     @Override
                     public void returnObject(Object object) {
-                        sendResultAndDismiss(object);
+                        sendResult(object);
                         dismiss();
                     }
 

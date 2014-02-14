@@ -82,7 +82,7 @@ public class StringLikeItemEditor extends ValueEditorDialogFragment implements O
                     throw new RuntimeException("Couldn't convert from string using valueOf", e);
                 }
             }
-            sendResultAndDismiss(newValue);
+            sendResult(newValue);
         }
     }
 
