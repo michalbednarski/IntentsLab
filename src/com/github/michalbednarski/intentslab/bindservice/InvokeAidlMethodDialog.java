@@ -9,12 +9,15 @@ import android.os.RemoteException;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
 import android.widget.Toast;
+import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.bindservice.manager.ServiceDescriptor;
+import com.github.michalbednarski.intentslab.clipboard.ClipboardService;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.InvokeMethodResult;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
+import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
 import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 import com.github.michalbednarski.intentslab.valueeditors.object.InlineValueEditor;
@@ -167,7 +170,16 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
         try {
             InvokeMethodResult result = mAidlInterface.invokeMethod(mMethodNumber, mMethodArguments);
             if (result.exception == null) { // True if there weren't error
-                Toast.makeText(getActivity(), result.returnValueAsString, Toast.LENGTH_LONG).show();
+                if (!"null".equals(result.returnValueAsString)) {
+                    ResultDialog resultDialog = new ResultDialog();
+                    Bundle args = new Bundle();
+                    args.putString(ResultDialog.ARG_RESULT_AS_STRING, result.returnValueAsString);
+                    args.putParcelable(ResultDialog.ARG_RESULT, result.sandboxedReturnValue);
+                    resultDialog.setArguments(args);
+                    resultDialog.show(getFragmentManager(), "ResultOf" + getTag());
+                } else {
+                    Toast.makeText(getActivity(), result.returnValueAsString, Toast.LENGTH_LONG).show();
+                }
                 return;
             } else {
                 Toast.makeText(getActivity(), result.exception, Toast.LENGTH_LONG).show();
@@ -186,5 +198,26 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
         final int i = Integer.parseInt(key.substring(3));
         mMethodArguments.arguments[i] = newValue;
         mValueEditors[i].updateTextOnButton();
+    }
+
+    public static class ResultDialog extends DialogFragment {
+        public static final String ARG_RESULT = "invokeAidl.ResultDialog.TheResult";
+        public static final String ARG_RESULT_AS_STRING = "invokeAidl.ResultDialog.TheResultAsString";
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            final SandboxedObject result = getArguments().getParcelable(ARG_RESULT);
+
+            return new AlertDialog.Builder(getActivity())
+                    .setMessage(getArguments().getString(ARG_RESULT_AS_STRING))
+                    .setPositiveButton(getString(R.string.edit_or_add_to_clipboard), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            ClipboardService.saveSandboxedObject(result);
+                        }
+                    })
+                    .setNegativeButton(getString(R.string.dismiss), null)
+                    .create();
+        }
     }
 }

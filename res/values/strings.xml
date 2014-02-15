@@ -223,5 +223,7 @@
     <string name="advanced">Advanced</string>
     <string name="creator_constructors">Constructors</string>
     <string name="group_by_applications">Group by applications</string>
+    <string name="edit_or_add_to_clipboard">Edit/Add to clipboard</string>
+    <string name="dismiss">Dismiss</string>
 
 </resources>

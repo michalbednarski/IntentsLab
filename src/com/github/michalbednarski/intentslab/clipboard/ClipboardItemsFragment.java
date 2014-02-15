@@ -1,0 +1,135 @@
+package com.github.michalbednarski.intentslab.clipboard;
+
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.support.v4.app.ListFragment;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ListView;
+import android.widget.TextView;
+import com.github.michalbednarski.intentslab.CategorizedAdapter;
+import com.github.michalbednarski.intentslab.bindservice.BoundServiceActivity;
+import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
+import com.github.michalbednarski.intentslab.bindservice.manager.ServiceDescriptor;
+
+import java.util.ArrayList;
+
+/**
+* Created by mb on 15.02.14.
+*/
+public class ClipboardItemsFragment extends ListFragment {
+    static ArrayList<ClipboardItemsFragment> sObservers = new ArrayList<ClipboardItemsFragment>();
+
+    public static void refreshAll() {
+        for (ClipboardItemsFragment observer : sObservers) {
+            observer.update();
+        }
+    }
+
+    static final int CATEGORY_INTERFACES = 0;
+    static final int CATEGORY_MY_INTERFACES = 1; // Not implemented, TODO
+    static final int CATEGORY_LOCAL_OBJECTS = 2;
+    static final int CATEGORY_SANDBOXED_OBJECTS = 3;
+
+    private void update() {
+        mBoundServices = BindServiceManager.getBoundServices();
+        mAdapter.notifyDataSetChanged();
+    }
+
+    private ServiceDescriptor[] mBoundServices;
+    private Adapter mAdapter = new Adapter();
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        setListAdapter(mAdapter);
+    }
+
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        CategorizedAdapter.ItemInfo itemInfo = mAdapter.getItemInfoForPosition(position);
+        switch (itemInfo.category) {
+            case CATEGORY_INTERFACES:
+                startActivity(
+                        new Intent(getActivity(), BoundServiceActivity.class)
+                                .putExtra(BoundServiceActivity.EXTRA_SERVICE, mBoundServices[itemInfo.positionInCategory])
+                );
+                break;
+        }
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        update();
+        sObservers.add(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        sObservers.remove(this);
+        super.onDestroy();
+    }
+
+    private class Adapter extends CategorizedAdapter {
+
+
+        @Override
+        protected int getCategoryCount() {
+            return 4;
+        }
+
+        @Override
+        protected int getCountInCategory(int category) {
+            switch (category) {
+                case CATEGORY_INTERFACES:
+                    return mBoundServices.length;
+                // TODO case CATEGORY_MY_INTERFACES:
+                case CATEGORY_LOCAL_OBJECTS:
+                    return ClipboardService.sLocalObjects.size();
+                case CATEGORY_SANDBOXED_OBJECTS:
+                    return ClipboardService.sSandboxedObjects.size();
+            }
+            return 0; // No uncategorized items
+        }
+
+        @Override
+        protected String getCategoryName(int category) {
+            return "category " + category; // TODO
+        }
+
+        @Override
+        protected int getViewTypeInCategory(int category, int positionInCategory) {
+            return 1;
+        }
+
+        @Override
+        protected View getViewInCategory(int category, int positionInCategory, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                LayoutInflater inflater =
+                        (LayoutInflater) parent.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                convertView = inflater.inflate(android.R.layout.simple_list_item_1, parent, false);
+            }
+            String text = null;
+            switch (category) {
+                case CATEGORY_INTERFACES:
+                    text = mBoundServices[positionInCategory].getTitle();
+                    break;
+            }
+            ((TextView) convertView).setText(text);
+            return convertView;
+        }
+
+        @Override
+        protected boolean isItemInCategoryEnabled(int category, int positionInCategory) {
+            return true;
+        }
+
+        @Override
+        public int getViewTypeCount() {
+            return 2;
+        }
+    }
+}

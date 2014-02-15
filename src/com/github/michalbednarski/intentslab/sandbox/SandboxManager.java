@@ -11,7 +11,7 @@ import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
 import com.github.michalbednarski.intentslab.R;
-import com.github.michalbednarski.intentslab.bindservice.BoundServicesListActivity;
+import com.github.michalbednarski.intentslab.clipboard.ClipboardActivity;
 
 import java.util.ArrayList;
 
@@ -108,7 +108,7 @@ public class SandboxManager {
                             .setContentIntent(PendingIntent.getActivity(
                                     this,
                                     0,
-                                    new Intent(this, BoundServicesListActivity.class),
+                                    new Intent(this, ClipboardActivity.class),
                                     0
                             ))
                             .build());
