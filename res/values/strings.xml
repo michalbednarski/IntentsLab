@@ -78,6 +78,7 @@
     <string name="services">Services</string>
     <string name="applications">Applications</string>
     <string name="components">Components</string>
+    <string name="permissions">Permissions</string>
     <string name="loading_apps_list">Loading apps list&#8230;</string>
     <string name="filter_excludes_all_possible_components">Filter is excluding all possible components</string>
     <string name="no_matching_components">There are no components matching to given filter</string>
@@ -221,5 +222,6 @@
     <string name="system_services">System services</string>
     <string name="advanced">Advanced</string>
     <string name="creator_constructors">Constructors</string>
+    <string name="group_by_applications">Group by applications</string>
 
 </resources>

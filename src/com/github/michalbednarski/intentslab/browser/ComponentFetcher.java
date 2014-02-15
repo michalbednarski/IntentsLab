@@ -34,7 +34,7 @@ import java.util.List;
 public class ComponentFetcher extends Fetcher {
     private static final String TAG = "ComponentFetcher";
 
-    private static final boolean DEVELOPMENT_PERMISSIONS_SUPPORTED =
+    static final boolean DEVELOPMENT_PERMISSIONS_SUPPORTED =
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN;
 
 
@@ -78,6 +78,13 @@ public class ComponentFetcher extends Fetcher {
 
     public static final int PROTECTION_ANY_EXPORTED =
             PROTECTION_ANY & ~PROTECTION_UNEXPORTED;
+
+    static final int PROTECTION_ANY_LEVEL =
+            ComponentFetcher.PROTECTION_NORMAL |
+            ComponentFetcher.PROTECTION_DANGEROUS |
+            ComponentFetcher.PROTECTION_SIGNATURE |
+            ComponentFetcher.PROTECTION_SYSTEM |
+            ComponentFetcher.PROTECTION_DEVELOPMENT;
 
     /**
      * Preset protection filters for displaying in Spinner in dialog
@@ -241,7 +248,6 @@ public class ComponentFetcher extends Fetcher {
         return false;
     }
 
-    @SuppressLint("InlinedApi")
     private boolean checkPermissionFilter(PackageManager pm, ComponentInfo cmp) {
         // Not exported?
         if (!cmp.exported) {
@@ -280,6 +286,16 @@ public class ComponentFetcher extends Fetcher {
             return (protection & PROTECTION_UNKNOWN) != 0;
         }
 
+        return checkProtectionLevel(permissionInfo, protection);
+    }
+
+    @SuppressLint("InlinedApi")
+    static boolean checkProtectionLevel(PermissionInfo permissionInfo, int protectionFilter) {
+        // Skip test if all options are checked
+        if ((protectionFilter & PROTECTION_ANY_LEVEL) == PROTECTION_ANY_LEVEL) {
+            return true;
+        }
+
         // Test protectionLevel
         int protectionLevel = permissionInfo.protectionLevel;
         if (protectionLevel == PermissionInfo.PROTECTION_SIGNATURE_OR_SYSTEM) {
@@ -298,9 +314,9 @@ public class ComponentFetcher extends Fetcher {
                     (((protectionLevelFlags & PermissionInfo.PROTECTION_FLAG_SYSTEM) != 0)
                         ? PROTECTION_SYSTEM : 0) |
                     (((protectionLevelFlags & PermissionInfo.PROTECTION_FLAG_DEVELOPMENT) != 0)
-                        ? PROTECTION_SYSTEM : 0)
+                        ? PROTECTION_DEVELOPMENT : 0)
                 )
-        ) & protection) != 0;
+        ) & protectionFilter) != 0;
     }
 
     // Configuration UI

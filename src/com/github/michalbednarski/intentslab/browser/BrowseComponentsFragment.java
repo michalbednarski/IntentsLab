@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageItemInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PermissionInfo;
 import android.content.pm.ProviderInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -24,6 +25,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import com.github.michalbednarski.intentslab.AppInfoActivity;
+import com.github.michalbednarski.intentslab.PermissionInfoActivity;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
 
@@ -247,6 +249,14 @@ public class BrowseComponentsFragment extends Fragment {
             startActivity(
                     new Intent(getActivity(), AppInfoActivity.class)
                     .putExtra(AppInfoActivity.EXTRA_PACKAGE_NAME, componentInfo.packageName)
+            );
+            return;
+        }
+
+        if (componentInfo instanceof PermissionInfo) {
+            startActivity(
+                    new Intent(getActivity(), PermissionInfoActivity.class)
+                            .putExtra(PermissionInfoActivity.EXTRA_PERMISSION_NAME, componentInfo.name)
             );
             return;
         }
