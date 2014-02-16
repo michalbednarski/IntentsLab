@@ -80,6 +80,7 @@
     <string name="components">Components</string>
     <string name="permissions">Permissions</string>
     <string name="loading_apps_list">Loading apps list&#8230;</string>
+    <string name="loading">Loading&#8230;</string>
     <string name="filter_excludes_all_possible_components">Filter is excluding all possible components</string>
     <string name="no_matching_components">There are no components matching to given filter</string>
 

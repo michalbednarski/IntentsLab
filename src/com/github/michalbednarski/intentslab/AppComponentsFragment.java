@@ -404,8 +404,9 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
             case SECTION_IMPLICITLY_GRANTED_PERMISSIONS:
             {
                 startActivity(
-                        new Intent(getActivity(), PermissionInfoActivity.class)
-                        .putExtra(PermissionInfoActivity.EXTRA_PERMISSION_NAME, getPermissionAt(groupPosition, childPosition))
+                        new Intent(getActivity(), SingleFragmentActivity.class)
+                        .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, PermissionInfoFragment.class.getName())
+                        .putExtra(PermissionInfoFragment.ARG_PERMISSION_NAME, getPermissionAt(groupPosition, childPosition))
                 );
                 return true;
             }

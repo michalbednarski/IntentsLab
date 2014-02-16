@@ -25,7 +25,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import com.github.michalbednarski.intentslab.AppInfoActivity;
-import com.github.michalbednarski.intentslab.PermissionInfoActivity;
+import com.github.michalbednarski.intentslab.PermissionInfoFragment;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
 
@@ -254,9 +254,11 @@ public class BrowseComponentsFragment extends Fragment {
         }
 
         if (componentInfo instanceof PermissionInfo) {
-            startActivity(
-                    new Intent(getActivity(), PermissionInfoActivity.class)
-                            .putExtra(PermissionInfoActivity.EXTRA_PERMISSION_NAME, componentInfo.name)
+            Bundle arguments = new Bundle();
+            arguments.putString(PermissionInfoFragment.ARG_PERMISSION_NAME, componentInfo.name);
+            ((BrowseComponentsActivity) getActivity()).openFragment(
+                    PermissionInfoFragment.class,
+                    arguments
             );
             return;
         }

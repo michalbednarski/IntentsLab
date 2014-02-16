@@ -69,8 +69,9 @@ public class FormattedTextBuilder {
                     public void onClick(View widget) {
                         Context context = widget.getContext();
                         context.startActivity(
-                                new Intent(context, PermissionInfoActivity.class)
-                                .putExtra(PermissionInfoActivity.EXTRA_PERMISSION_NAME, originalValue)
+                                new Intent(context, SingleFragmentActivity.class)
+                                .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, PermissionInfoFragment.class.getName())
+                                .putExtra(PermissionInfoFragment.ARG_PERMISSION_NAME, originalValue)
                         );
                     }
                 };

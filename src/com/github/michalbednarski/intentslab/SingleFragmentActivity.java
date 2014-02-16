@@ -18,7 +18,8 @@ public class SingleFragmentActivity extends FragmentActivity {
     private static final Class<? extends Fragment>[] WHITE_LIST = new Class[] {
             XMLViewerFragment.class,
             ComponentInfoFragment.class,
-            ProviderInfoFragment.class
+            ProviderInfoFragment.class,
+            PermissionInfoFragment.class
     };
 
 
