@@ -1,0 +1,167 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
+          package="com.github.michalbednarski.intentslab"
+          android:versionCode="1"
+          android:versionName="1.0">
+
+    <uses-sdk
+        android:minSdkVersion="7"
+        android:targetSdkVersion="18"/>
+
+    <uses-permission android:name="android.permission.GET_TASKS"/>
+    <uses-permission android:name="android.permission.BROADCAST_STICKY"/>
+
+    <permission android:name="com.github.michalbednarski.intentslab.ACCESS_SANDBOX" android:protectionLevel="signature" />
+    <uses-permission android:name="com.github.michalbednarski.intentslab.ACCESS_SANDBOX" />
+
+    <application
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme">
+        <activity android:name=".StartActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".editor.IntentEditorActivity"
+            android:windowSoftInputMode="stateHidden">
+        </activity>
+        <activity
+            android:name=".PickRecentlyRunningActivity"
+            android:label="@string/pick_recent_task">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.testapp1.StartActivity"/>
+        </activity>
+        <activity
+            android:name=".browser.BrowseComponentsActivity"
+            android:label="@string/browse_components">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.testapp1.StartActivity"/>
+        </activity>
+        <activity
+            android:name=".CatchBroadcastDialog$WrapperActivity"
+            android:theme="@style/NoDisplayForDialogTheme"/>
+
+        <service android:name=".CatchBroadcastService"/>
+
+        <activity
+            android:name=".CatchBroadcastService$BroadcastsListActivity"
+            android:label="@string/received_broadcasts"/>
+
+        <activity android:name=".PrefsActivity"/>
+        <activity android:name=".providerlab.QueryResultActivity"/>
+        <activity
+            android:name=".SavedItemsActivity"
+            android:label="Saved items"/>
+        <activity
+            android:name=".providerlab.AdvancedQueryActivity"
+            android:windowSoftInputMode="stateHidden"/>
+        <activity android:name=".valueeditors.BundleEditorActivity"/>
+        <activity android:name=".valueeditors.object.ObjectEditorActivity"/>
+
+        <!-- Interception activity -->
+        <activity
+            android:name=".editor.IntentEditorInterceptedActivity"
+            android:label="IntentsLab Intercept">
+
+            <intent-filter>
+                <action android:name="android.intent.action.ALL_APPS"/>
+                <action android:name="android.intent.action.APP_ERROR"/>
+                <action android:name="android.intent.action.ASSIST"/>
+                <action android:name="android.intent.action.ATTACH_DATA"/>
+                <action android:name="android.intent.action.BUG_REPORT"/>
+                <action android:name="android.intent.action.CALL_BUTTON"/>
+                <action android:name="android.intent.action.CREATE_SHORTCUT"/>
+                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.MANAGE_NETWORK_USAGE"/>
+                <action android:name="android.intent.action.MANAGE_PACKAGE_STORAGE"/>
+                <action android:name="android.intent.action.POWER_USAGE_SUMMARY"/>
+                <!--<action android:name="android.intent.action.RUN"/>-->
+                <action android:name="android.intent.action.SEARCH"/>
+                <action android:name="android.intent.action.SEARCH_LONG_PRESS"/>
+                <action android:name="android.intent.action.SENDTO"/>
+                <action android:name="android.intent.action.SET_WALLPAPER"/>
+                <!--<action android:name="android.intent.action.SYNC"/>-->
+                <action android:name="android.intent.action.SYSTEM_TUTORIAL"/>
+                <action android:name="android.intent.action.VOICE_COMMAND"/>
+                <action android:name="android.intent.action.WEB_SEARCH"/>
+
+                <category android:name="android.intent.category.ALTERNATIVE"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <!--<category android:name="android.intent.category.HOME"/>-->
+                <!--<category android:name="android.intent.category.INFO"/>-->
+                <category android:name="android.intent.category.OPENABLE"/>
+                <category android:name="android.intent.category.SELECTED_ALTERNATIVE"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.DELETE"/>
+                <action android:name="android.intent.action.EDIT"/>
+                <action android:name="android.intent.action.GET_CONTENT"/>
+                <action android:name="android.intent.action.INSERT"/>
+                <action android:name="android.intent.action.INSERT_OR_EDIT"/>
+                <action android:name="android.intent.action.INSTALL_PACKAGE"/>
+                <action android:name="android.intent.action.PASTE"/>
+                <action android:name="android.intent.action.PICK"/>
+                <action android:name="android.intent.action.SEND"/>
+                <action android:name="android.intent.action.SEND_MULTIPLE"/>
+                <action android:name="android.intent.action.UNINSTALL_PACKAGE"/>
+                <action android:name="android.intent.action.VIEW"/>
+
+                <category android:name="android.intent.category.ALTERNATIVE"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.OPENABLE"/>
+                <category android:name="android.intent.category.SELECTED_ALTERNATIVE"/>
+
+                <data android:mimeType="*/*"/>
+            </intent-filter>
+        </activity>
+        <activity android:name=".AppInfoActivity"/>
+
+        <provider
+            android:name=".AssetProvider"
+            android:authorities="intentslab.assetsprovider"/>
+        <provider
+            android:name=".providerlab.proxy.ProxyProvider"
+            android:authorities="intentslab.proxyprovider"
+            android:exported="true"
+            tools:ignore="ExportedContentProvider">
+            <meta-data
+                android:name="intentslab.disallowproxy"
+                android:value="true" />
+        </provider>
+        <provider
+            android:name=".providerlab.proxy.ProxyProviderForGrantUriPermission"
+            android:authorities="intentslab.proxyprovider.forgranturipermission"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="intentslab.disallowproxy"
+                android:value="true" />
+        </provider>
+
+        <activity android:name=".providerlab.proxy.LogViewerActivity"/>
+        <receiver
+            android:name=".runas.RunAsInitReceiver"
+            android:exported="true"
+            android:label="Run-As mode internal BroadcastReceiver"
+            tools:ignore="ExportedReceiver"/>
+
+        <activity android:name=".ActivityMonitorActivity"/>
+        <activity android:name=".bindservice.BoundServiceActivity"/>
+
+        <service android:name=".ActivityMonitorActivity$ActivityRecorderService" />
+        <service android:name=".sandbox.SandboxManager$AService"/>
+
+        <activity android:name=".valueeditors.ArrayEditorActivity" />
+        <activity android:name=".SingleFragmentActivity" />
+
+        <activity android:name=".clipboard.ClipboardActivity" />
+    </application>
+
+</manifest>

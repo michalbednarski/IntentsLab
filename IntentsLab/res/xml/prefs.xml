@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <CheckBoxPreference
+        android:key="autoeditbroadcast"
+        android:summaryOff="@string/broadcast_autoedit_off"
+        android:summaryOn="@string/broadcast_autoedit_on"
+        android:title="@string/broadcast_autoedit" />
+
+    <PreferenceCategory android:title="Developer options" >
+        <CheckBoxPreference android:key="forcelegacytabs" android:title="Force legacy tabs"/>
+        <CheckBoxPreference
+            android:key="use-real-files-in-open-asset-file"
+            android:title="Use real files in openAssetFile in assets provider"
+            android:defaultValue="true" />
+    </PreferenceCategory>
+
+</PreferenceScreen>
