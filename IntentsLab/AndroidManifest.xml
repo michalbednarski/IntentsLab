@@ -43,13 +43,13 @@
                 android:value="com.example.testapp1.StartActivity"/>
         </activity>
         <activity
-            android:name=".CatchBroadcastDialog$WrapperActivity"
+            android:name=".ReceiveBroadcastDialog$WrapperActivity"
             android:theme="@style/NoDisplayForDialogTheme"/>
 
-        <service android:name=".CatchBroadcastService"/>
+        <service android:name=".ReceiveBroadcastService"/>
 
         <activity
-            android:name=".CatchBroadcastService$BroadcastsListActivity"
+            android:name=".ReceiveBroadcastService$BroadcastsListActivity"
             android:label="@string/received_broadcasts"/>
 
         <activity android:name=".PrefsActivity"/>

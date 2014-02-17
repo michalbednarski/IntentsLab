@@ -135,7 +135,7 @@ public class StartActivity extends FragmentActivity {
     }
 
     public void catchBroadcast(View view) {
-    	(new CatchBroadcastDialog(this)).show();
+    	(new ReceiveBroadcastDialog(this)).show();
     }
 
     public void viewSavedItems(View view) {

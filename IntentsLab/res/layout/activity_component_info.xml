@@ -73,7 +73,7 @@
         <Button
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Receive broadcast"
+            android:text="@string/receive_broadcast"
             android:id="@+id/receive_broadcast"
             android:layout_weight="1"
             android:visibility="gone"

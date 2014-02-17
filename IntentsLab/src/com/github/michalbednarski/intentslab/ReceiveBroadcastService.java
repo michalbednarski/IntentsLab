@@ -26,13 +26,13 @@ import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
 
 import java.util.ArrayList;
 
-public class CatchBroadcastService extends Service {
-    private static final String TAG = "CatchBroadcast";
+public class ReceiveBroadcastService extends Service {
+    private static final String TAG = "ReceiveBroadcast";
     private static final int SERVICE_NOTIFICATION_ID = 1;
     private static final int RESULT_NOTIFICATION_ID = 2;
 
 	static boolean sIsRunning = false;
-	private CatchBroadcastReceiver mReceiver = null;
+	private MyBroadcastReceiver mReceiver = null;
 	private boolean mGotBroadcast = false;
     private static class ReceivedBroadcast {
         long time;
@@ -58,7 +58,7 @@ public class CatchBroadcastService extends Service {
         }
 
         context.startService(
-                new Intent(context, CatchBroadcastService.class)
+                new Intent(context, ReceiveBroadcastService.class)
                         .putExtra("intentFilters", filters)
                         .putExtra("multiple", multiple)
         );
@@ -78,7 +78,7 @@ public class CatchBroadcastService extends Service {
 			// We were already started, clear old receiver
 			unregisterReceiver(mReceiver);
 		} else {
-			mReceiver = new CatchBroadcastReceiver();
+			mReceiver = new MyBroadcastReceiver();
 		}
 
         if (intent.getBooleanExtra("multiple", false)) {
@@ -125,7 +125,7 @@ public class CatchBroadcastService extends Service {
 	void showWaitingNotification(String action) {
 		mGotBroadcast = false;
 
-		Intent requeryAction = new Intent(this, CatchBroadcastDialog.WrapperActivity.class);
+		Intent requeryAction = new Intent(this, ReceiveBroadcastDialog.WrapperActivity.class);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
 				requeryAction, 0);
 
@@ -210,11 +210,11 @@ public class CatchBroadcastService extends Service {
 		return null;
 	}
 
-	private class CatchBroadcastReceiver extends BroadcastReceiver {
+	private class MyBroadcastReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
             if (sReceivedBroadcasts != null) {
-                // Running in catch multiple mode, add broadcast to list
+                // Running in receive multiple mode, add broadcast to list
                 ReceivedBroadcast receivedBroadcast = new ReceivedBroadcast();
                 receivedBroadcast.time = System.currentTimeMillis();
                 receivedBroadcast.intent = intent;
@@ -349,7 +349,7 @@ public class CatchBroadcastService extends Service {
         @Override
         public boolean onOptionsItemSelected(MenuItem item) {
             if (item.getItemId() == R.id.stop_listening_for_broadcasts) {
-                stopService(new Intent(this, CatchBroadcastService.class));
+                stopService(new Intent(this, ReceiveBroadcastService.class));
                 sIsRunning = false;
                 try {
                     invalidateOptionsMenu();

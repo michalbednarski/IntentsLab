@@ -38,7 +38,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="catchBroadcast"
-            android:text="@string/title_activity_catch_broadcast"
+            android:text="@string/receive_broadcast"
             android:paddingRight="@dimen/button_padding"
             android:paddingLeft="@dimen/button_padding"/>
 

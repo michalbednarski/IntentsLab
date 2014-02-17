@@ -15,7 +15,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
 
 
-public class CatchBroadcastDialog implements OnClickListener, OnCancelListener {
+public class ReceiveBroadcastDialog implements OnClickListener, OnCancelListener {
 
     Context mContext;
     AutoCompleteTextView mActionTextView;
@@ -24,10 +24,10 @@ public class CatchBroadcastDialog implements OnClickListener, OnCancelListener {
     private AlertDialog.Builder mBuilder;
 
 
-    CatchBroadcastDialog(Context context) {
+    ReceiveBroadcastDialog(Context context) {
         mContext = context;
         mBuilder = new AlertDialog.Builder(mContext);
-        View view = ((LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.dialog_catch_broadcast, null);
+        View view = ((LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(R.layout.dialog_receive_broadcast, null);
         mActionTextView = (AutoCompleteTextView) view.findViewById(R.id.action);
         mMultipleCheckBox = (CheckBox) view.findViewById(R.id.receive_multiple_broadcasts);
         mActionTextView.setText(PreferenceManager
@@ -36,14 +36,14 @@ public class CatchBroadcastDialog implements OnClickListener, OnCancelListener {
         );
         mActionTextView.setAdapter(new NameAutocompleteAdapter(context, R.raw.broadcast_actions));
         mBuilder.setView(view);
-        mBuilder.setTitle(R.string.title_activity_catch_broadcast);
+        mBuilder.setTitle(R.string.receive_broadcast);
         mBuilder.setPositiveButton(R.string.register_receiver, this);
-        if (CatchBroadcastService.sIsRunning) {
+        if (ReceiveBroadcastService.sIsRunning) {
             mBuilder.setNegativeButton(R.string.unregister_receiver, this);
         }
     }
 
-    private CatchBroadcastDialog setWrapperActivty(Activity wrapperActivty) {
+    private ReceiveBroadcastDialog setWrapperActivty(Activity wrapperActivty) {
         mWrapperActivity = wrapperActivty;
         mBuilder.setOnCancelListener(this);
         return this;
@@ -64,16 +64,16 @@ public class CatchBroadcastDialog implements OnClickListener, OnCancelListener {
     @Override
     public void onClick(DialogInterface dialog, int which) {
         if (which == AlertDialog.BUTTON_NEGATIVE) {
-            stopCatcher();
+            stopReceiving();
         } else {
-            startCatcher();
+            startReceiving();
         }
         if (mWrapperActivity != null) {
             mWrapperActivity.finish();
         }
     }
 
-    void startCatcher() {
+    void startReceiving() {
         String action = mActionTextView.getText().toString();
         Utils.applyOrCommitPrefs(
                 PreferenceManager
@@ -81,11 +81,11 @@ public class CatchBroadcastDialog implements OnClickListener, OnCancelListener {
                         .edit()
                         .putString("lastcatchbroadcastaction", action)
         );
-        CatchBroadcastService.startReceiving(mContext, action, mMultipleCheckBox.isChecked());
+        ReceiveBroadcastService.startReceiving(mContext, action, mMultipleCheckBox.isChecked());
     }
 
-    void stopCatcher() {
-        mContext.stopService(new Intent(mContext, CatchBroadcastService.class));
+    void stopReceiving() {
+        mContext.stopService(new Intent(mContext, ReceiveBroadcastService.class));
     }
 
     public static class WrapperActivity extends Activity {
@@ -94,7 +94,7 @@ public class CatchBroadcastDialog implements OnClickListener, OnCancelListener {
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            new CatchBroadcastDialog(this).setWrapperActivty(this).show();
+            new ReceiveBroadcastDialog(this).setWrapperActivty(this).show();
         }
     }
 

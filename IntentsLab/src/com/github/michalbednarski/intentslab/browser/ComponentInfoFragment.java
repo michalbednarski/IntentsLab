@@ -23,7 +23,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.github.michalbednarski.intentslab.AppInfoActivity;
-import com.github.michalbednarski.intentslab.CatchBroadcastService;
+import com.github.michalbednarski.intentslab.ReceiveBroadcastService;
 import com.github.michalbednarski.intentslab.FormattedTextBuilder;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
@@ -353,13 +353,13 @@ public class ComponentInfoFragment extends Fragment {
         mReceiveBroadcastButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                CatchBroadcastService.startReceiving(getActivity(), mExtendedComponentInfo.intentFilters, false);
+                ReceiveBroadcastService.startReceiving(getActivity(), mExtendedComponentInfo.intentFilters, false);
             }
         });
         mReceiveBroadcastButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                CatchBroadcastService.startReceiving(getActivity(), mExtendedComponentInfo.intentFilters, true);
+                ReceiveBroadcastService.startReceiving(getActivity(), mExtendedComponentInfo.intentFilters, true);
                 return true;
             }
         });
