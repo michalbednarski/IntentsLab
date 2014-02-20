@@ -4,14 +4,22 @@ import android.annotation.TargetApi;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.Toast;
+import com.github.michalbednarski.intentslab.runas.IRemoteInterface;
+import com.github.michalbednarski.intentslab.runas.RunAsManager;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -204,5 +212,84 @@ public class Utils {
             array[index++] = integer;
         }
         return array;
+    }
+
+    public static InputStream dumpSystemService(Context context, String serviceName, final String[] arguments) throws Exception {
+        // Check if we have permission to invoke dump from our process
+        boolean canDumpLocally =
+                context.getPackageManager().checkPermission(android.Manifest.permission.DUMP, context.getPackageName())
+                == PackageManager.PERMISSION_GRANTED;
+
+        // On versions without createPipe() just execute dumpsys
+        if (android.os.Build.VERSION.SDK_INT < 9) {
+            if (!canDumpLocally) {
+                throw new Exception("Dumping is not supported on this system version");
+            }
+            String[] progArray = new String[arguments != null ? 2 + arguments.length : 2];
+            progArray[0] = "dumpsys";
+            progArray[1] = serviceName;
+            if (arguments != null) {
+                System.arraycopy(arguments, 0, progArray, 2, arguments.length);
+            }
+            return Runtime.getRuntime().exec(progArray).getInputStream();
+        }
+
+        // Get service
+        final Class<?> serviceManager = Class.forName("android.os.ServiceManager");
+        final IBinder service = (IBinder) serviceManager.getMethod("getService", String.class).invoke(null, serviceName);
+
+        // Create pipe, write(pipe[0]) -> read(pipe[1])
+        final ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
+        final ParcelFileDescriptor readablePipe = pipe[0];
+        final ParcelFileDescriptor writablePipe = pipe[1];
+
+        try {
+            // Execute dump
+            if (canDumpLocally) {
+                if (android.os.Build.VERSION.SDK_INT >= 13) {
+                    service.dumpAsync(writablePipe.getFileDescriptor(), arguments);
+                    writablePipe.close();
+                } else {
+                    (new Thread() {
+                        @Override
+                        public void run() {
+                            try {
+                                service.dump(writablePipe.getFileDescriptor(), arguments);
+                                writablePipe.close();
+                            } catch (Exception e) {
+                                // TODO: can we handle this?
+                                e.printStackTrace();
+                            }
+                        }
+                    }).start();
+                }
+            } else {
+                IRemoteInterface remoteInterface = RunAsManager.getRemoteInterfaceForSystemDebuggingCommands();
+                remoteInterface.dumpServiceAsync(service, writablePipe, arguments);
+                writablePipe.close();
+            }
+        // If anything went wrong, close pipe and rethrow
+        } catch (Exception e) {
+            readablePipe.close();
+            writablePipe.close();
+            throw e;
+        } catch (Error e) {
+            readablePipe.close();
+            writablePipe.close();
+            throw e;
+        } catch (Throwable e) {
+            readablePipe.close();
+            writablePipe.close();
+            throw new RuntimeException(e);
+        }
+
+        // Return stream that will ensure closing fd
+        return new FileInputStream(readablePipe.getFileDescriptor()) {
+            @Override
+            public void close() throws IOException {
+                super.close();
+                readablePipe.close();
+            }
+        };
     }
 }

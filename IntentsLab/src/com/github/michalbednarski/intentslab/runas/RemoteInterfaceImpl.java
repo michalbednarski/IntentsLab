@@ -5,6 +5,7 @@ import android.app.IServiceConnection;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -37,5 +38,11 @@ class RemoteInterfaceImpl extends IRemoteInterface.Stub {
     @Override
     public void setActivityController(IActivityController controller) throws RemoteException {
         ActivityManagerWrapper.get().setActivityController(controller);
+    }
+
+    @Override
+    public void dumpServiceAsync(IBinder service, ParcelFileDescriptor fd, String[] args) throws RemoteException {
+        // This is oneway call and therefore it's already async so we behave normally here
+        service.dump(fd.getFileDescriptor(), args);
     }
 }

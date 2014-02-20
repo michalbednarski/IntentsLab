@@ -1,7 +1,6 @@
 package com.github.michalbednarski.intentslab.browser;
 
 import android.content.Context;
-import android.content.pm.PackageItemInfo;
 import android.os.Parcelable;
 import android.view.Menu;
 import org.json.JSONException;
@@ -20,7 +19,7 @@ abstract class Fetcher implements Parcelable, Cloneable {
     static final class Component {
         String title;
         String subtitle; // Used only in non categorized mode
-        PackageItemInfo componentInfo;
+        Object componentInfo;
     }
 
     static abstract class Descriptor {

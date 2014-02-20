@@ -5,6 +5,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
 import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
+import com.github.michalbednarski.intentslab.browser.RegisteredReceiverInfoFragment;
 import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
 
 /**
@@ -19,6 +20,7 @@ public class SingleFragmentActivity extends FragmentActivity {
             XMLViewerFragment.class,
             ComponentInfoFragment.class,
             ProviderInfoFragment.class,
+            RegisteredReceiverInfoFragment.class,
             PermissionInfoFragment.class
     };
 

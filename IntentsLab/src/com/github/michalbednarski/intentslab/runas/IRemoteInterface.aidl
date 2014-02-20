@@ -15,4 +15,6 @@ interface IRemoteInterface {
     int bindService(IBinder sandboxApplicationToken, in Intent intent, IServiceConnection conn);
 
     void setActivityController(IActivityController controller);
+
+    oneway void dumpServiceAsync(IBinder service, in ParcelFileDescriptor fd, in String[] args);
 }

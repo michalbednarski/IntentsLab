@@ -226,5 +226,7 @@
     <string name="group_by_applications">Group by applications</string>
     <string name="edit_or_add_to_clipboard">Edit/Add to clipboard</string>
     <string name="dismiss">Dismiss</string>
+    <string name="registered_receivers">Registered receivers</string>
+    <string name="registered_receiver">Registered receiver</string>
 
 </resources>

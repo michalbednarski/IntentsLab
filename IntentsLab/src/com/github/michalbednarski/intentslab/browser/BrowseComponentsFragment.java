@@ -244,7 +244,21 @@ public class BrowseComponentsFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
-    private void showComponent(PackageItemInfo componentInfo) {
+    private void showComponent(Object baseComponentInfo) {
+        if (baseComponentInfo instanceof RegisteredReceiverInfo) {
+            Bundle arguments = new Bundle();
+            arguments.putParcelable(
+                    RegisteredReceiverInfoFragment.ARG_REGISTERED_RECEIVER,
+                    (RegisteredReceiverInfo) baseComponentInfo
+            );
+            ((BrowseComponentsActivity) getActivity()).openFragment(
+                    RegisteredReceiverInfoFragment.class,
+                    arguments
+            );
+            return;
+        }
+
+        PackageItemInfo componentInfo = (PackageItemInfo) baseComponentInfo;
         if (componentInfo instanceof ApplicationInfo) {
             startActivity(
                     new Intent(getActivity(), AppInfoActivity.class)

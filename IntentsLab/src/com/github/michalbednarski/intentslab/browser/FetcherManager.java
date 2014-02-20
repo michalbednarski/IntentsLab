@@ -11,6 +11,7 @@ import org.json.JSONTokener;
 class FetcherManager {
     private static final Fetcher.Descriptor[] FETCHER_REGISTRY = new Fetcher.Descriptor[] {
             ComponentFetcher.DESCRIPTOR,
+            RegisteredReceiverFetcher.DESCRIPTOR,
             ApplicationFetcher.DESCRIPTOR,
             PermissionsFetcher.DESCRIPTOR
     };
