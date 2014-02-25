@@ -157,7 +157,7 @@
     <string name="provider_r_permission">Read permission</string>
     <string name="provider_no_w_permission">No write permission, <i>probably</i> read-only</string>
     <string name="provider_w_permission">Write permission</string>
-    <string name="a_returned_b" formatted="false">%s returned %s</string>
+    <string name="a_returned_b">%1$s returned %2$s</string>
     <string name="content_providers_permission_type">For content providers check</string>
     <string name="filter_read_permission">Read permission</string>
     <string name="filter_write_permission">Write permission</string>

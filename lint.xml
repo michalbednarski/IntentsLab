@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Allow fragment constructors accepting parameters -->
+    <issue id="ValidFragment" severity="warning" />
+
+    <!-- Disallow importing android.R -->
+    <issue id="SuspiciousImport" severity="error" />
+</lint>

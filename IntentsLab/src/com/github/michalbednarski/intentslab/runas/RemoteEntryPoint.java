@@ -1,5 +1,6 @@
 package com.github.michalbednarski.intentslab.runas;
 
+import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -83,6 +84,7 @@ public class RemoteEntryPoint {
         return new File(context.getFilesDir().getParentFile(), "rr");
     }
 
+    @SuppressLint("NewApi")
     public static void ensureInstalled(Context context) {
         int checksum = context.getPackageCodePath().hashCode();
         final SharedPreferences preferences = getDefaultSharedPreferences(context);
@@ -100,6 +102,7 @@ public class RemoteEntryPoint {
         }
     }
 
+    @SuppressLint("NewApi")
     public static void install(Context context) throws IOException {
         File script = getScriptFile(context);
         FileWriter writer = new FileWriter(script);

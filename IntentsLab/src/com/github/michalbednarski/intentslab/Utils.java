@@ -214,6 +214,7 @@ public class Utils {
         return array;
     }
 
+    @TargetApi(13) // Function handles all supported api levels
     public static InputStream dumpSystemService(Context context, String serviceName, final String[] arguments) throws Exception {
         // Check if we have permission to invoke dump from our process
         boolean canDumpLocally =
