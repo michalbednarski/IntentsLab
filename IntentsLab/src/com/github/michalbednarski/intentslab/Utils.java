@@ -217,7 +217,7 @@ public class Utils {
     @TargetApi(13) // Function handles all supported api levels
     public static InputStream dumpSystemService(Context context, String serviceName, final String[] arguments) throws Exception {
         // Check if we have permission to invoke dump from our process
-        boolean canDumpLocally =
+        final boolean canDumpLocally =
                 context.getPackageManager().checkPermission(android.Manifest.permission.DUMP, context.getPackageName())
                 == PackageManager.PERMISSION_GRANTED;
 
@@ -238,6 +238,15 @@ public class Utils {
         // Get service
         final Class<?> serviceManager = Class.forName("android.os.ServiceManager");
         final IBinder service = (IBinder) serviceManager.getMethod("getService", String.class).invoke(null, serviceName);
+
+        // Check permissions and get remote interface if needed
+        IRemoteInterface remoteInterface = null;
+        if (!canDumpLocally) {
+            remoteInterface = RunAsManager.getRemoteInterfaceForSystemDebuggingCommands();
+            if (remoteInterface == null) {
+                throw new SecurityException("Process has no permission to dump services");
+            }
+        }
 
         // Create pipe, write(pipe[0]) -> read(pipe[1])
         final ParcelFileDescriptor[] pipe = ParcelFileDescriptor.createPipe();
@@ -265,23 +274,15 @@ public class Utils {
                     }).start();
                 }
             } else {
-                IRemoteInterface remoteInterface = RunAsManager.getRemoteInterfaceForSystemDebuggingCommands();
                 remoteInterface.dumpServiceAsync(service, writablePipe, arguments);
                 writablePipe.close();
             }
         // If anything went wrong, close pipe and rethrow
-        } catch (Exception e) {
-            readablePipe.close();
-            writablePipe.close();
-            throw e;
-        } catch (Error e) {
-            readablePipe.close();
-            writablePipe.close();
-            throw e;
         } catch (Throwable e) {
             readablePipe.close();
             writablePipe.close();
-            throw new RuntimeException(e);
+            throwUnchecked(e);
+            throw new Error(); // Unreachable
         }
 
         // Return stream that will ensure closing fd
@@ -292,5 +293,21 @@ public class Utils {
                 readablePipe.close();
             }
         };
+    }
+
+    /**
+     * Throw exception without declaring throws
+     *
+     * Use this only for rethrowing Throwable
+     * in method declaring "throws Exception"!
+     */
+    private static void throwUnchecked(Throwable e) {
+        // http://stackoverflow.com/a/12423831
+        Utils.<RuntimeException>throwUnchecked0(e);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <E extends Throwable> void throwUnchecked0(Throwable e) throws E {
+        throw (E) e;
     }
 }

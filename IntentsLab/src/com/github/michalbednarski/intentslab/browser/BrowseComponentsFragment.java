@@ -25,6 +25,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import com.github.michalbednarski.intentslab.AppInfoActivity;
+import com.github.michalbednarski.intentslab.BuildConfig;
 import com.github.michalbednarski.intentslab.PermissionInfoFragment;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
@@ -51,6 +52,7 @@ public class BrowseComponentsFragment extends Fragment {
     private ExpandableListView mExpandableListView;
     private ListView mNonExpandableListView;
     private TextView mEmptyMessage;
+    private TextView mCustomErrorText;
 
     private Object mLoadedData;
 
@@ -84,6 +86,7 @@ public class BrowseComponentsFragment extends Fragment {
         mExpandableListView = (ExpandableListView) view.findViewById(R.id.expandableListView);
         mNonExpandableListView = (ListView) view.findViewById(R.id.listView);
         mEmptyMessage = (TextView) view.findViewById(R.id.empty_message);
+        mCustomErrorText = (TextView) view.findViewById(R.id.custom_error);
         return view;
     }
 
@@ -102,6 +105,7 @@ public class BrowseComponentsFragment extends Fragment {
         mExpandableListView = null;
         mNonExpandableListView = null;
         mEmptyMessage = null;
+        mCustomErrorText = null;
     }
 
     @Override
@@ -143,6 +147,7 @@ public class BrowseComponentsFragment extends Fragment {
                 mExpandableListView.setAdapter((ExpandableListAdapter) null);
 
                 mEmptyMessage.setVisibility(View.GONE);
+                mCustomErrorText.setVisibility(View.GONE);
                 mProgressIndicator.setVisibility(View.VISIBLE);
             }
 
@@ -156,6 +161,13 @@ public class BrowseComponentsFragment extends Fragment {
 
         @Override
         protected void onPostExecute(Object o) {
+            if (BuildConfig.DEBUG && !(
+                    o instanceof Fetcher.Category[] ||
+                    o instanceof Fetcher.Component[] ||
+                    o instanceof Fetcher.CustomError
+                    )) {
+                throw new AssertionError("Fetcher " + mFetcher + " returned unexpected value " + o);
+            }
             mLoadedData = o;
             updateView();
             mFetchTask = null;
@@ -177,7 +189,8 @@ public class BrowseComponentsFragment extends Fragment {
             mNonExpandableListView.setOnItemClickListener(adapter);
             mNonExpandableListView.setVisibility(View.VISIBLE);
         } else {
-            throw new RuntimeException("Invalid fetcher result");
+            mCustomErrorText.setText(((Fetcher.CustomError) o).message);
+            mCustomErrorText.setVisibility(View.VISIBLE);
         }
         mProgressIndicator.setVisibility(View.GONE);
     }

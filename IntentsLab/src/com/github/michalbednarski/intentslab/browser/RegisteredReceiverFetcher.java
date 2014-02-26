@@ -2,8 +2,16 @@ package com.github.michalbednarski.intentslab.browser;
 
 import android.content.Context;
 import android.content.IntentFilter;
+import android.graphics.Typeface;
 import android.os.Parcel;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.StyleSpan;
+
 import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.Utils;
+import com.github.michalbednarski.intentslab.runas.RemoteEntryPoint;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,9 +33,26 @@ public class RegisteredReceiverFetcher extends Fetcher {
                 }
             }).parse(context);
             return categorizer.getResult();
-        } catch (Throwable e) {
+        } catch (SecurityException e) {
+            // Create message about error
+            SpannableStringBuilder ssb = new SpannableStringBuilder(context.getString(R.string.registered_receivers_denied));
+            ssb.append("\n");
+            int commandStart = ssb.length();
+            if (ComponentFetcher.DEVELOPMENT_PERMISSIONS_SUPPORTED) {
+                ssb
+                        .append("pm grant ")
+                        .append(context.getPackageName())
+                        .append(" android.permission.DUMP");
+            } else {
+                ssb
+                        .append(RemoteEntryPoint.getScriptFile(context).getAbsolutePath());
+            }
+            int commandEnd = ssb.length();
+            ssb.setSpan(new StyleSpan(Typeface.BOLD), commandStart, commandEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            return new CustomError(ssb);
+        } catch (Throwable e){
             e.printStackTrace();
-            return new Component[0]; // TODO: handle this / ask user to grant permission
+            return new CustomError(Utils.describeException(e));
         }
     }
 

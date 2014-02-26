@@ -22,6 +22,14 @@ abstract class Fetcher implements Parcelable, Cloneable {
         Object componentInfo;
     }
 
+    static final class CustomError {
+        CharSequence message;
+
+        CustomError(CharSequence message) {
+            this.message = message;
+        }
+    }
+
     static abstract class Descriptor {
         /**
          * Name used in JSON serialization, must not be changed
@@ -55,7 +63,7 @@ abstract class Fetcher implements Parcelable, Cloneable {
      *
      * @param context The application context
      *
-     * @return {@link Category[]} or {@link Component[]}
+     * @return {@link Category[]}, {@link Component[]} or {@link CustomError}
      */
     abstract Object getEntries(Context context);
 

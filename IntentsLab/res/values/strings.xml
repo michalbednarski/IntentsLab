@@ -227,5 +227,8 @@
     <string name="dismiss">Dismiss</string>
     <string name="registered_receivers">Registered receivers</string>
     <string name="registered_receiver">Registered receiver</string>
+    <string name="registered_receivers_denied">
+        In order to get registered receivers list run following command in adb shell:
+    </string>
 
 </resources>
