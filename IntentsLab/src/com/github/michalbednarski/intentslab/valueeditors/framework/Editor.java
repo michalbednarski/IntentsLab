@@ -47,6 +47,10 @@ public interface Editor {
         ValueEditorDialogFragment getEditorDialogFragment();
     }
 
+    public static interface FragmentEditor extends Editor {
+        Class<? extends ValueEditorFragment> getEditorFragment();
+    }
+
     public static interface InPlaceValueToggler extends Editor {
         Object toggleObjectValue(Object originalValue);
     }

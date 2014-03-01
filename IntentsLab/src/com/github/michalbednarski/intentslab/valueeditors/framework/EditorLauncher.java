@@ -1,5 +1,6 @@
 package com.github.michalbednarski.intentslab.valueeditors.framework;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -18,7 +19,7 @@ import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
 import com.github.michalbednarski.intentslab.valueeditors.ArrayEditorActivity;
 import com.github.michalbednarski.intentslab.valueeditors.BundleEditorActivity;
 import com.github.michalbednarski.intentslab.valueeditors.EnumEditor;
-import com.github.michalbednarski.intentslab.valueeditors.object.ObjectEditorActivity;
+import com.github.michalbednarski.intentslab.valueeditors.object.ObjectEditorFragment;
 import com.github.michalbednarski.intentslab.valueeditors.StringLikeItemEditor;
 
 /**
@@ -71,7 +72,7 @@ public class EditorLauncher {
             new ArrayEditorActivity.LaunchableEditor(),
 
             // Generic Parcelable object editor
-            new ObjectEditorActivity.LaunchableEditor()
+            new ObjectEditorFragment.LaunchableEditor()
     };
 
     /**
@@ -95,7 +96,9 @@ public class EditorLauncher {
     }
 
 
-    private final ActivityHandlingHeadlessFragment mFragment;
+    private static final int REQUEST_CODE_INTERNAL_EDITOR = 0;
+
+    final ActivityHandlingHeadlessFragment mFragment;
 
     //private final ActivityResultHandler mActivityResultHandler;
     private EditorLauncherCallback mEditorLauncherCallback = null;
@@ -189,6 +192,11 @@ public class EditorLauncher {
                     d.setArguments(args);
                     d.setTargetFragment(mFragment, 0);
                     d.show(mFragment.getActivity().getSupportFragmentManager(), "DFEditorFor" + key);
+                } else if (editor instanceof Editor.FragmentEditor) {
+                    Bundle args = new Bundle();
+                    args.putString(SingleEditorActivity.EXTRA_ECHOED_KEY, key);
+                    args.putParcelable(ValueEditorFragment.ARG_EDITED_OBJECT, new SandboxedObject(value));
+                    openEditorFragment(((Editor.FragmentEditor) editor).getEditorFragment(), args);
                 } else if (editor instanceof Editor.InPlaceValueToggler) {
                     // In place value toggler (eg. for Boolean)
                     Object newValue = ((Editor.InPlaceValueToggler) editor).toggleObjectValue(value);
@@ -210,15 +218,17 @@ public class EditorLauncher {
      * @param wrappedValue Wrapped value to be edited
      */
     public void launchEditorForSandboxedObject(final String key, String title, SandboxedObject wrappedValue) {
-        // Build intent
-        Intent editorIntent = new Intent(mFragment.getActivity(), ObjectEditorActivity.class);
-        editorIntent.putExtra(Editor.EXTRA_TITLE, title);
-        editorIntent.putExtra(Editor.EXTRA_VALUE, wrappedValue);
-        editorIntent.putExtra(ObjectEditorActivity.EXTRA_VALUE_IS_SANDBOXED, true);
+        Bundle args = new Bundle();
+        args.putString(SingleEditorActivity.EXTRA_ECHOED_KEY, key);
+        args.putParcelable(ValueEditorFragment.ARG_EDITED_OBJECT, wrappedValue);
+        openEditorFragment(ObjectEditorFragment.class, args);
+    }
 
-        // Register callback and start for result
-        final int requestCode = mFragment.mState.saveRequestInfoAndGetCode(new ActivityRequestInfo(key, true));
-        mFragment.startActivityForResult(editorIntent, requestCode);
+    void openEditorFragment(Class<? extends ValueEditorFragment> editorFragment, Bundle args) {
+        args.putString(SingleEditorActivity.EXTRA_FRAGMENT_CLASS_NAME, editorFragment.getName());
+        Intent intent = new Intent(mFragment.getActivity(), SingleEditorActivity.class);
+        intent.replaceExtras(args);
+        mFragment.startActivityForResult(intent, REQUEST_CODE_INTERNAL_EDITOR);
     }
 
     /**
@@ -273,7 +283,7 @@ public class EditorLauncher {
      * Parcelable class managing mapping of activity request codes and key passed to launchEditor
      */
     private static class EditorLauncherState implements Parcelable {
-        private int nextFreeRequestCode = 0;
+        private int nextFreeRequestCode = 1;
         private SparseArray<ActivityRequestInfo> requestInfos = new SparseArray<ActivityRequestInfo>();
 
         @Override
@@ -296,7 +306,7 @@ public class EditorLauncher {
             public EditorLauncherState createFromParcel(Parcel source) {
                 final EditorLauncherState editorLauncherState = new EditorLauncherState();
                 int count = source.readInt();
-                int tmpNextFreeRequestCode = 0;
+                int tmpNextFreeRequestCode = 1;
                 for (int i = 0; i < count; i++) {
                     int requestCode = source.readInt();
                     if (requestCode >= tmpNextFreeRequestCode) {
@@ -337,7 +347,18 @@ public class EditorLauncher {
 
         @Override
         public void onActivityResult(int requestCode, int resultCode, Intent data) {
-            if (requestCode >= 0 && requestCode <= 0xffff) {
+            if (requestCode == REQUEST_CODE_INTERNAL_EDITOR) {
+                if (resultCode == Activity.RESULT_OK) {
+                    final String key = data.getStringExtra(SingleEditorActivity.EXTRA_ECHOED_KEY);
+                    final SandboxedObject sandboxedObject = data.getParcelableExtra(SingleEditorActivity.EXTRA_RESULT);
+                    EditorLauncherCallback callback = mEditorLauncher.mEditorLauncherCallback;
+                    if (callback instanceof EditorLauncherWithSandboxCallback) {
+                        ((EditorLauncherWithSandboxCallback) callback).onSandboxedEditorResult(key, sandboxedObject);
+                    } else {
+                        callback.onEditorResult(key, sandboxedObject.unwrap(null));
+                    }
+                }
+            } else if (requestCode >= 1 && requestCode <= 0xffff) {
                 final ActivityRequestInfo requestInfo = mState.getRequestInfoAndReleaseCode(requestCode);
                 final String key = requestInfo.key;
                 if (data != null && data.getExtras() != null) {

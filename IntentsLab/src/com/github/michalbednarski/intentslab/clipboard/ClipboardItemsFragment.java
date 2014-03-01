@@ -3,16 +3,21 @@ package com.github.michalbednarski.intentslab.clipboard;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.ListFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import com.github.michalbednarski.intentslab.CategorizedAdapter;
+import com.github.michalbednarski.intentslab.MasterDetailActivity;
 import com.github.michalbednarski.intentslab.bindservice.BoundServiceActivity;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.bindservice.manager.ServiceDescriptor;
+import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
+import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncherForMasterDetail;
 
 import java.util.ArrayList;
 
@@ -40,6 +45,7 @@ public class ClipboardItemsFragment extends ListFragment {
 
     private ServiceDescriptor[] mBoundServices;
     private Adapter mAdapter = new Adapter();
+    private EditorLauncher mEditorLauncher;
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
@@ -57,12 +63,22 @@ public class ClipboardItemsFragment extends ListFragment {
                                 .putExtra(BoundServiceActivity.EXTRA_SERVICE, mBoundServices[itemInfo.positionInCategory])
                 );
                 break;
+            case CATEGORY_LOCAL_OBJECTS:
+                // TODO: saving
+                mEditorLauncher.launchEditor("dummyLocal", ClipboardService.sLocalObjects.get(itemInfo.positionInCategory));
+                break;
         }
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        FragmentActivity activity = getActivity();
+        if (activity instanceof MasterDetailActivity) {
+            mEditorLauncher = new EditorLauncherForMasterDetail((MasterDetailActivity) activity, "clipboardLauncher");
+        } else {
+            mEditorLauncher = new EditorLauncher(activity, "clipboardLauncherEmb");
+        }
         update();
         sObservers.add(this);
     }

@@ -5,8 +5,4 @@
         android:id="@+id/show_non_public_fields"
         android:checkable="true"
         />
-    <item
-        android:title="@string/discard_changes"
-        android:id="@+id/discard"
-        />
 </menu>

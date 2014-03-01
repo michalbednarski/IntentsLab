@@ -361,6 +361,21 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
 
     @Override
     public void onSandboxedEditorResult(final String key, final SandboxedObject newWrappedValue) {
+        // Check if sandbox isn't needed
+skipSandbox: {
+            if (!mUseSandbox) {
+                Object unwrapped = null;
+                try {
+                    unwrapped = newWrappedValue.unwrap(null);
+                } catch (Exception e) {
+                    break skipSandbox;
+                }
+                onEditorResult(key, unwrapped);
+                return;
+            }
+        }
+
+        // Really use sandbox
         sandboxBundle(false, new Runnable() {
             @Override
             public void run() {

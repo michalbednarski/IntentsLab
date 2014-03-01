@@ -63,7 +63,6 @@
             android:name=".providerlab.AdvancedQueryActivity"
             android:windowSoftInputMode="stateHidden"/>
         <activity android:name=".valueeditors.BundleEditorActivity"/>
-        <activity android:name=".valueeditors.object.ObjectEditorActivity"/>
 
         <!-- Interception activity -->
         <activity
@@ -164,6 +163,7 @@
         <activity android:name=".SingleFragmentActivity" />
 
         <activity android:name=".clipboard.ClipboardActivity" />
+        <activity android:name=".valueeditors.framework.SingleEditorActivity" />
     </application>
 
 </manifest>

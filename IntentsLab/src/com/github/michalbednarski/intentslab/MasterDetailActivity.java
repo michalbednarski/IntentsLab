@@ -44,7 +44,7 @@ public abstract class MasterDetailActivity extends FragmentActivity {
         return getSupportFragmentManager().findFragmentById(R.id.detail);
     }
 
-    private boolean usingTabletView() {
+    public boolean usingTabletView() {
         return getResources().getBoolean(R.bool.use_master_detail);
     }
 
