@@ -35,8 +35,7 @@ public class ClipboardItemsFragment extends ListFragment {
 
     static final int CATEGORY_INTERFACES = 0;
     static final int CATEGORY_MY_INTERFACES = 1; // Not implemented, TODO
-    static final int CATEGORY_LOCAL_OBJECTS = 2;
-    static final int CATEGORY_SANDBOXED_OBJECTS = 3;
+    static final int CATEGORY_OBJECTS = 2;
 
     private void update() {
         mBoundServices = BindServiceManager.getBoundServices();
@@ -63,9 +62,12 @@ public class ClipboardItemsFragment extends ListFragment {
                                 .putExtra(BoundServiceActivity.EXTRA_SERVICE, mBoundServices[itemInfo.positionInCategory])
                 );
                 break;
-            case CATEGORY_LOCAL_OBJECTS:
-                // TODO: saving
-                mEditorLauncher.launchEditor("dummyLocal", ClipboardService.sLocalObjects.get(itemInfo.positionInCategory));
+            case CATEGORY_OBJECTS:
+                mEditorLauncher.launchEditorForSandboxedObject(
+                        ClipboardService.sObjects.keyAt(itemInfo.positionInCategory),
+                        ClipboardService.sObjects.keyAt(itemInfo.positionInCategory),
+                        ClipboardService.sObjects.valueAt(itemInfo.positionInCategory)
+                );
                 break;
         }
     }
@@ -94,7 +96,7 @@ public class ClipboardItemsFragment extends ListFragment {
 
         @Override
         protected int getCategoryCount() {
-            return 4;
+            return 3;
         }
 
         @Override
@@ -103,10 +105,8 @@ public class ClipboardItemsFragment extends ListFragment {
                 case CATEGORY_INTERFACES:
                     return mBoundServices.length;
                 // TODO case CATEGORY_MY_INTERFACES:
-                case CATEGORY_LOCAL_OBJECTS:
-                    return ClipboardService.sLocalObjects.size();
-                case CATEGORY_SANDBOXED_OBJECTS:
-                    return ClipboardService.sSandboxedObjects.size();
+                case CATEGORY_OBJECTS:
+                    return ClipboardService.sObjects.size();
             }
             return 0; // No uncategorized items
         }
@@ -132,6 +132,9 @@ public class ClipboardItemsFragment extends ListFragment {
             switch (category) {
                 case CATEGORY_INTERFACES:
                     text = mBoundServices[positionInCategory].getTitle();
+                    break;
+                case CATEGORY_OBJECTS:
+                    text = ClipboardService.sObjects.keyAt(positionInCategory);
                     break;
             }
             ((TextView) convertView).setText(text);

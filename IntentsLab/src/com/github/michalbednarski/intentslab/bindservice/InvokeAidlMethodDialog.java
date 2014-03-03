@@ -208,12 +208,13 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             final SandboxedObject result = getArguments().getParcelable(ARG_RESULT);
 
+            final String string = getArguments().getString(ARG_RESULT_AS_STRING);
             return new AlertDialog.Builder(getActivity())
-                    .setMessage(getArguments().getString(ARG_RESULT_AS_STRING))
+                    .setMessage(string)
                     .setPositiveButton(getString(R.string.edit_or_add_to_clipboard), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-                            ClipboardService.saveSandboxedObject(result);
+                            ClipboardService.saveSandboxedObject(string, result);
                         }
                     })
                     .setNegativeButton(getString(R.string.dismiss), null)

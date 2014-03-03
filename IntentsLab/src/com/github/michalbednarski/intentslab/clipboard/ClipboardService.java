@@ -1,37 +1,38 @@
 package com.github.michalbednarski.intentslab.clipboard;
 
-import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
+import android.support.v4.util.ArrayMap;
 
-import java.util.ArrayList;
+import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
+import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 
 /**
  * Created by mb on 15.02.14.
  */
 public class ClipboardService /*extends Service*/ {
+    static ArrayMap<String, SandboxedObject> sObjects = new ArrayMap<String, SandboxedObject>();
 
-    static final ArrayList<Object> sLocalObjects = new ArrayList<Object>();
-    static final ArrayList<SandboxedObject> sSandboxedObjects = new ArrayList<SandboxedObject>();
-
-    public static void saveLocalObject(Object object) {
-        sLocalObjects.add(object);
+    public static void saveLocalObject(String name, Object object) {
+        saveSandboxedObject(name, new SandboxedObject(object));
         ClipboardItemsFragment.refreshAll();
     }
 
-    public static void saveSandboxedObject(SandboxedObject object) {
-        // Try to unwrap
-        Object localObject = null;
-        try {
-            localObject = object.unwrap(null);
-        } catch (Exception ignored) {}
-        if (localObject != null) {
-            saveLocalObject(localObject);
-            return;
+    public static void saveSandboxedObject(String name, SandboxedObject object) {
+        // Save as sandboxed
+        sObjects.put(name, object);
+        ClipboardItemsFragment.refreshAll();
+    }
+
+    static final EditorLauncher.EditorLauncherWithSandboxCallback EDITOR_LAUNCHER_CALLBACK = new EditorLauncher.EditorLauncherWithSandboxCallback() {
+        @Override
+        public void onSandboxedEditorResult(String key, SandboxedObject newWrappedValue) {
+            saveSandboxedObject(key, newWrappedValue);
         }
 
-        // Save as sandboxed
-        sSandboxedObjects.add(object);
-        ClipboardItemsFragment.refreshAll();
-    }
+        @Override
+        public void onEditorResult(String key, Object newValue) {
+            saveLocalObject(key, newValue);
+        }
+    };
 
     /*@Override
     public int onStartCommand(Intent intent, int flags, int startId) {

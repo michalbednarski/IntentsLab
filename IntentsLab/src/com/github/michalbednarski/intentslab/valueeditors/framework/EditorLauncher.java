@@ -218,6 +218,17 @@ public class EditorLauncher {
      * @param wrappedValue Wrapped value to be edited
      */
     public void launchEditorForSandboxedObject(final String key, String title, SandboxedObject wrappedValue) {
+unwrap: {
+            Object unwrapped;
+            try {
+                unwrapped = wrappedValue.unwrap(null);
+            } catch (Throwable e) {
+                break unwrap;
+            }
+            launchEditor(key, title, unwrapped);
+            return;
+        }
+
         Bundle args = new Bundle();
         args.putString(SingleEditorActivity.EXTRA_ECHOED_KEY, key);
         args.putParcelable(ValueEditorFragment.ARG_EDITED_OBJECT, wrappedValue);
