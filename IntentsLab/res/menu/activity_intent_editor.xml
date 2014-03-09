@@ -26,6 +26,11 @@
         android:id="@+id/save"
         android:title="Save"/>
 
+    <item
+        android:id="@+id/track_intent"
+        android:title="Track intent"
+        android:checkable="true"/>
+
     <!-- This is for cases if we accidentally break something -->
     <item
         android:id="@+id/disable_interception"

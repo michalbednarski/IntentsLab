@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">IntentsLab Xposed Hooks</string>
+    <string name="allow">Allow</string>
+    <string name="deny">Deny</string>
+</resources>

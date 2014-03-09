@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="DialogWhenLarge"
+           parent="@android:style/Theme.DeviceDefault.Dialog.NoActionBar.MinWidth">
+    </style>
+</resources>

@@ -1,4 +1,5 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
             android:id="@+id/generalWrapper"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -61,6 +62,14 @@
                 android:id="@+id/response_code"
                 android:layout_weight="1"/>
         </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="[Intent tracker summary]"
+            android:id="@+id/intent_tracker_summary"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"/>
 
         <TextView
             android:layout_width="wrap_content"

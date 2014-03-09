@@ -1,1 +1,1 @@
-include ':IntentsLab', ':IntentsLabSandbox'
+include ':IntentsLab', ':IntentsLabSandbox', ':XposedHooks', ':XposedHooksApi'

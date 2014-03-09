@@ -23,10 +23,12 @@ import com.github.michalbednarski.intentslab.providerlab.AdvancedQueryActivity;
 import com.github.michalbednarski.intentslab.providerlab.proxy.ProxyProvider;
 import com.github.michalbednarski.intentslab.providerlab.proxy.ProxyProviderForGrantUriPermission;
 import com.github.michalbednarski.intentslab.providerlab.UriAutocompleteAdapter;
+import com.github.michalbednarski.intentslab.xposedhooks.api.IntentTracker;
+import com.github.michalbednarski.intentslab.xposedhooks.api.TrackerUpdateListener;
 
 import java.util.*;
 
-public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSelectedListener {
+public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSelectedListener, TrackerUpdateListener {
 
     /**
      * List of actions for which we don't imply that if there is accepted data type but no scheme then schemes
@@ -60,6 +62,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     private View mComponentHeader;
     private View mComponentFieldWithButtons;
     private View mPackageNameHeader;
+    private TextView mIntentTrackerSummary;
 
 
     public IntentGeneralFragment() {
@@ -116,6 +119,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         mComponentHeader = v.findViewById(R.id.component_header);
         mComponentFieldWithButtons = v.findViewById(R.id.component_field_with_buttons);
         mPackageNameHeader = v.findViewById(R.id.package_name_header);
+        mIntentTrackerSummary = (TextView) v.findViewById(R.id.intent_tracker_summary);
 
         // Apparently using android:scrollHorizontally="true" does not work.
         // http://stackoverflow.com/questions/9011944/android-ice-cream-sandwich-edittext-disabling-spell-check-and-word-wrap
@@ -245,6 +249,16 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
 
         setupActionAutocomplete();
 
+        // Prepare intent tracker
+        {
+            IntentTracker tracker = getIntentEditor().getIntentTracker();
+            if (tracker != null) {
+                tracker.setUpdateListener(this, true);
+            } else {
+                onNoTracker();
+            }
+        }
+
         return v;
     }
 
@@ -259,6 +273,11 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
 
     @Override
     public void onDestroyView() {
+        IntentTracker tracker = getIntentEditor().getIntentTracker();
+        if (tracker != null) {
+            tracker.clearUpdateListener();
+        }
+
         super.onDestroyView();
         mActionText = null;
         mDataText = null;
@@ -918,5 +937,29 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         default:
             return false;
         }
+    }
+
+    // Intent tracker
+    @Override
+    void onIntentTrackerChanged(IntentTracker newTracker, IntentTracker oldTracker) {
+        if (oldTracker != null) {
+            oldTracker.clearUpdateListener();
+        }
+        if (newTracker != null) {
+            newTracker.setUpdateListener(this, true);
+        } else {
+            onNoTracker();
+        }
+    }
+
+    @Override
+    public void onTrackerUpdate() {
+        IntentTracker tracker = getIntentEditor().getIntentTracker();
+        mIntentTrackerSummary.setText("[Tracking intent], action " + (tracker.actionRead() ? "" : "NOT ") + "read");
+        mIntentTrackerSummary.setVisibility(View.VISIBLE);
+    }
+
+    private void onNoTracker() {
+        mIntentTrackerSummary.setVisibility(View.GONE);
     }
 }

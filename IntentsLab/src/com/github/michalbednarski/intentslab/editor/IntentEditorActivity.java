@@ -9,11 +9,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -27,9 +30,13 @@ import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceMana
 import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
 import com.github.michalbednarski.intentslab.browser.ExtendedPackageInfo;
 import com.github.michalbednarski.intentslab.runas.IRemoteInterface;
+import com.github.michalbednarski.intentslab.runas.RunAsInitReceiver;
 import com.github.michalbednarski.intentslab.runas.RunAsManager;
 import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
 import com.github.michalbednarski.intentslab.valueeditors.framework.Editor;
+import com.github.michalbednarski.intentslab.xposedhooks.api.IntentTracker;
+import com.github.michalbednarski.intentslab.xposedhooks.api.XIntentsLab;
+import com.github.michalbednarski.intentslab.xposedhooks.api.XIntentsLabStatic;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -41,6 +48,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
     private static final String TAG = "IntentEditor";
     private static final int REQUEST_CODE_TEST_STARTACTIVITYFORRESULT = 657;
     private static final int REQUEST_CODE_RESULT_INTENT_EDITOR = 754;
+    public static final int REQUEST_CODE_REQUEST_INTENT_TRACKER_PERMISSION = 2243;
 
     public static final String EXTRA_COMPONENT_TYPE = "componentType_";
     public static final String EXTRA_METHOD_ID = "intents_lab.intent_editor.methodId";
@@ -60,6 +68,13 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
 
     private boolean mGenericEditorMode = false;
 
+    private static final class LocalIntentEditorState extends Binder {
+        IntentTracker intentTracker = null;
+    }
+
+    LocalIntentEditorState mLocalState = new LocalIntentEditorState();
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,6 +87,10 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
             mComponentType = savedInstanceState.getInt("componentType");
             mMethodId = savedInstanceState.getInt("methodId");
             uncastedIntentFilters = savedInstanceState.getParcelableArray("intentFilters");
+            Object uncastedLocalState = savedInstanceState.get("localIEState");
+            if (uncastedLocalState instanceof LocalIntentEditorState) {
+                mLocalState = (LocalIntentEditorState) uncastedLocalState;
+            }
         } else if (isInterceptedIntent()) {
             // Intercept
             mEditedIntent = new Intent(getIntent());
@@ -128,10 +147,41 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
         outState.putInt("componentType", mComponentType);
         outState.putInt("methodId", mMethodId);
         outState.putParcelableArray("intentFilters", mAttachedIntentFilters);
+        RunAsInitReceiver.putBinderInBundle(outState, "localIEState", mLocalState);
         /*if (mTabsHelper != null) {
 			outState.putInt("tab", mTabsHelper.getCurrentView());
 		}*/
         // TODO: current tab?
+    }
+
+    boolean isIntentTrackerAvailable() {
+        XIntentsLab xIntentsLab = XIntentsLabStatic.getInstance();
+        return xIntentsLab != null && xIntentsLab.supportsObjectTracking();
+    }
+
+    void createIntentTracker() {
+        IntentTracker newTracker = XIntentsLabStatic.getInstance().createIntentTracker();
+        IntentTracker oldTracker = mLocalState.intentTracker;
+        mLocalState.intentTracker = newTracker;
+        for (IntentEditorPanel panel : loadedPanels) {
+            panel.onIntentTrackerChanged(newTracker, oldTracker);
+        }
+        ActivityCompat.invalidateOptionsMenu(this);
+    }
+
+    void removeIntentTracker() {
+        if (mLocalState.intentTracker != null) {
+            IntentTracker oldTracker = mLocalState.intentTracker;
+            mLocalState.intentTracker = null;
+            for (IntentEditorPanel panel : loadedPanels) {
+                panel.onIntentTrackerChanged(null, oldTracker);
+            }
+        }
+        ActivityCompat.invalidateOptionsMenu(this);
+    }
+
+    public IntentTracker getIntentTracker() {
+        return mLocalState.intentTracker;
     }
 
     @Override
@@ -165,6 +215,15 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 .setVisible(mAttachedIntentFilters != null);
         menu.findItem(R.id.component_info)
                 .setVisible(mEditedIntent.getComponent() != null);
+
+        // Intent tracking options
+        {
+            boolean intentTrackerAvailable = isIntentTrackerAvailable();
+            MenuItem trackIntentOption = menu.findItem(R.id.track_intent);
+            trackIntentOption.setVisible(intentTrackerAvailable);
+            trackIntentOption.setEnabled(intentTrackerAvailable);
+            trackIntentOption.setChecked(getIntentTracker() != null);
+        }
 
         // "Disable interception" option
         menu.findItem(R.id.disable_interception)
@@ -236,6 +295,32 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 SavedItemsDatabase.getInstance(this).saveIntent(this, mEditedIntent, mComponentType, mMethodId);
             }
             return true;
+            case R.id.track_intent:
+            {
+                if (!item.isChecked()) {
+                    XIntentsLab xIntentsLab = XIntentsLabStatic.getInstance();
+                    if (xIntentsLab.havePermission()) {
+                        createIntentTracker();
+                    } else {
+                        try {
+                            startIntentSenderForResult(
+                                    xIntentsLab.getRequestPermissionIntent(getPackageName()).getIntentSender(),
+                                    REQUEST_CODE_REQUEST_INTENT_TRACKER_PERMISSION,
+                                    null,
+                                    0,
+                                    0,
+                                    0
+                            );
+                        } catch (IntentSender.SendIntentException e) {
+                            e.printStackTrace();
+                            // TODO: can we handle this?
+                        }
+                    }
+                } else {
+                    removeIntentTracker();
+                }
+                return true;
+            }
             case R.id.disable_interception:
                 getPackageManager().setComponentEnabledSetting(
                         new ComponentName(this, IntentEditorInterceptedActivity.class),
@@ -341,6 +426,11 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
     public void runIntent() {
         updateIntent();
         IRemoteInterface remoteInterface = RunAsManager.getSelectedRemoteInterface();
+        Intent intent = mEditedIntent;
+        IntentTracker intentTracker = getIntentTracker();
+        if (intentTracker != null) {
+            intent = intentTracker.tagIntent(intent);
+        }
         try {
             switch (getComponentType()) {
 
@@ -350,14 +440,14 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                             if (remoteInterface != null) {
                                 startActivityRemote(remoteInterface, false);
                             } else {
-                                startActivity(mEditedIntent);
+                                startActivity(intent);
                             }
                             break;
                         case IntentEditorConstants.ACTIVITY_METHOD_STARTACTIVITYFORRESULT:
                             if (remoteInterface != null) {
                                 startActivityRemote(remoteInterface, true);
                             } else {
-                                startActivityForResult(mEditedIntent, REQUEST_CODE_TEST_STARTACTIVITYFORRESULT);
+                                startActivityForResult(intent, REQUEST_CODE_TEST_STARTACTIVITYFORRESULT);
                             }
                             break;
                     }
@@ -367,11 +457,11 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 case IntentEditorConstants.BROADCAST:
                     switch (getMethodId()) {
                         case IntentEditorConstants.BROADCAST_METHOD_SENDBROADCAST:
-                            sendBroadcast(mEditedIntent);
+                            sendBroadcast(intent);
                             break;
                         case IntentEditorConstants.BROADCAST_METHOD_SENDORDEREDBROADCAST: {
                             sendOrderedBroadcast(
-                                    mEditedIntent, // intent
+                                    intent, // intent
                                     null, // permission
                                     new BroadcastReceiver() { // resultReceiver
                                         @Override
@@ -398,7 +488,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                         }
                         break;
                         case IntentEditorConstants.BROADCAST_METHOD_SENDSTICKYBROADCAST:
-                            sendStickyBroadcast(mEditedIntent);
+                            sendStickyBroadcast(intent);
                             break;
                     }
                     break;
@@ -407,14 +497,14 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 case IntentEditorConstants.SERVICE:
                     switch (getMethodId()) {
                         case IntentEditorConstants.SERVICE_METHOD_STARTSERVICE:
-                            startService(mEditedIntent);
+                            startService(intent);
                             break;
                         default:
                         {
                             if (!SandboxManager.isSandboxInstalled(this)) {
                                 SandboxManager.requestSandboxInstall(this);
                             } else {
-                                BindServiceManager.prepareBinderAndShowUI(this, new BindServiceDescriptor(new Intent(mEditedIntent)));
+                                BindServiceManager.prepareBinderAndShowUI(this, new BindServiceDescriptor(new Intent(intent)));
                             }
                         }
                     }
@@ -425,7 +515,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                             0,
                             new Intent()
                             .putExtra(EXTRA_FORWARD_RESULT_CODE, mMethodId)
-                            .putExtra(EXTRA_FORWARD_RESULT_INTENT, mEditedIntent)
+                            .putExtra(EXTRA_FORWARD_RESULT_INTENT, intent)
                     );
                     finish();
                     break;
@@ -498,6 +588,10 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 finish();
             }
 
+        } else if (requestCode == REQUEST_CODE_REQUEST_INTENT_TRACKER_PERMISSION) {
+            if (resultCode == RESULT_OK) {
+                createIntentTracker();
+            }
         } else {
             super.onActivityResult(requestCode, resultCode, resultIntent);
         }

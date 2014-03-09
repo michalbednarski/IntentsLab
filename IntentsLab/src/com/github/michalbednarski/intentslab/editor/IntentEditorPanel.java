@@ -9,6 +9,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.github.michalbednarski.intentslab.xposedhooks.api.IntentTracker;
+
 abstract class IntentEditorPanel extends Fragment {
 	private static final String TAG = "IntentEditorPanel";
 
@@ -66,4 +68,5 @@ abstract class IntentEditorPanel extends Fragment {
 	abstract void updateEditedIntent(Intent editedIntent);
 	void onComponentTypeChanged(int newComponentType) {}
 	void onIntentFiltersChanged(IntentFilter[] newIntentFilters) {}
+	void onIntentTrackerChanged(IntentTracker newTracker, IntentTracker oldTracker) {}
 }
