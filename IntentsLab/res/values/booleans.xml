@@ -2,4 +2,6 @@
 <resources>
     <bool name="merge_general_and_extras_tabs">false</bool>
     <bool name="use_master_detail">false</bool>
+    <!-- Similar to use_master_detail but independent on orientation -->
+    <bool name="may_use_master_detail">false</bool>
 </resources>

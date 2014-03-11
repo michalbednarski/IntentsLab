@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 import android.view.View;
 
 /**
@@ -30,6 +31,19 @@ public abstract class MasterDetailActivity extends FragmentActivity {
                     findViewById(R.id.master).setVisibility(View.GONE);
                 }
                 showDetail = true;
+
+                // Show or hide master using fragment manager
+                Fragment masterFragment = getMaster();
+                boolean masterVisible = !masterFragment.isHidden();
+                if (masterVisible != usingTabletView()) {
+                    FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                    if (usingTabletView()) {
+                        transaction.show(masterFragment);
+                    } else {
+                        transaction.hide(masterFragment);
+                    }
+                    transaction.commit();
+                }
             }
         }
         findViewById(R.id.detail).setVisibility(showDetail ? View.VISIBLE : View.GONE);
@@ -40,6 +54,10 @@ public abstract class MasterDetailActivity extends FragmentActivity {
      */
     protected abstract Fragment createMasterFragment();
 
+    private Fragment getMaster() {
+        return getSupportFragmentManager().findFragmentById(R.id.master);
+    }
+
     private Fragment getDetail() {
         return getSupportFragmentManager().findFragmentById(R.id.detail);
     }
@@ -47,30 +65,48 @@ public abstract class MasterDetailActivity extends FragmentActivity {
     public boolean usingTabletView() {
         return getResources().getBoolean(R.bool.use_master_detail);
     }
+    public boolean mayUseTabletView() {
+        return getResources().getBoolean(R.bool.may_use_master_detail);
+    }
 
     /**
      * Open given fragment in detail panel or new activity
      */
     public void openFragment(Class<? extends Fragment> fragmentClass, Bundle arguments) {
-        if (usingTabletView()) {
-            // Put in detail fragment
-            Fragment fragment;
-            try {
-                fragment = fragmentClass.newInstance();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            fragment.setArguments(arguments);
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.detail, fragment)
-                    .commit();
-            findViewById(R.id.detail).setVisibility(View.VISIBLE);
+        if (mayUseTabletView()) {
+            openFragmentInDetail(fragmentClass, arguments);
         } else {
             // Just open in new activity
             arguments.putString(SingleFragmentActivity.EXTRA_FRAGMENT, fragmentClass.getName());
             startActivity(new Intent(this, SingleFragmentActivity.class).replaceExtras(arguments));
         }
+    }
+
+    /**
+     * Open given fragment in detail panel
+     */
+    public void openFragmentInDetail(Class<? extends Fragment> fragmentClass, Bundle arguments) {
+        // Instantiate fragment
+        Fragment fragment;
+        try {
+            fragment = fragmentClass.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        fragment.setArguments(arguments);
+
+        // Perform fragment transaction
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.detail, fragment);
+        if (!usingTabletView()) {
+            // If not using tablet view right now, hide master
+            transaction.hide(getMaster());
+            findViewById(R.id.master).setVisibility(View.GONE);
+        }
+        transaction.commit();
+
+        // Show detail view
+        findViewById(R.id.detail).setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -83,10 +119,13 @@ public abstract class MasterDetailActivity extends FragmentActivity {
     }
 
     private void closeDetail() {
-        getSupportFragmentManager()
-                .beginTransaction()
-                .remove(getDetail())
-                .commit();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.remove(getDetail());
+        Fragment masterFragment = getMaster();
+        if (masterFragment.isHidden()) {
+            transaction.show(masterFragment);
+        }
+        transaction.commit();
         findViewById(R.id.detail).setVisibility(View.GONE);
         findViewById(R.id.master).setVisibility(View.VISIBLE);
     }
