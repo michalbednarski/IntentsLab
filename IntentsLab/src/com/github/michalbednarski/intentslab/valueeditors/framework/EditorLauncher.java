@@ -16,7 +16,7 @@ import com.github.michalbednarski.intentslab.editor.BundleAdapter;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
-import com.github.michalbednarski.intentslab.valueeditors.ArrayEditorActivity;
+import com.github.michalbednarski.intentslab.valueeditors.ArrayEditorFragment;
 import com.github.michalbednarski.intentslab.valueeditors.BundleEditorActivity;
 import com.github.michalbednarski.intentslab.valueeditors.EnumEditor;
 import com.github.michalbednarski.intentslab.valueeditors.object.ObjectEditorFragment;
@@ -69,7 +69,7 @@ public class EditorLauncher {
             new EnumEditor.LaunchableEditor(),
 
             // Array editor
-            new ArrayEditorActivity.LaunchableEditor(),
+            new ArrayEditorFragment.LaunchableEditor(),
 
             // Generic Parcelable object editor
             new ObjectEditorFragment.LaunchableEditor()

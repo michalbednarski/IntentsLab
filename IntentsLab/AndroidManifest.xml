@@ -159,7 +159,6 @@
         <service android:name=".ActivityMonitorActivity$ActivityRecorderService" />
         <service android:name=".sandbox.SandboxManager$AService"/>
 
-        <activity android:name=".valueeditors.ArrayEditorActivity" />
         <activity android:name=".SingleFragmentActivity" />
 
         <activity android:name=".clipboard.ClipboardActivity" />
