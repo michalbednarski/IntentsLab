@@ -62,7 +62,6 @@
         <activity
             android:name=".providerlab.AdvancedQueryActivity"
             android:windowSoftInputMode="stateHidden"/>
-        <activity android:name=".valueeditors.BundleEditorActivity"/>
 
         <!-- Interception activity -->
         <activity

@@ -12,12 +12,15 @@ public class IntentExtrasFragment extends IntentEditorPanel implements BundleAda
     public IntentExtrasFragment() {}
 
 	ListView mExtrasList;
-	private BundleAdapter mBundleAdapter;
+	private BundleAdapter<IntentExtrasFragment> mBundleAdapter;
 
     @Override
     public BundleAdapter getBundleAdapter() {
         return mBundleAdapter;
     }
+
+    @Override
+    public void onBundleModified() {}
 
     @Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -28,7 +31,7 @@ public class IntentExtrasFragment extends IntentEditorPanel implements BundleAda
 		mExtrasList = new ListView(inflater.getContext());
 
         if (mBundleAdapter == null) {
-            mBundleAdapter = new BundleAdapter(getActivity(), getEditedIntent().getExtras(), new EditorLauncher(getActivity(), "IntentExtrasEditorLauncher"), this);
+            mBundleAdapter = new BundleAdapter<IntentExtrasFragment>(getEditedIntent().getExtras(), new EditorLauncher(getActivity(), "IntentExtrasEditorLauncher"), this);
         }
 		mBundleAdapter.settleOnList(mExtrasList);
 		return mExtrasList;

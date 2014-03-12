@@ -1,7 +1,6 @@
 package com.github.michalbednarski.intentslab.valueeditors.framework;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -17,7 +16,7 @@ import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
 import com.github.michalbednarski.intentslab.valueeditors.ArrayEditorFragment;
-import com.github.michalbednarski.intentslab.valueeditors.BundleEditorActivity;
+import com.github.michalbednarski.intentslab.valueeditors.BundleEditorFragment;
 import com.github.michalbednarski.intentslab.valueeditors.EnumEditor;
 import com.github.michalbednarski.intentslab.valueeditors.object.ObjectEditorFragment;
 import com.github.michalbednarski.intentslab.valueeditors.StringLikeItemEditor;
@@ -49,18 +48,7 @@ public class EditorLauncher {
             new StringLikeItemEditor.LaunchableEditor(),
 
             // Bundle editor
-            new Editor.EditorActivity() {
-
-                @Override
-                public Intent getEditorIntent(Context context) {
-                    return new Intent(context, BundleEditorActivity.class);
-                }
-
-                @Override
-                public boolean canEdit(Object value) {
-                    return value instanceof Bundle;
-                }
-            },
+            new BundleEditorFragment.LaunchableEditor(),
 
             // Intent editor
             new IntentEditorActivity.LaunchableEditor(),

@@ -85,6 +85,15 @@ public abstract class ValueEditorFragment extends Fragment {
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(STATE_MODIFIED, mModified);
+        if (mModified) {
+            Object editorResult = getEditorResult();
+            outState.putParcelable(
+                    STATE_MODIFIED_SANDBOXED_OBJECT,
+                    isEditorResultSandboxed() ?
+                            (SandboxedObject) editorResult :
+                            new SandboxedObject(editorResult)
+            );
+        }
     }
 
 

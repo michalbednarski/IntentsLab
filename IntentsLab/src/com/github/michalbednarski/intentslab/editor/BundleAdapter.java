@@ -1,11 +1,9 @@
 package com.github.michalbednarski.intentslab.editor;
 
-import android.content.Context;
 import android.os.BadParcelableException;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -19,6 +17,7 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
@@ -32,11 +31,9 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
-public class BundleAdapter extends BaseAdapter implements OnClickListener,
+public class BundleAdapter<OwnerFragment extends Fragment & BundleAdapter.BundleAdapterAggregate> extends BaseAdapter implements OnClickListener,
 		OnItemClickListener, View.OnCreateContextMenuListener, EditorLauncher.EditorLauncherWithSandboxCallback {
 	private static final String TAG = "BundleAdapter";
-	private FragmentActivity mActivity;
-	private LayoutInflater mInflater;
 	private Bundle mBundle;
 	private String[] mKeys = new String[0];
 	private int mKeysCount = 0;
@@ -89,12 +86,9 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
     }
 
     private final EditorLauncher mEditorLauncher;
-    private Fragment mOwnerFragment;
+    private OwnerFragment mOwnerFragment;
 
-    public BundleAdapter(FragmentActivity activity, Bundle map, EditorLauncher editorLauncher, Fragment ownerFragment) {
-		mActivity = activity;
-		mInflater = (LayoutInflater) activity
-				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    public BundleAdapter(Bundle map, EditorLauncher editorLauncher, OwnerFragment ownerFragment) {
 		setBundle(map);
         mEditorLauncher = editorLauncher;
         mEditorLauncher.setCallback(this);
@@ -159,7 +153,7 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
         }
 
         // Initialize sandbox
-        SandboxManager.initSandboxAndRunWhenReady(mActivity, new Runnable() {
+        SandboxManager.initSandboxAndRunWhenReady(mOwnerFragment.getActivity(), new Runnable() {
             @Override
             public void run() {
 
@@ -253,7 +247,7 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
 			if (convertView != null) {
 				return convertView;
 			}
-			Button btn = new Button(mActivity);
+			Button btn = new Button(parent.getContext());
 			btn.setText(R.string.btn_add);
 			btn.setOnClickListener(this);
 			return btn;
@@ -261,8 +255,8 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
 
 		View view = convertView;
 		if (view == null) {
-			view = mInflater.inflate(android.R.layout.simple_list_item_2,
-					parent, false);
+			view = LayoutInflater.from(parent.getContext()).inflate(android.R.layout.simple_list_item_2,
+                    parent, false);
 		}
 
         final String key = mKeys[position];
@@ -288,9 +282,9 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
 
 	@Override
 	public void onClick(View v) { // For add new button
-        FragmentManager topFragmentManager = mActivity.getSupportFragmentManager();
+        FragmentManager topFragmentManager = mOwnerFragment.getFragmentManager();
 
-        if (mOwnerFragment instanceof IntentExtrasFragment && NewExtraPickerDialog.mayHaveSomethingForIntent(mActivity)) {
+        if (mOwnerFragment instanceof IntentExtrasFragment && NewExtraPickerDialog.mayHaveSomethingForIntent(mOwnerFragment.getActivity())) {
             // We're in intent editor and may guess some extras from it
             // Launch suggestion picker
             NewExtraPickerDialog newExtraPickerDialog = new NewExtraPickerDialog((IntentExtrasFragment) mOwnerFragment);
@@ -345,6 +339,7 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
                         updateKeySet();
                     }
                     notifyDataSetChanged();
+                    dispatchModified();
                 }
             });
         } else {
@@ -356,6 +351,7 @@ public class BundleAdapter extends BaseAdapter implements OnClickListener,
                 updateKeySet();
             }
             notifyDataSetChanged();
+            dispatchModified();
         }
     }
 
@@ -390,8 +386,13 @@ skipSandbox: {
                     updateKeySet();
                 }
                 notifyDataSetChanged();
+                dispatchModified();
             }
         });
+    }
+
+    private void dispatchModified() {
+        mOwnerFragment.onBundleModified();
     }
 
 	public void settleOnList(ListView listView) {
@@ -406,7 +407,7 @@ skipSandbox: {
         if (aMenuInfo.position == mKeysCount) {
             return;
         }
-        menu.add(mActivity.getString(R.string.delete)).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        menu.add(mOwnerFragment.getString(R.string.delete)).setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 final String key = mKeys[aMenuInfo.position];
@@ -432,5 +433,7 @@ skipSandbox: {
 
     public interface BundleAdapterAggregate {
         public BundleAdapter getBundleAdapter();
+
+        void onBundleModified();
     }
 }
