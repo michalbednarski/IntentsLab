@@ -110,7 +110,7 @@ public class XHUtils {
      *
      * At index 0 is caller of hooked method
      */
-    StackTraceElement[] getHookedMethodStackTrace() {
+    public static StackTraceElement[] getHookedMethodStackTrace() {
         StackTraceElement[] stackTrace = new Throwable().getStackTrace();
 
         // Find handleHookedMethod call index
@@ -128,5 +128,9 @@ public class XHUtils {
         StackTraceElement[] newStackTrace = new StackTraceElement[stackTrace.length - i];
         System.arraycopy(stackTrace, i, newStackTrace, 0, stackTrace.length - i);
         return newStackTrace;
+    }
+
+    public static StackTraceWrapper getHookedMethodWrappedStackTrace() {
+        return new StackTraceWrapper(getHookedMethodStackTrace());
     }
 }

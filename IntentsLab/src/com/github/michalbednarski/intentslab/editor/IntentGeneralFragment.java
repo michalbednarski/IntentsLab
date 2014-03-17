@@ -944,9 +944,11 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     void onIntentTrackerChanged(IntentTracker newTracker, IntentTracker oldTracker) {
         if (oldTracker != null) {
             oldTracker.clearUpdateListener();
+            oldTracker.getExtrasTracker().clearUpdateListener();
         }
         if (newTracker != null) {
             newTracker.setUpdateListener(this, true);
+            newTracker.getExtrasTracker().setUpdateListener(this, true);
         } else {
             onNoTracker();
         }
@@ -955,7 +957,10 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     @Override
     public void onTrackerUpdate() {
         IntentTracker tracker = getIntentEditor().getIntentTracker();
-        mIntentTrackerSummary.setText("[Tracking intent], action " + (tracker.actionRead() ? "" : "NOT ") + "read");
+        mIntentTrackerSummary.setText(
+                "[Tracking intent]\naction " + (tracker.actionRead() ? "" : "NOT ") + "read\n" +
+                "Read extras: " + Arrays.toString(tracker.getExtrasTracker().getExtrasRead())
+        );
         mIntentTrackerSummary.setVisibility(View.VISIBLE);
     }
 

@@ -10,7 +10,7 @@ public interface IntentTracker extends BaseTracker {
 
     boolean actionRead();
 
-
+    BundleTracker getExtrasTracker();
 
     //
     //

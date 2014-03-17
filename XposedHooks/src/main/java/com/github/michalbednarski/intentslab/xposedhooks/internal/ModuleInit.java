@@ -5,6 +5,7 @@ import android.os.IBinder;
 
 import com.github.michalbednarski.intentslab.xposedhooks.api.XIntentsLabStatic;
 import com.github.michalbednarski.intentslab.xposedhooks.internal.apiimpl.XIntentsLabImpl;
+import com.github.michalbednarski.intentslab.xposedhooks.internal.trackers.BundleTrackerModule;
 import com.github.michalbednarski.intentslab.xposedhooks.internal.trackers.IntentTrackerModule;
 
 import java.lang.reflect.Method;
@@ -61,6 +62,7 @@ public class ModuleInit implements IXposedHookZygoteInit, IXposedHookLoadPackage
 
         // Prepare object tracker
         (new IntentTrackerModule()).installHooks();
+        (new BundleTrackerModule()).installHooks();
     }
 
     @Override
@@ -93,5 +95,4 @@ public class ModuleInit implements IXposedHookZygoteInit, IXposedHookLoadPackage
                 }
         );
     }
-
 }
