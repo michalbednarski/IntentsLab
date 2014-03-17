@@ -32,18 +32,10 @@
         </activity>
         <activity
             android:name=".PickRecentlyRunningActivity"
-            android:label="@string/pick_recent_task">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.testapp1.StartActivity"/>
-        </activity>
+            android:label="@string/pick_recent_task" />
         <activity
             android:name=".browser.BrowseComponentsActivity"
-            android:label="@string/browse_components">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.testapp1.StartActivity"/>
-        </activity>
+            android:label="@string/browse_components" />
         <activity
             android:name=".ReceiveBroadcastDialog$WrapperActivity"
             android:theme="@style/NoDisplayForDialogTheme"/>
