@@ -145,7 +145,6 @@
             tools:ignore="ExportedReceiver"/>
 
         <activity android:name=".ActivityMonitorActivity"/>
-        <activity android:name=".bindservice.BoundServiceActivity"/>
 
         <service android:name=".ActivityMonitorActivity$ActivityRecorderService" />
         <service android:name=".sandbox.SandboxManager$AService"/>

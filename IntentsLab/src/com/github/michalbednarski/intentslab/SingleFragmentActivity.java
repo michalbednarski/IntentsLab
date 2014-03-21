@@ -4,6 +4,9 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
+
+import com.github.michalbednarski.intentslab.bindservice.AidlControlsFragment;
+import com.github.michalbednarski.intentslab.bindservice.InvokeAidlMethodDialog;
 import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
 import com.github.michalbednarski.intentslab.browser.RegisteredReceiverInfoFragment;
 import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
@@ -21,7 +24,9 @@ public class SingleFragmentActivity extends FragmentActivity {
             ComponentInfoFragment.class,
             ProviderInfoFragment.class,
             RegisteredReceiverInfoFragment.class,
-            PermissionInfoFragment.class
+            PermissionInfoFragment.class,
+            AidlControlsFragment.class,
+            InvokeAidlMethodDialog.class
     };
 
 

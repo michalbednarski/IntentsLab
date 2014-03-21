@@ -1,16 +1,20 @@
 package com.github.michalbednarski.intentslab.bindservice;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.support.v4.app.ListFragment;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.RelativeSizeSpan;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
+
+import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
@@ -18,36 +22,33 @@ import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 /**
  * Created by mb on 30.09.13.
  */
-public class AidlControlsFragment extends ListFragment {
+public class AidlControlsFragment extends BaseServiceFragment {
 
-    private BindServiceManager.Helper mServiceHelper;
     private IAidlInterface mAidlInterface;
     private BaseAdapter mAdapter;
+    private ListView mListView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
 
-        mServiceHelper = ((BoundServiceActivity) getActivity()).getBoundService();
-
-        mServiceHelper.prepareAidlAndRunWhenReady(getActivity(), new BindServiceManager.AidlReadyCallback() {
+        getServiceHelper().prepareAidlAndRunWhenReady(getActivity(), new BindServiceManager.AidlReadyCallback() {
             @Override
             public void onAidlReady(IAidlInterface anInterface) {
                 mAidlInterface = anInterface;
                 if (anInterface != null) {
                     createAdapter();
                 } else {
+                    UnrecognizedAidlFragment fragment = new UnrecognizedAidlFragment();
+                    fragment.setArguments(getArguments());
                     getFragmentManager()
                             .beginTransaction()
-                            .replace(getId(), new UnrecognizedAidlFragment())
+                            .replace(getId(), fragment)
                             .commitAllowingStateLoss();
                 }
             }
         });
-
-
-
     }
 
     private void createAdapter() {
@@ -101,8 +102,13 @@ public class AidlControlsFragment extends ListFragment {
                             convertView.setOnClickListener(new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
-                                    (new InvokeAidlMethodDialog(mServiceHelper, (Integer) v.getTag()))
-                                            .show(getActivity().getSupportFragmentManager(), "invokeAidlMethod");
+                                    int methodNumber = (Integer) v.getTag();
+                                    startActivity(
+                                            new Intent(getActivity(), SingleFragmentActivity.class)
+                                                    .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, InvokeAidlMethodDialog.class.getName())
+                                                    .putExtra(ARG_SERVICE_DESCRIPTOR, getArguments().getParcelable(ARG_SERVICE_DESCRIPTOR))
+                                                    .putExtra(InvokeAidlMethodDialog.ARG_METHOD_NUMBER, methodNumber)
+                                    );
                                 }
                             });
                         }
@@ -122,22 +128,26 @@ public class AidlControlsFragment extends ListFragment {
                     return false;
                 }
             };
-            try {
-                setListAdapter(mAdapter);
-            } catch (Exception ignored) {
-                // List might have not been ready
+            if (mListView != null) {
+                mListView.setAdapter(mAdapter);
             }
         } catch (RemoteException e) {
             // TODO: handle crashed sandbox
         }
     }
 
-
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        setListAdapter(mAdapter);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        mListView = new ListView(getActivity());
+        if (mAdapter != null) {
+            mListView.setAdapter(mAdapter);
+        }
+        return mListView;
     }
 
-
+    @Override
+    public void onDestroyView() {
+        mListView = null;
+        super.onDestroyView();
+    }
 }

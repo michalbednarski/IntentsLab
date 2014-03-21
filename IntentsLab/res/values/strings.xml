@@ -230,5 +230,6 @@
     <string name="registered_receivers_denied">
         In order to get registered receivers list run following command in adb shell:
     </string>
+    <string name="method_invoke">Invoke</string>
 
 </resources>

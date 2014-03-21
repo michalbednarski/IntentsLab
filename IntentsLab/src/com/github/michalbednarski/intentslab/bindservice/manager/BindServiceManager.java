@@ -5,8 +5,11 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.IBinder;
 import android.os.RemoteException;
+
+import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.Utils;
-import com.github.michalbednarski.intentslab.bindservice.BoundServiceActivity;
+import com.github.michalbednarski.intentslab.bindservice.AidlControlsFragment;
+import com.github.michalbednarski.intentslab.bindservice.BaseServiceFragment;
 import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
@@ -27,8 +30,9 @@ public class BindServiceManager {
             public void onBinderReady(IBinder binder) {
                 if (binder != null) {
                     context.startActivity(
-                            new Intent(context, BoundServiceActivity.class)
-                                    .putExtra(BoundServiceActivity.EXTRA_SERVICE, descriptor)
+                            new Intent(context, SingleFragmentActivity.class)
+                                    .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, AidlControlsFragment.class.getName())
+                                    .putExtra(BaseServiceFragment.ARG_SERVICE_DESCRIPTOR, descriptor)
                     );
                 } else {
                     helper.unbindAndRemove();

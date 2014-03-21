@@ -1,20 +1,19 @@
 package com.github.michalbednarski.intentslab.bindservice;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 
 /**
  * Created by mb on 16.10.13.
  */
-public class UnrecognizedAidlFragment extends Fragment {
+public class UnrecognizedAidlFragment extends BaseServiceFragment {
 
-    private BindServiceManager.Helper mServiceHelper;
     String mMessage;
 
     @Override
@@ -22,8 +21,8 @@ public class UnrecognizedAidlFragment extends Fragment {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
 
-        mServiceHelper = ((BoundServiceActivity) getActivity()).getBoundService();
-        mMessage = "No AIDL found\ngetInterfaceDescriptor() = " + mServiceHelper.getInterfaceDescriptor();
+        BindServiceManager.Helper serviceHelper = getServiceHelper();
+        mMessage = "No AIDL found\ngetInterfaceDescriptor() = " + serviceHelper.getInterfaceDescriptor();
     }
 
     @Override
@@ -33,7 +32,7 @@ public class UnrecognizedAidlFragment extends Fragment {
         view.findViewById(R.id.unbind).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mServiceHelper.unbind();
+                getServiceHelper().unbind();
                 getActivity().finish();
             }
         });

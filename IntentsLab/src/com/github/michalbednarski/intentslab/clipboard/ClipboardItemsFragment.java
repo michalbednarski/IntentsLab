@@ -13,7 +13,9 @@ import android.widget.TextView;
 
 import com.github.michalbednarski.intentslab.CategorizedAdapter;
 import com.github.michalbednarski.intentslab.MasterDetailActivity;
-import com.github.michalbednarski.intentslab.bindservice.BoundServiceActivity;
+import com.github.michalbednarski.intentslab.SingleFragmentActivity;
+import com.github.michalbednarski.intentslab.bindservice.AidlControlsFragment;
+import com.github.michalbednarski.intentslab.bindservice.BaseServiceFragment;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.bindservice.manager.ServiceDescriptor;
 import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
@@ -57,9 +59,11 @@ public class ClipboardItemsFragment extends ListFragment {
         CategorizedAdapter.ItemInfo itemInfo = mAdapter.getItemInfoForPosition(position);
         switch (itemInfo.category) {
             case CATEGORY_INTERFACES:
+                // TODO: open as detail
                 startActivity(
-                        new Intent(getActivity(), BoundServiceActivity.class)
-                                .putExtra(BoundServiceActivity.EXTRA_SERVICE, mBoundServices[itemInfo.positionInCategory])
+                        new Intent(getActivity(), SingleFragmentActivity.class)
+                                .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, AidlControlsFragment.class.getName())
+                                .putExtra(BaseServiceFragment.ARG_SERVICE_DESCRIPTOR, mBoundServices[itemInfo.positionInCategory])
                 );
                 break;
             case CATEGORY_OBJECTS:

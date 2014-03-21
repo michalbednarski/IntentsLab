@@ -8,10 +8,16 @@ import android.os.Bundle;
 import android.os.RemoteException;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Toast;
+
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
-import com.github.michalbednarski.intentslab.bindservice.manager.ServiceDescriptor;
 import com.github.michalbednarski.intentslab.clipboard.ClipboardService;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.InvokeMethodResult;
@@ -26,32 +32,17 @@ import com.github.michalbednarski.intentslab.valueeditors.object.InlineValueEdit
 /**
  * Created by mb on 03.10.13.
  */
-public class InvokeAidlMethodDialog extends DialogFragment implements EditorLauncher.EditorLauncherCallback {
-    private static final String ARG_SERVICE = "bound-service-descriptor";
-    private static final String ARG_METHOD_NUMBER = "method-number";
+public class InvokeAidlMethodDialog extends BaseServiceFragment implements EditorLauncher.EditorLauncherCallback, BindServiceManager.AidlReadyCallback {
+    static final String ARG_METHOD_NUMBER = "method-number";
     private static final String STATE_METHOD_ARGUMENTS = "method-arguments";
 
     private IAidlInterface mAidlInterface;
-    private int mMethodNumber = -9999;
+    private int mMethodNumber;
     private SandboxedMethodArguments mMethodArguments;
     private EditorLauncher mEditorLauncher;
     private InlineValueEditor[] mValueEditors;
+    private InlineValueEditorsLayout mEditorsLayout;
 
-
-    /**
-     * Required by framework empty constructor
-     */
-    public InvokeAidlMethodDialog() {}
-
-    public InvokeAidlMethodDialog(BindServiceManager.Helper serviceHelper, int methodNr) {
-        Bundle args = new Bundle();
-        args.putParcelable(ARG_SERVICE, serviceHelper.getDescriptor());
-        args.putInt(ARG_METHOD_NUMBER, methodNr);
-        setArguments(args);
-
-        mMethodNumber = methodNr;
-        mAidlInterface = serviceHelper.getAidlIfAvailable();
-    }
 
     @Override
     public void onAttach(Activity activity) {
@@ -63,33 +54,44 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (mAidlInterface == null && mMethodNumber == -9999) {
-            Bundle args = getArguments();
-            try {
-                mAidlInterface = BindServiceManager.getBoundService(args.<ServiceDescriptor>getParcelable(ARG_SERVICE)).getAidlIfAvailable();
-            } catch (Exception e) {
-                mAidlInterface = null;
-            }
-            mMethodNumber = args.getInt(ARG_METHOD_NUMBER);
+        setRetainInstance(true);
+        setHasOptionsMenu(true);
+
+        // Restore method arguments from state
+        if (savedInstanceState != null) {
+            mMethodArguments = savedInstanceState.getParcelable(STATE_METHOD_ARGUMENTS);
         }
+
+        // Read arguments and continue to preparing aidl
+        Bundle args = getArguments();
+        mMethodNumber = args.getInt(ARG_METHOD_NUMBER);
+        getServiceHelper().prepareAidlAndRunWhenReady(getActivity(), this);
+    }
+
+    @Override
+    public void onAidlReady(IAidlInterface anInterface) {
+        mAidlInterface = anInterface;
         if (mAidlInterface == null || !mAidlInterface.asBinder().isBinderAlive()) {
-            dismissAllowingStateLoss();
+            getActivity().finish();
             return;
         }
+
+        // Prepare method info
         SandboxedMethod sandboxedMethod;
         try {
             sandboxedMethod = mAidlInterface.getMethods()[mMethodNumber];
         } catch (RemoteException e) {
             e.printStackTrace();
-            dismissAllowingStateLoss();
+            getActivity().finish();
             return;
         }
+
+        // Prepare or restore arguments
         final int argumentCount = sandboxedMethod.argumentTypes.length;
-        if (savedInstanceState != null) {
-            mMethodArguments = savedInstanceState.getParcelable(STATE_METHOD_ARGUMENTS);
+        if (mMethodArguments != null) {
             if (mMethodArguments.arguments.length != argumentCount) {
                 Log.e("InvokeAidlMethodDialog", "Arguments count changed unexpectedly");
-                dismissAllowingStateLoss();
+                getActivity().finish();
                 return;
             }
         } else {
@@ -115,6 +117,8 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
                 }
             }
         }
+
+        // Prepare value editors
         mValueEditors = new InlineValueEditor[argumentCount];
         for (int ii = 0; ii < argumentCount; ii++) {
             SandboxedType type = sandboxedMethod.argumentTypes[ii];
@@ -141,7 +145,10 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
             );
         }
 
-
+        // Show value editors if their layout was ready first
+        if (mEditorsLayout != null) {
+            mEditorsLayout.setValueEditors(mValueEditors);
+        }
     }
 
     @Override
@@ -151,19 +158,33 @@ public class InvokeAidlMethodDialog extends DialogFragment implements EditorLaun
     }
 
     @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
-        InlineValueEditorsLayout editorsLayout = new InlineValueEditorsLayout(getActivity());
-        editorsLayout.setValueEditors(mValueEditors);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        mEditorsLayout = new InlineValueEditorsLayout(getActivity());
+        if (mValueEditors != null) {
+            mEditorsLayout.setValueEditors(mValueEditors);
+        }
+        return mEditorsLayout;
+    }
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setView(editorsLayout);
-        builder.setPositiveButton("Invoke", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
+    @Override
+    public void onDestroyView() {
+        mEditorsLayout = null;
+        super.onDestroyView();
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.aidl_method, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.execute:
                 invokeAidlMethod();
-            }
-        });
-        return builder.create();
+                return true;
+        }
+        return false;
     }
 
     private void invokeAidlMethod() {
