@@ -169,7 +169,7 @@ public class Utils {
     public static Object[] deepCastArray(Object[] array, Class targetType) {
         assert targetType.isArray() && !targetType.getComponentType().isPrimitive();
 
-        if (targetType.isInstance(array)) {
+        if (targetType.isInstance(array) || array == null) {
             return array;
         }
 

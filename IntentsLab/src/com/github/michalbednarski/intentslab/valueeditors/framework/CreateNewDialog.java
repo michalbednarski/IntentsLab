@@ -186,6 +186,7 @@ public class CreateNewDialog extends ValueEditorDialogFragment {
                         args.putString(EXTRA_KEY, chooserArguments.getString(EXTRA_KEY));
                         args.putString(Editor.EXTRA_TITLE, chooserArguments.getString(Editor.EXTRA_TITLE));
                         editor.setArguments(args);
+                        editor.setTargetFragment(getTargetFragment(), 0);
                         editor.show(getActivity().getSupportFragmentManager(), getTag() + "Redirected");
                         dismiss();
                     }

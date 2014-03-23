@@ -3,14 +3,35 @@ package com.github.michalbednarski.intentslab.sandbox;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+
 /**
  * Created by mb on 30.09.13.
  */
 public class SandboxedMethod implements Parcelable {
-    public int methodNumber;
-    public String name;
-    public SandboxedType[] argumentTypes;
+    public final String name;
+    public final String declaration;
+    public final SandboxedType[] argumentTypes;
 
+
+    public SandboxedMethod(Method method) {
+        name = method.getName();
+        declaration = method.toString();
+        argumentTypes = SandboxedType.wrapClassesArray(method.getParameterTypes());
+    }
+
+    public SandboxedMethod(Constructor method) {
+        name = method.getName();
+        declaration = method.toString();
+        argumentTypes = SandboxedType.wrapClassesArray(method.getParameterTypes());
+    }
+
+    private SandboxedMethod(Parcel source) {
+        name = source.readString();
+        declaration = source.readString();
+        argumentTypes = source.createTypedArray(SandboxedType.CREATOR);
+    }
 
     @Override
     public int describeContents() {
@@ -19,21 +40,15 @@ public class SandboxedMethod implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(methodNumber);
         dest.writeString(name);
-
+        dest.writeString(declaration);
         dest.writeTypedArray(argumentTypes, 0);
     }
 
     public static final Creator<SandboxedMethod> CREATOR = new Creator<SandboxedMethod>() {
         @Override
         public SandboxedMethod createFromParcel(Parcel source) {
-            SandboxedMethod sm = new SandboxedMethod();
-            sm.methodNumber = source.readInt();
-            sm.name = source.readString();
-
-            sm.argumentTypes = source.createTypedArray(SandboxedType.CREATOR);
-            return sm;
+            return new SandboxedMethod(source);
         }
 
         @Override

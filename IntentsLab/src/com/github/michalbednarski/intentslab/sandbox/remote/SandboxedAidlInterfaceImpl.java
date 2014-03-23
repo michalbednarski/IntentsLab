@@ -3,15 +3,13 @@ package com.github.michalbednarski.intentslab.sandbox.remote;
 import android.app.Service;
 import android.os.IBinder;
 import android.os.RemoteException;
+
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
-import com.github.michalbednarski.intentslab.sandbox.ISandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.InvokeMethodResult;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
-import com.github.michalbednarski.intentslab.sandbox.SandboxedMethodArguments;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
-import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -59,12 +57,7 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
             ArrayList<Method> filteredMethods = new ArrayList<Method>();
             for (Method method : methods) {
                 if (Modifier.isAbstract(method.getModifiers())) {
-                    SandboxedMethod sandboxedMethod = new SandboxedMethod();
-                    sandboxedMethod.methodNumber = sandboxedMethods.size();
-                    sandboxedMethod.name = method.getName();
-                    sandboxedMethod.argumentTypes = SandboxedType.wrapClassesArray(method.getParameterTypes());
-
-                    sandboxedMethods.add(sandboxedMethod);
+                    sandboxedMethods.add(new SandboxedMethod(method));
                     filteredMethods.add(method);
                 }
             }
@@ -89,22 +82,17 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
         return mSandboxedMethods;
     }
 
-
     @Override
-    public InvokeMethodResult invokeMethod(int methodNumber, SandboxedMethodArguments remoteObjects) throws RemoteException {
+    public InvokeMethodResult invokeMethod(int methodNumber, SandboxedObject[] wrappedArguments) throws RemoteException {
         InvokeMethodResult requestResult = new InvokeMethodResult();
-        Object[] arguments = new Object[remoteObjects.arguments.length];
 
-        for (int i = 0; i < remoteObjects.arguments.length; i++) {
-            //
-            Object arg = remoteObjects.arguments[i];
-            if (arg instanceof ISandboxedObject) {
-                // TODO: unwrap object
-            } else if (arg instanceof IAidlInterface) {
-                arg = ((SandboxedAidlInterfaceImpl) arg).mObject;
-            }
-            arguments[i] = arg;
+        // Unwrap arguments
+        Object[] arguments = new Object[wrappedArguments.length];
+        for (int i = 0; i < wrappedArguments.length; i++) {
+            arguments[i] = wrappedArguments[i].unwrap(mClassLoader);
         }
+
+        // Invoke method
         try {
             Object result = mMethods[methodNumber].invoke(mObject, arguments);
             requestResult.sandboxedReturnValue = new SandboxedObject(result);

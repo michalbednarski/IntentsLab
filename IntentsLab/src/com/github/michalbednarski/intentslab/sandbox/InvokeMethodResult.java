@@ -4,7 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * Result of {@link IAidlInterface#invokeMethod(int, SandboxedMethodArguments)}
+ * Result of {@link IAidlInterface#invokeMethod(int, SandboxedObject[])}}
  */
 public class InvokeMethodResult implements Parcelable {
     public SandboxedObject sandboxedReturnValue;

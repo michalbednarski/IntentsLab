@@ -59,6 +59,29 @@ public class SandboxedType implements Parcelable {
         return typeName;
     }
 
+    public Object getDefaultValue() {
+        if (type == Type.PRIMITIVE) {
+            if (aClass == Boolean.TYPE) {
+                return false;
+            } else if (aClass == Byte.TYPE) {
+                return (byte) 0;
+            } else if (aClass == Character.TYPE) {
+                return 0;
+            } else if (aClass == Short.TYPE) {
+                return (short) 0;
+            } else if (aClass == Integer.TYPE) {
+                return 0;
+            } else if (aClass == Long.TYPE) {
+                return (long) 0;
+            } else if (aClass == Float.TYPE) {
+                return 0;
+            } else if (aClass == Double.TYPE) {
+                return 0;
+            }
+        }
+        return null;
+    }
+
     /*
      *
      * Parcelable

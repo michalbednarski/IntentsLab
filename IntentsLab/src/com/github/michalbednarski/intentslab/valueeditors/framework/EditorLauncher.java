@@ -7,6 +7,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.util.SparseArray;
 import android.widget.Toast;
 import com.github.michalbednarski.intentslab.R;
@@ -98,16 +99,45 @@ public class EditorLauncher {
      * Note: creating this object immediately triggers pending calls to onEditorResult's
      *       Only use this when you are ready to receive them
      *
+     * @param tag Tag for helper fragment, use null to auto-generate
+     *            then save value of {@link #getTag()} and pass it here when restoring
+     *
      */
     public EditorLauncher(FragmentActivity fragmentActivity, String tag) {
-        final android.support.v4.app.FragmentManager fragmentManager = fragmentActivity.getSupportFragmentManager();
+        final FragmentManager fragmentManager = fragmentActivity.getSupportFragmentManager();
+
+        // Create tag if null was passed
+        if (tag == null) {
+            tag = "AutoEdLaTag_" + Math.random();
+            while (fragmentManager.findFragmentByTag(tag) != null) {
+                tag += "c";
+            }
+        }
+
+        // Try finding existing fragment
         ActivityHandlingHeadlessFragment fragment = (ActivityHandlingHeadlessFragment) fragmentManager.findFragmentByTag(tag);
+
+        // Create new fragment if we don't have existing
         if (fragment == null) {
             fragment = new ActivityHandlingHeadlessFragment();
             fragmentManager.beginTransaction().add(fragment, tag).commit();
         }
+
+        // Save references between us and fragment
         fragment.mEditorLauncher = this;
         mFragment = fragment;
+    }
+
+    /**
+     * Set this to same value as hosting fragment
+     */
+    public void setRetainFragmentInstance(boolean retain) {
+        mFragment.setRetainInstance(retain);
+    }
+
+    /***/
+    public String getTag() {
+        return mFragment.getTag();
     }
 
     public void setCallback(EditorLauncherCallback callback) {
@@ -152,14 +182,7 @@ public class EditorLauncher {
     public void launchEditor(final String key, String title, Object value, Class<?> type) {
         // Create new if value is null
         if (value == null && type != null) {
-            CreateNewDialog d = new CreateNewDialog();
-            Bundle args = new Bundle();
-            args.putString(ValueEditorDialogFragment.EXTRA_KEY, key);
-            args.putParcelable(CreateNewDialog.ARG_SANDBOXED_TYPE, new SandboxedType(type));
-            args.putBoolean(CreateNewDialog.ARG_ALLOW_SANDBOX, false);
-            d.setArguments(args);
-            d.setTargetFragment(mFragment, 0);
-            d.show(mFragment.getActivity().getSupportFragmentManager(), "DFNewFor" + key);
+            launchEditorForNew(key, new SandboxedType(type));
             return;
         }
 
@@ -194,6 +217,17 @@ public class EditorLauncher {
             }
         }
         Toast.makeText(mFragment.getActivity(), R.string.type_unsupported, Toast.LENGTH_SHORT).show();
+    }
+
+    public void launchEditorForNew(String key, SandboxedType type) {
+        CreateNewDialog d = new CreateNewDialog();
+        Bundle args = new Bundle();
+        args.putString(ValueEditorDialogFragment.EXTRA_KEY, key);
+        args.putParcelable(CreateNewDialog.ARG_SANDBOXED_TYPE, type);
+        args.putBoolean(CreateNewDialog.ARG_ALLOW_SANDBOX, false);
+        d.setArguments(args);
+        d.setTargetFragment(mFragment, 0);
+        d.show(mFragment.getActivity().getSupportFragmentManager(), "DFNewFor" + key);
     }
 
     /**
