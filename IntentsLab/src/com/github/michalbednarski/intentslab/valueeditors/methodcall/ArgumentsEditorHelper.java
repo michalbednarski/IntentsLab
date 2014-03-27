@@ -54,6 +54,8 @@ public class ArgumentsEditorHelper implements EditorLauncher.EditorLauncherWithS
                             final Object value = getValue();
                             if (value == null) {
                                 mEditorLauncher.launchEditorForNew("arg" + i, type);
+                            } else if (mArgumentsSandboxed[i]) {
+                                mEditorLauncher.launchEditorForSandboxedObject("arg" + i, "arg" + i, (SandboxedObject) value);
                             } else {
                                 mEditorLauncher.launchEditor("arg" + i, value);
                             }
