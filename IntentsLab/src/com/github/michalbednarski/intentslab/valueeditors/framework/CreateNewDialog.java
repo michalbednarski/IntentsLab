@@ -11,6 +11,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
 import com.github.michalbednarski.intentslab.CategorizedAdapter;
+import com.github.michalbednarski.intentslab.bindservice.callback.CreateCallbackDialog;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
 import com.github.michalbednarski.intentslab.valueeditors.ConstructorDialog;
@@ -24,7 +25,8 @@ import java.util.Arrays;
 public class CreateNewDialog extends ValueEditorDialogFragment {
 
     private static final CreatorBase[] CREATOR_REGISTRY = new CreatorBase[] {
-            new ConstructorDialog.ValueCreator()
+            new ConstructorDialog.ValueCreator(),
+            new CreateCallbackDialog.ValueCreator()
     };
 
 

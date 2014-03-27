@@ -237,6 +237,7 @@ public final class SandboxedObject implements Parcelable {
             do {
                 try {
                     String className = aClass.getName();
+                    // TODO: check non-standard names
                     if (className.endsWith("$Stub$Proxy")) {
                         aClass = Class.forName(
                                 className.substring(0, className.length() - 6),

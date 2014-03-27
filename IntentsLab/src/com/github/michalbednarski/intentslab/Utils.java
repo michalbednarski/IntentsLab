@@ -5,14 +5,19 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Binder;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.Toast;
+
 import com.github.michalbednarski.intentslab.runas.IRemoteInterface;
+import com.github.michalbednarski.intentslab.runas.RunAsInitReceiver;
 import com.github.michalbednarski.intentslab.runas.RunAsManager;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -309,5 +314,34 @@ public class Utils {
     @SuppressWarnings("unchecked")
     private static <E extends Throwable> void throwUnchecked0(Throwable e) throws E {
         throw (E) e;
+    }
+
+
+
+    /**
+     * Save reference to object in bundle so it can be later retrieved with
+     * {@link #getLiveRefFromBundle(Bundle, String)}
+     *
+     * Note: such reference will become null if this process will be killed
+     */
+    public static void putLiveRefInBundle(Bundle bundle, String key, Object object) {
+        RunAsInitReceiver.putBinderInBundle(bundle, key, new LiveRefInBundle(object));
+    }
+
+    public static <T> T getLiveRefFromBundle(Bundle bundle, String key) {
+        final Object binder = bundle.get(key);
+        if (binder instanceof LiveRefInBundle) {
+            return (T) ((LiveRefInBundle) binder).target;
+        }
+        return null;
+    }
+
+
+    private final static class LiveRefInBundle extends Binder {
+        LiveRefInBundle(Object target) {
+            this.target = target;
+        }
+
+        final Object target;
     }
 }

@@ -2,6 +2,7 @@ package com.github.michalbednarski.intentslab.clipboard;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.ListFragment;
@@ -16,6 +17,7 @@ import com.github.michalbednarski.intentslab.MasterDetailActivity;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.bindservice.AidlControlsFragment;
 import com.github.michalbednarski.intentslab.bindservice.BaseServiceFragment;
+import com.github.michalbednarski.intentslab.bindservice.callback.CallbackInterfacesManager;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.bindservice.manager.ServiceDescriptor;
 import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
@@ -36,7 +38,7 @@ public class ClipboardItemsFragment extends ListFragment {
     }
 
     static final int CATEGORY_INTERFACES = 0;
-    static final int CATEGORY_MY_INTERFACES = 1; // Not implemented, TODO
+    static final int CATEGORY_MY_INTERFACES = 1;
     static final int CATEGORY_OBJECTS = 2;
 
     private void update() {
@@ -65,6 +67,9 @@ public class ClipboardItemsFragment extends ListFragment {
                                 .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, AidlControlsFragment.class.getName())
                                 .putExtra(BaseServiceFragment.ARG_SERVICE_DESCRIPTOR, mBoundServices[itemInfo.positionInCategory])
                 );
+                break;
+            case CATEGORY_MY_INTERFACES:
+                CallbackInterfacesManager.openLogForCallbackAt((MasterDetailActivity) getActivity(), itemInfo.positionInCategory);
                 break;
             case CATEGORY_OBJECTS:
                 mEditorLauncher.launchEditorForSandboxedObject(
@@ -108,7 +113,8 @@ public class ClipboardItemsFragment extends ListFragment {
             switch (category) {
                 case CATEGORY_INTERFACES:
                     return mBoundServices.length;
-                // TODO case CATEGORY_MY_INTERFACES:
+                case CATEGORY_MY_INTERFACES:
+                    return CallbackInterfacesManager.getCallbacksCount();
                 case CATEGORY_OBJECTS:
                     return ClipboardService.sObjects.size();
             }
@@ -153,6 +159,18 @@ public class ClipboardItemsFragment extends ListFragment {
         @Override
         public int getViewTypeCount() {
             return 2;
+        }
+
+        @Override
+        public void registerDataSetObserver(DataSetObserver observer) {
+            super.registerDataSetObserver(observer);
+            CallbackInterfacesManager.registerCallbacksObserver(observer);
+        }
+
+        @Override
+        public void unregisterDataSetObserver(DataSetObserver observer) {
+            super.unregisterDataSetObserver(observer);
+            CallbackInterfacesManager.unregisterCallbacksObserver(observer);
         }
     }
 }
