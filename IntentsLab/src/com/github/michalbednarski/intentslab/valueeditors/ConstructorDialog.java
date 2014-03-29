@@ -45,7 +45,7 @@ public class ConstructorDialog extends ValueEditorDialogFragment implements Dial
                         savedInstanceState.getString(STATE_EDITOR_LAUNCHER_TAG) :
                         null
         );
-        mArgumentsEditorHelper = new ArgumentsEditorHelper(getArguments().<SandboxedMethod>getParcelable(ARG_METHOD_INFO));
+        mArgumentsEditorHelper = new ArgumentsEditorHelper(getArguments().<SandboxedMethod>getParcelable(ARG_METHOD_INFO), false);
         mArgumentsEditorHelper.setEditorLauncher(mEditorLauncher);
     }
 

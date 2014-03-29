@@ -218,5 +218,13 @@ public class BindServiceManager {
                 return null;
             }
         }
+
+        public IBinder getBinderIfAvailable() {
+            if (mBoundService != null && mBoundService.isBinderAlive()) {
+                return mBoundService;
+            } else {
+                return null;
+            }
+        }
     }
 }

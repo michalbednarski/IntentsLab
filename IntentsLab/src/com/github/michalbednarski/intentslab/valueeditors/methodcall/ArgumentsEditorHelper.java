@@ -1,6 +1,7 @@
 package com.github.michalbednarski.intentslab.valueeditors.methodcall;
 
 import com.github.michalbednarski.intentslab.BuildConfig;
+import com.github.michalbednarski.intentslab.runas.RunAsSelectorView;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
@@ -13,12 +14,15 @@ import com.github.michalbednarski.intentslab.valueeditors.object.InlineValueEdit
  */
 public class ArgumentsEditorHelper implements EditorLauncher.EditorLauncherWithSandboxCallback {
 
+    private final boolean mWithRunAsSpinner;
     private EditorLauncher mEditorLauncher;
     private final InlineValueEditor[] mValueEditors;
     private final Object[] mArguments;
     private final boolean[] mArgumentsSandboxed;
 
-    public ArgumentsEditorHelper(SandboxedMethod method) {
+
+    public ArgumentsEditorHelper(SandboxedMethod method, boolean withRunAsSpinner) {
+        mWithRunAsSpinner = withRunAsSpinner;
 
         // Initialize arrays
         final int argumentsCount = method.argumentTypes.length;
@@ -108,6 +112,9 @@ public class ArgumentsEditorHelper implements EditorLauncher.EditorLauncherWithS
      * Fill the editors layout
      */
     public void fillEditorsLayout(InlineValueEditorsLayout editorsLayout) {
+        if (mWithRunAsSpinner) {
+            editorsLayout.addHeaderOrFooter(new RunAsSelectorView(editorsLayout.getContext(), null));
+        }
         editorsLayout.setValueEditors(mValueEditors);
     }
 

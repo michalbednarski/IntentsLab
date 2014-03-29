@@ -28,6 +28,7 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
     private final SandboxedMethod[] mSandboxedMethods;
     private final Method[] mMethods;
     private final ClassLoader mClassLoader;
+    private final Method mAsInterfaceMethod;
 
     SandboxedAidlInterfaceImpl(IBinder binder, ClassLoaderDescriptor fromPackage, Service service) throws RemoteException, UnknownInterfaceException {
         // Get interface name
@@ -49,7 +50,9 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
                 }
             }
 
-            mObject = stub.getMethod("asInterface", IBinder.class).invoke(null, binder);
+
+            mAsInterfaceMethod = stub.getMethod("asInterface", IBinder.class);
+            mObject = mAsInterfaceMethod.invoke(null, binder);
 
             // Get it's methods
             final Method[] methods = stub.getMethods();
@@ -82,8 +85,8 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
         return mSandboxedMethods;
     }
 
-    @Override
-    public InvokeMethodResult invokeMethod(int methodNumber, SandboxedObject[] wrappedArguments) throws RemoteException {
+
+    private InvokeMethodResult doInvokeMethod(Object object, int methodNumber, SandboxedObject[] wrappedArguments) throws RemoteException {
         InvokeMethodResult requestResult = new InvokeMethodResult();
 
         // Unwrap arguments
@@ -94,7 +97,7 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
 
         // Invoke method
         try {
-            Object result = mMethods[methodNumber].invoke(mObject, arguments);
+            Object result = mMethods[methodNumber].invoke(object, arguments);
             requestResult.sandboxedReturnValue = new SandboxedObject(result);
             requestResult.returnValueAsString = String.valueOf(result);
         } catch (InvocationTargetException e) {
@@ -104,6 +107,25 @@ class SandboxedAidlInterfaceImpl extends IAidlInterface.Stub {
         }
         return requestResult;
     }
+
+    @Override
+    public InvokeMethodResult invokeMethod(int methodNumber, SandboxedObject[] arguments) throws RemoteException {
+        return doInvokeMethod(mObject, methodNumber, arguments);
+    }
+
+    @Override
+    public InvokeMethodResult invokeMethodUsingBinder(IBinder binder, int methodNumber, SandboxedObject[] arguments) throws RemoteException {
+        final Object aidlInterface;
+        try {
+            aidlInterface = mAsInterfaceMethod.invoke(null, binder);
+        } catch (Exception e) {
+            final InvokeMethodResult result = new InvokeMethodResult();
+            result.exception = "[Run-As mode] " + Utils.describeException(e);
+            return result;
+        }
+        return doInvokeMethod(aidlInterface, methodNumber, arguments);
+    }
+
 
     static class UnknownInterfaceException extends Exception {}
 }

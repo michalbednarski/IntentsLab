@@ -19,6 +19,8 @@ import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.clipboard.ClipboardService;
+import com.github.michalbednarski.intentslab.runas.IRemoteInterface;
+import com.github.michalbednarski.intentslab.runas.RunAsManager;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.InvokeMethodResult;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
@@ -101,7 +103,7 @@ public class InvokeAidlMethodDialog extends BaseServiceFragment implements BindS
         }
 
         // Prepare arguments editor helper
-        mArgumentsEditorHelper = new ArgumentsEditorHelper(sandboxedMethod);
+        mArgumentsEditorHelper = new ArgumentsEditorHelper(sandboxedMethod, true);
         mArgumentsEditorHelper.setEditorLauncher(mEditorLauncher);
 
         // Restore arguments
@@ -159,7 +161,13 @@ public class InvokeAidlMethodDialog extends BaseServiceFragment implements BindS
 
     private void invokeAidlMethod() {
         try {
-            InvokeMethodResult result = mAidlInterface.invokeMethod(mMethodNumber, mArgumentsEditorHelper.getSandboxedArguments());
+            InvokeMethodResult result;
+            final IRemoteInterface runAs = RunAsManager.getSelectedRemoteInterface();
+            if (runAs != null) {
+                result = mAidlInterface.invokeMethodUsingBinder(runAs.createOneShotProxyBinder(getServiceHelper().getBinderIfAvailable()), mMethodNumber, mArgumentsEditorHelper.getSandboxedArguments());
+            } else {
+                result = mAidlInterface.invokeMethod(mMethodNumber, mArgumentsEditorHelper.getSandboxedArguments());
+            }
             if (result.exception == null) { // True if there weren't error
                 if (!"null".equals(result.returnValueAsString)) {
                     ResultDialog resultDialog = new ResultDialog();

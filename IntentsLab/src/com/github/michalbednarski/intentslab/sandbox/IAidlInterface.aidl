@@ -14,5 +14,7 @@ interface IAidlInterface {
 
     InvokeMethodResult invokeMethod(int methodNumber, in SandboxedObject[] arguments);
 
+    InvokeMethodResult invokeMethodUsingBinder(IBinder binder, int methodNumber, in SandboxedObject[] arguments);
+
 
 }
