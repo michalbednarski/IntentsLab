@@ -10,10 +10,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.support.v4.util.ArrayMap;
 import android.view.MenuItem;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.github.michalbednarski.intentslab.bindservice.manager.SystemServiceDescriptor;
 import com.github.michalbednarski.intentslab.runas.IRemoteInterface;
 import com.github.michalbednarski.intentslab.runas.RunAsInitReceiver;
 import com.github.michalbednarski.intentslab.runas.RunAsManager;
@@ -343,5 +345,39 @@ public class Utils {
         }
 
         final Object target;
+    }
+
+
+
+    // PROTECTED BROADCASTS
+    private static ArrayMap<String, Boolean> sProtectedBroadcastsCache = new ArrayMap<String, Boolean>();
+
+    public static boolean isProtectedBroadcast(String action) {
+        // Try cache
+        final Boolean cachedValue = sProtectedBroadcastsCache.get(action);
+        if (cachedValue != null) {
+            return cachedValue;
+        }
+
+        // Get value
+        final boolean isProtectedBroadcast;
+
+        try {
+            final IBinder service = SystemServiceDescriptor.getSystemService("package");
+            final Object asInterface =
+                    Class.forName("android.content.pm.IPackageManager$Stub")
+                            .getMethod("asInterface", IBinder.class)
+                            .invoke(null, service);
+            isProtectedBroadcast = (Boolean) asInterface.getClass()
+                    .getMethod("isProtectedBroadcast", String.class)
+                    .invoke(asInterface, action);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        // Add to cache
+        sProtectedBroadcastsCache.put(action, isProtectedBroadcast);
+        return isProtectedBroadcast;
     }
 }

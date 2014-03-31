@@ -28,13 +28,7 @@ public class SystemServiceDescriptor extends ServiceDescriptor {
 
         @Override
         void bind() {
-            IBinder service = null;
-            try {
-                Class<?> serviceManager = Class.forName("android.os.ServiceManager");
-                service = (IBinder) serviceManager.getMethod("getService", String.class).invoke(null, mServiceName);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            IBinder service = getSystemService(mServiceName);
             if (service != null) {
                 mHelper.dispatchBound(service);
             }
@@ -42,6 +36,16 @@ public class SystemServiceDescriptor extends ServiceDescriptor {
 
         @Override
         void unbind() {}
+    }
+
+    public static IBinder getSystemService(String serviceName) {
+        try {
+            Class<?> serviceManager = Class.forName("android.os.ServiceManager");
+            return (IBinder) serviceManager.getMethod("getService", String.class).invoke(null, serviceName);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     // Parcelable

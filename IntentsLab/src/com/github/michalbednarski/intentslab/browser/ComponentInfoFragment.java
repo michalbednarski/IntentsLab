@@ -27,6 +27,7 @@ import com.github.michalbednarski.intentslab.ReceiveBroadcastService;
 import com.github.michalbednarski.intentslab.FormattedTextBuilder;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
+import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.XMLViewerFragment;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
 import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
@@ -72,19 +73,26 @@ public class ComponentInfoFragment extends Fragment {
     private CharSequence mDescription;
     private boolean mShowReceiveBroadcast;
 
-    static CharSequence dumpIntentFilter(IntentFilter filter, Resources res) {
+    static CharSequence dumpIntentFilter(IntentFilter filter, Resources res, boolean isBroadcast) {
         FormattedTextBuilder ftb = new FormattedTextBuilder();
         int tagColor = res.getColor(R.color.xml_tag);
         int attributeNameColor = res.getColor(R.color.xml_attr_name);
         int attributeValueColor = res.getColor(R.color.xml_attr_value);
+        int commentColor = res.getColor(R.color.xml_comment);
+        final String protectedComment = " <!-- " + res.getString(R.string.broadcast_action_protected_comment) + " -->";
 
         ftb.appendColoured("\n<intent-filter>", tagColor);
 
         for (int i = 0, j = filter.countActions(); i < j; i++) {
+            final String action = filter.getAction(i);
             ftb.appendColoured("\n  <action", tagColor);
             ftb.appendColoured(" a:name=", attributeNameColor);
-            ftb.appendColoured("\"" + filter.getAction(i) + "\"", attributeValueColor);
+            ftb.appendColoured("\"" + action + "\"", attributeValueColor);
             ftb.appendColoured(">", tagColor);
+
+            if (Utils.isProtectedBroadcast(action)) {
+                ftb.appendColoured(protectedComment, commentColor);
+            }
         }
 
         for (int i = 0, j = filter.countCategories(); i < j; i++) {
@@ -263,6 +271,7 @@ public class ComponentInfoFragment extends Fragment {
                 }
 
                 // Description: <intent-filter>'s
+                final boolean isBroadcast = mExtendedComponentInfo.componentType == IntentEditorConstants.BROADCAST;
                 if (mExtendedComponentInfo.intentFilters == null) {
                     text.appendHeader(getString(R.string.unknown_intent_filters));
                 } else if (mExtendedComponentInfo.intentFilters.length == 0) {
@@ -270,7 +279,7 @@ public class ComponentInfoFragment extends Fragment {
                 } else {
                     text.appendHeader(getString(R.string.intent_filters));
                     for (IntentFilter filter : mExtendedComponentInfo.intentFilters) {
-                        text.appendFormattedText(dumpIntentFilter(filter, getResources()));
+                        text.appendFormattedText(dumpIntentFilter(filter, getResources(), isBroadcast));
                     }
                 }
 
@@ -281,7 +290,7 @@ public class ComponentInfoFragment extends Fragment {
 
 
                 // Show or hide "Receive broadcast" button
-                mShowReceiveBroadcast = mExtendedComponentInfo.componentType == IntentEditorConstants.BROADCAST &&
+                mShowReceiveBroadcast = isBroadcast &&
                         mExtendedComponentInfo.intentFilters != null &&
                         mExtendedComponentInfo.intentFilters.length != 0;
 
