@@ -138,6 +138,30 @@ public class Utils {
         return wrapperClass != null ? wrapperClass : aClass;
     }
 
+    public static Object getDefaultValueForPrimitveClass(Class<?> aClass) {
+        if (aClass == Boolean.TYPE) {
+            return false;
+        } else if (aClass == Byte.TYPE) {
+            return (byte) 0;
+        } else if (aClass == Character.TYPE) {
+            return 0;
+        } else if (aClass == Short.TYPE) {
+            return (short) 0;
+        } else if (aClass == Integer.TYPE) {
+            return 0;
+        } else if (aClass == Long.TYPE) {
+            return (long) 0;
+        } else if (aClass == Float.TYPE) {
+            return 0;
+        } else if (aClass == Double.TYPE) {
+            return 0;
+        } else {
+            throw new RuntimeException("Not primitive type");
+        }
+    }
+
+
+
     public static void fixListViewInDialogBackground(ListView listView) {
         if (Build.VERSION.SDK_INT < 11) {
             listView.setBackgroundColor(listView.getResources().getColor(android.R.color.background_light));

@@ -6,8 +6,10 @@ import android.os.Parcel;
 
 import com.github.michalbednarski.intentslab.Utils;
 import com.google.dexmaker.Code;
+import com.google.dexmaker.Comparison;
 import com.google.dexmaker.DexMaker;
 import com.google.dexmaker.FieldId;
+import com.google.dexmaker.Label;
 import com.google.dexmaker.Local;
 import com.google.dexmaker.MethodId;
 import com.google.dexmaker.TypeId;
@@ -185,7 +187,8 @@ class AidlImplGenerator {
 
 
                 // Begin method impl
-                final TypeId<?> returnType = TypeId.get(baseMethod.getReturnType());
+                final Class<?> returnClass = baseMethod.getReturnType();
+                final TypeId<?> returnType = TypeId.get(returnClass);
                 final MethodId<Object, ?> method1 = implClass.getMethod(returnType, baseMethod.getName(), parameters);
                 final Code code = dexMaker.declare(method1, Modifier.PUBLIC);
 
@@ -199,13 +202,22 @@ class AidlImplGenerator {
                 final Local<Object[]> args = code.newLocal(TypeId.get(Object[].class));
                 final Local<InvocationHandler> invocationHandler = code.newLocal(INVOCATION_HANDLER_TYPE_ID);
 
+                // Prepare to unbox result at end
                 // result is allocated only if this isn't void method
-                final boolean isVoidMethod = baseMethod.getReturnType() == Void.TYPE;
-                final Local result;
+                final boolean isVoidMethod = returnClass == Void.TYPE;
+                Local boxedResultCasted = null;
+                MethodId unboxResultMethod = null;
+                Local unboxedResult = null;
                 if (!isVoidMethod) {
-                    result = code.newLocal(returnType);
-                } else {
-                    result = null;
+                    // Return value exist, try unboxing it
+                    Class<?> resultBoxedClass = Utils.toWrapperClass(returnClass);
+                    if (resultBoxedClass != returnClass) {
+                        unboxedResult = code.newLocal(returnType);
+                        boxedResultCasted = code.newLocal(TypeId.get(resultBoxedClass));
+                        // e.g. boxedResult.intValue()
+                        unboxResultMethod = TypeId.get(resultBoxedClass).getMethod(returnType, Utils.afterLastDot(returnClass.getName()) + "Value");
+
+                    }
                 }
 
                 // Prepare null local
@@ -227,7 +239,7 @@ class AidlImplGenerator {
                 code.aput(extras, integerLocal, objectLocal);
 
                 // extra[EXTRA_RETURN_TYPE] = baseMethod.getReturnType()
-                code.loadConstant(objectLocal, baseMethod.getReturnType());
+                code.loadConstant(objectLocal, returnClass);
                 code.loadConstant(integerLocal, BaseAidlInvocationHandler.EXTRA_RETURN_TYPE);
                 code.aput(extras, integerLocal, objectLocal);
 
@@ -271,7 +283,7 @@ class AidlImplGenerator {
                 // Copy mInvocationHandler to local variable
                 code.iget(mInvocationHandler, invocationHandler, aThis);
 
-                // return mInvocationHandler.invoke(extras, null, args)
+                // return mInvocationHandler.invoke(extras, null, args) // with unboxing result
                 code.invokeInterface(
                         INVOCATION_HANDLER_TYPE_ID.getMethod(
                                 TypeId.OBJECT,
@@ -280,15 +292,35 @@ class AidlImplGenerator {
                                 TypeId.get(Method.class),
                                 TypeId.get(Object[].class)
                         ),
-                        result, // result is null if this is void method
+                        isVoidMethod ? null : objectLocal,
                         invocationHandler,
                         extras,
                         aNull,
                         args
                 );
                 if (!isVoidMethod) {
-                    code.returnValue(result);
+                    // Forward return value
+                    if (unboxResultMethod != null) {
+                        // Unboxing needed
+
+                        final Label boxedResultIsNullLabel = new Label();
+                        code.compare(Comparison.EQ, boxedResultIsNullLabel, objectLocal, aNull);
+
+                        // If boxed result returned by handler is not null
+                        code.cast(boxedResultCasted, objectLocal);
+                        code.invokeVirtual(unboxResultMethod, unboxedResult, boxedResultCasted);
+                        code.returnValue(unboxedResult);
+
+                        // Boxed result returned by handler is null, return default
+                        code.mark(boxedResultIsNullLabel);
+                        code.loadConstant(unboxedResult, Utils.getDefaultValueForPrimitveClass(returnClass));
+                        code.returnValue(unboxedResult);
+                    } else {
+                        // No unboxing needed, just return value
+                        code.returnValue(objectLocal);
+                    }
                 } else {
+                    // Void method
                     code.returnVoid();
                 }
             }

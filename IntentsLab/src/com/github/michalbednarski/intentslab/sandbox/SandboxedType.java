@@ -4,6 +4,8 @@ import android.os.IInterface;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.github.michalbednarski.intentslab.Utils;
+
 import java.util.Arrays;
 
 /**
@@ -61,23 +63,7 @@ public class SandboxedType implements Parcelable {
 
     public Object getDefaultValue() {
         if (type == Type.PRIMITIVE) {
-            if (aClass == Boolean.TYPE) {
-                return false;
-            } else if (aClass == Byte.TYPE) {
-                return (byte) 0;
-            } else if (aClass == Character.TYPE) {
-                return 0;
-            } else if (aClass == Short.TYPE) {
-                return (short) 0;
-            } else if (aClass == Integer.TYPE) {
-                return 0;
-            } else if (aClass == Long.TYPE) {
-                return (long) 0;
-            } else if (aClass == Float.TYPE) {
-                return 0;
-            } else if (aClass == Double.TYPE) {
-                return 0;
-            }
+            return Utils.getDefaultValueForPrimitveClass(aClass);
         }
         return null;
     }
