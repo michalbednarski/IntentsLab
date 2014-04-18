@@ -21,6 +21,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
+
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.SavedItemsDatabase;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
@@ -33,6 +34,7 @@ import com.github.michalbednarski.intentslab.runas.IRemoteInterface;
 import com.github.michalbednarski.intentslab.runas.RunAsInitReceiver;
 import com.github.michalbednarski.intentslab.runas.RunAsManager;
 import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
+import com.github.michalbednarski.intentslab.uihelpers.FragmentTabsActivity;
 import com.github.michalbednarski.intentslab.valueeditors.framework.Editor;
 import com.github.michalbednarski.intentslab.xposedhooks.api.IntentTracker;
 import com.github.michalbednarski.intentslab.xposedhooks.api.XIntentsLab;
@@ -128,12 +130,17 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
         }
 
         // Setup tabs
-        if (getResources().getBoolean(R.bool.merge_general_and_extras_tabs)) {
-            addTab(getString(R.string.general), new IntentGeneralWithExtrasFragment());
-        } else {
-            addTab(getString(R.string.general), new IntentGeneralFragment());
-            addTab(getString(R.string.intent_extras), new IntentExtrasFragment());
+        if (getResources().getBoolean(R.bool.use_master_detail)) {
+        //if (getResources().getConfiguration().orientation == 2) {
+            mergeFollowingTabs(
+                    getString(R.string.general),
+                    R.layout.intent_editor_general_with_extras,
+                    R.id.general,
+                    R.id.extras
+            );
         }
+        addTab(getString(R.string.general), new IntentGeneralFragment());
+        addTab(getString(R.string.intent_extras), new IntentExtrasFragment());
         addTab("Flags", new IntentFlagsFragment());
 		allTabsAdded();
 
@@ -148,10 +155,6 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
         outState.putInt("methodId", mMethodId);
         outState.putParcelableArray("intentFilters", mAttachedIntentFilters);
         RunAsInitReceiver.putBinderInBundle(outState, "localIEState", mLocalState);
-        /*if (mTabsHelper != null) {
-			outState.putInt("tab", mTabsHelper.getCurrentView());
-		}*/
-        // TODO: current tab?
     }
 
     boolean isIntentTrackerAvailable() {

@@ -2,7 +2,7 @@ package com.github.michalbednarski.intentslab;
 
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import com.github.michalbednarski.intentslab.editor.FragmentTabsActivity;
+import com.github.michalbednarski.intentslab.uihelpers.FragmentTabsActivity;
 
 /**
  * Application info

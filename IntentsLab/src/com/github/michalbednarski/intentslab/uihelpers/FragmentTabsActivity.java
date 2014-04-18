@@ -1,4 +1,4 @@
-package com.github.michalbednarski.intentslab.editor;
+package com.github.michalbednarski.intentslab.uihelpers;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
@@ -8,11 +8,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.util.ArrayMap;
 import android.support.v4.view.ViewPager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TabHost;
 import android.widget.TabHost.TabSpec;
+
+import com.github.michalbednarski.intentslab.BuildConfig;
 import com.github.michalbednarski.intentslab.R;
 
 import java.util.ArrayList;
@@ -23,15 +25,25 @@ import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 @SuppressLint("Registered")
 public abstract class FragmentTabsActivity extends FragmentActivity {
 
+    private static final String STATE_CURRENT_FRAGMENT_NUMBER = "FragmentTabsActivity.current";
+
     private ViewPager mViewPager;
 
     private ArrayList<Fragment> mFragmentsList = new ArrayList<Fragment>();
+    private int mTabsCount = 0;
+    private int mTabsToSkip = 0;
+    private final ArrayMap<Integer, FragmentTabMergingPagerAdapter.MultiFragmentPageInfo> mTabMergingMappings = new ArrayMap<Integer, FragmentTabMergingPagerAdapter.MultiFragmentPageInfo>();
+
+    private int mInitialFragmentNumber = 0; // For state restoring
 
     private TabsHelper mTabsHelper;
+    private FragmentTabMergingPagerAdapter mAdapter;
 
-	@Override
+    @Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+        // Create tabs helper and view pager
         boolean useActionBarForTabs = Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB
                 && !getDefaultSharedPreferences(this).getBoolean("forcelegacytabs", false);
 
@@ -40,30 +52,36 @@ public abstract class FragmentTabsActivity extends FragmentActivity {
 		} else {
             mTabsHelper = new TabsHelperTabWidget();
 		}
-	}
 
-	protected void allTabsAdded() {
-		mViewPager.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
-			@Override
-			public Fragment getItem(int position) {
-				try {
-					return mFragmentsList.get(position);
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			}
+        // We save state ourselves
+        mViewPager.setSaveEnabled(false);
+        if (savedInstanceState != null) {
+            mInitialFragmentNumber = savedInstanceState.getInt(STATE_CURRENT_FRAGMENT_NUMBER);
+        }
+    }
 
-			@Override
-			public int getCount() {
-				return mFragmentsList.size();
-			}
-		});
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(STATE_CURRENT_FRAGMENT_NUMBER, mAdapter.getCurrentFragmentNumber());
+    }
+
+    protected void allTabsAdded() {
+        mAdapter = new FragmentTabMergingPagerAdapter(
+                getSupportFragmentManager(),
+                mFragmentsList.toArray(new Fragment[mFragmentsList.size()]),
+                mTabMergingMappings
+        );
+        final int page = mAdapter.fragmentNumberToPageNumber(mInitialFragmentNumber);
+        mViewPager.setAdapter(mAdapter);
+        mViewPager.setCurrentItem(page);
 		mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
 			@Override
 			public void onPageSelected(int position) {
 				mTabsHelper.selectTab(position);
 			}
 		});
+        mTabsHelper.selectTab(page);
 	}
 
 	/**
@@ -73,9 +91,34 @@ public abstract class FragmentTabsActivity extends FragmentActivity {
 	 * @param fragment Fragment class that has to be instantiated and put in tab
 	 */
     protected void addTab(CharSequence text, Fragment fragment) {
-        mTabsHelper.addTab(text, mFragmentsList.size());
+        if (mTabsToSkip == 0) {
+            mTabsHelper.addTab(text, mTabsCount++);
+        } else {
+            mTabsToSkip--;
+        }
         mFragmentsList.add(fragment);
 	}
+
+    protected void mergeFollowingTabs(CharSequence text, int containerLayout, int ...fillInViewIds) {
+        if (BuildConfig.DEBUG) {
+            if (mTabsToSkip != 0) {
+                throw new AssertionError("Overlapping tab merge");
+            }
+            if (fillInViewIds.length <= 0) {
+                throw new AssertionError("No fill-in view ids");
+            }
+        }
+
+        mTabMergingMappings.put(
+                mFragmentsList.size(),
+                new FragmentTabMergingPagerAdapter.MultiFragmentPageInfo(
+                        containerLayout,
+                        fillInViewIds
+                )
+        );
+        mTabsHelper.addTab(text, mTabsCount++);
+        mTabsToSkip = fillInViewIds.length;
+    }
 
     /**
      * Callback from TabsHelper implementation
