@@ -90,7 +90,7 @@ public class ComponentInfoFragment extends Fragment {
             ftb.appendColoured("\"" + action + "\"", attributeValueColor);
             ftb.appendColoured(">", tagColor);
 
-            if (Utils.isProtectedBroadcast(action)) {
+            if (isBroadcast && Utils.isProtectedBroadcast(action)) {
                 ftb.appendColoured(protectedComment, commentColor);
             }
         }
