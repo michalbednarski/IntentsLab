@@ -3,6 +3,7 @@ package com.github.michalbednarski.intentslab;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -61,6 +62,10 @@ public class PackageNameAutocompleteAdapter extends BaseAdapter implements Filte
     private Filter mFilter = new Filter() {
         @Override
         protected FilterResults performFiltering(CharSequence constraint) {
+            if (TextUtils.isEmpty(constraint)) {
+                return new FilterResults(); // Return empty result
+            }
+
             MyPackageInfo[] allPackages;
 
             // Prepare list of packages
