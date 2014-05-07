@@ -32,6 +32,8 @@ public abstract class RegisteredReceiversParser {
             Pattern.compile("  \\* ReceiverList\\{.*\\}");
     private static final Pattern PATTERN_RECEIVER_LIST_SECOND_LINE =
             Pattern.compile("    app=ProcessRecord\\{[0-9a-f]+ \\d+:(.*)/[0-9au]+\\} pid=(\\d+) uid=(\\d+)");
+    private static final Pattern PATTERN_RECEIVER_LIST_SECOND_LINE_V2 =
+            Pattern.compile("    app=\\d+:(.*)/[0-9au]+ pid=(\\d+) uid=(\\d+)( .*)?");
     private static final Pattern PATTERN_RECEIVER_FILTER_START =
             Pattern.compile("    Filter #\\d+: BroadcastFilter\\{.*\\}");
     private static final Pattern PATTERN_RECEIVER_FILTER_ACTION =
@@ -91,9 +93,14 @@ public abstract class RegisteredReceiversParser {
                 // Match receiver start
                 Matcher matcher = PATTERN_RECEIVER_LIST_START.matcher(line);
                 if (matcher.find()) {
-                    matcher = PATTERN_RECEIVER_LIST_SECOND_LINE.matcher(reader.readLine());
+                    line = reader.readLine();
+                    matcher = PATTERN_RECEIVER_LIST_SECOND_LINE.matcher(line);
                     if (!matcher.find()) {
-                        throw new Exception("Unexpected second line");
+                        // Try again using different syntax
+                        matcher = PATTERN_RECEIVER_LIST_SECOND_LINE_V2.matcher(line);
+                        if (!matcher.find()) {
+                            throw new Exception("Unexpected second line");
+                        }
                     }
 
                     // Finish previous info // this code is also below
