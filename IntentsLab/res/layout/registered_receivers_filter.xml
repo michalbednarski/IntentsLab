@@ -82,4 +82,9 @@
             android:id="@+id/permission_filter_unknown"/>
     </LinearLayout>-->
 
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Exculde protected actions"
+        android:id="@+id/exclude_protected"/>
 </LinearLayout>

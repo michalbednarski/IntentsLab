@@ -20,6 +20,10 @@ public abstract class RegisteredReceiversParser {
     private static final String TAG = "ReReParser";
     private static final boolean VERBOSE = false;
 
+    public RegisteredReceiversParser(boolean excludeProtected) {
+        mExcludeProtected = excludeProtected;
+    }
+
     /**
      * This method is called from {@link #parse(Context)} when receiver is found
      * Warning: This method will be called while activity manager lock is held.
@@ -58,7 +62,7 @@ public abstract class RegisteredReceiversParser {
 
 
 
-
+    private final boolean mExcludeProtected;
 
     public void parse(Context context) throws Throwable {
         InputStream inputStream = null;
@@ -104,12 +108,19 @@ public abstract class RegisteredReceiversParser {
                     }
 
                     // Finish previous info // this code is also below
-                    if (receiverInfo != null) {
-                        receiverInfo.intentFilters = filters.toArray(new IntentFilter[filters.size()]);
-                        receiverInfo.filterPermissions = filterPermissions.toArray(new String[filterPermissions.size()]);
-                        filters.clear();
-                        filterPermissions.clear();
-                        onReceiverFound(receiverInfo);
+                    if (receiverInfo != null && !filters.isEmpty()) {
+                        if (currentFilter != null && currentFilter.countActions() == 0) {
+                            final int lastIndex = filters.size() - 1;
+                            filters.remove(lastIndex);
+                            filterPermissions.remove(lastIndex);
+                        }
+                        if (!filters.isEmpty()) {
+                            receiverInfo.intentFilters = filters.toArray(new IntentFilter[filters.size()]);
+                            receiverInfo.filterPermissions = filterPermissions.toArray(new String[filterPermissions.size()]);
+                            filters.clear();
+                            filterPermissions.clear();
+                            onReceiverFound(receiverInfo);
+                        }
                     }
                     currentFilter = null;
 
@@ -125,6 +136,11 @@ public abstract class RegisteredReceiversParser {
                 // Match filter start
                 matcher = PATTERN_RECEIVER_FILTER_START.matcher(line);
                 if (matcher.find()) {
+                    if (currentFilter != null && currentFilter.countActions() == 0) {
+                        final int lastIndex = filters.size() - 1;
+                        filters.remove(lastIndex);
+                        filterPermissions.remove(lastIndex);
+                    }
                     currentFilter = new IntentFilter();
                     filters.add(currentFilter);
                     filterPermissions.add(null); // Will replace if we find
@@ -134,7 +150,10 @@ public abstract class RegisteredReceiversParser {
                 // Match filter components
                 matcher = PATTERN_RECEIVER_FILTER_ACTION.matcher(line);
                 if (matcher.find()) {
-                    currentFilter.addAction(matcher.group(1));
+                    final String action = matcher.group(1);
+                    if (!mExcludeProtected || !Utils.isProtectedBroadcast(action)) {
+                        currentFilter.addAction(action);
+                    }
                     continue;
                 }
 
@@ -221,10 +240,17 @@ public abstract class RegisteredReceiversParser {
             }
 
             // Finish last info // TODO: this duplicates "Finish previous info" above
-            if (receiverInfo != null) {
-                receiverInfo.intentFilters = filters.toArray(new IntentFilter[filters.size()]);
-                receiverInfo.filterPermissions = filterPermissions.toArray(new String[filterPermissions.size()]);
-                onReceiverFound(receiverInfo);
+            if (receiverInfo != null && !filters.isEmpty()) {
+                if (currentFilter != null && currentFilter.countActions() == 0) {
+                    final int lastIndex = filters.size() - 1;
+                    filters.remove(lastIndex);
+                    filterPermissions.remove(lastIndex);
+                }
+                if (!filters.isEmpty()) {
+                    receiverInfo.intentFilters = filters.toArray(new IntentFilter[filters.size()]);
+                    receiverInfo.filterPermissions = filterPermissions.toArray(new String[filterPermissions.size()]);
+                    onReceiverFound(receiverInfo);
+                }
             }
         } finally {
             try {

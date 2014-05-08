@@ -22,11 +22,13 @@ import java.util.Iterator;
  */
 public class RegisteredReceiverFetcher extends Fetcher {
 
+    private boolean mExcludeProtected = true;
+
     @Override
     Object getEntries(Context context) {
         try {
             final Categorizer<RegisteredReceiverInfo> categorizer = new ProcessCategorizer();
-            (new RegisteredReceiversParser() {
+            (new RegisteredReceiversParser(mExcludeProtected) {
                 @Override
                 protected void onReceiverFound(RegisteredReceiverInfo receiverInfo) {
                     categorizer.add(receiverInfo);
@@ -92,12 +94,12 @@ public class RegisteredReceiverFetcher extends Fetcher {
 
     @Override
     void initConfigurationForm(FetcherOptionsDialog dialog) {
-        // empty form
+        dialog.setBoxChecked(R.id.exclude_protected, mExcludeProtected);
     }
 
     @Override
     void updateFromConfigurationForm(FetcherOptionsDialog dialog) {
-        // empty form
+        mExcludeProtected = dialog.isBoxChecked(R.id.exclude_protected);
     }
 
 
@@ -135,6 +137,7 @@ public class RegisteredReceiverFetcher extends Fetcher {
         @Override
         Fetcher unserializeFromJSON(JSONObject jsonObject) throws JSONException {
             RegisteredReceiverFetcher fetcher = new RegisteredReceiverFetcher();
+            fetcher.mExcludeProtected = jsonObject.getBoolean("excludeProtected");
             return fetcher;
         }
     };
@@ -142,6 +145,7 @@ public class RegisteredReceiverFetcher extends Fetcher {
     @Override
     JSONObject serializeToJSON() throws JSONException {
         JSONObject jsonObject = new JSONObject();
+        jsonObject.put("excludeProtected", mExcludeProtected);
         return jsonObject;
     }
 }
