@@ -2,8 +2,11 @@ package com.github.michalbednarski.intentslab.xposedhooks.internal;
 
 import android.os.IBinder;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 
 /**
@@ -34,7 +37,7 @@ public class XHUtils {
                             Class<?>[] parameterTypes = method.getParameterTypes();
                             for (int i = 0; i < parameterTypes.length; i++) {
                                 Class<?> aClass = parameterTypes[i];
-                                Class<?> paramTargetInterface = getTargetInterfaceIfMayCast(aClass, sourceClassLoader);
+                                Class<?> paramTargetInterface = getTargetTypeIfMayCast(aClass, sourceClassLoader);
                                 if (paramTargetInterface != null) {
                                     parameterTypes[i] = paramTargetInterface;
                                     args[i] = castInterface(args[i], paramTargetInterface);
@@ -50,12 +53,12 @@ public class XHUtils {
 
                                 // Cast result if needed
                                 Class<?> returnType = method.getReturnType();
-                                Class<?> returnTargetInterface = getTargetInterfaceIfMayCast(returnType, targetClassLoader);
-                                if (returnTargetInterface != null) {
-                                    return castInterface(result, returnTargetInterface);
-                                } else {
-                                    return result;
-                                }
+                                //Class<?> targetReturnType = getTargetTypeIfMayCast(returnType, targetClassLoader);
+                                //if (targetReturnType != null) {
+                                    return convertObjectAcrossClassLoaders(result, returnType);
+                                //} else {
+                                //    return result;
+                                //}
                             } catch (Throwable e) {
                                 // If it failed, check if this is one of supports* methods and return false if so
                                 if (
@@ -75,9 +78,64 @@ public class XHUtils {
         }
     }
 
-    private static Class<?> getTargetInterfaceIfMayCast(Class<?> aClass, ClassLoader toClassLoader) {
+    private static Object convertObjectAcrossClassLoaders(Object source, Class<?> targetClass) {
+        if (source == null || targetClass.isInstance(source) || targetClass.isPrimitive()) {
+            return source;
+        } else if (targetClass.isInterface()) {
+            return castInterface(source, targetClass);
+        } else if (targetClass.isArray()) {
+            final Object[] sourceArray = (Object[]) source;
+            final int length = sourceArray.length;
+            final Class<?> targetComponentType = targetClass.getComponentType();
+            final Object[] targetArray = (Object[]) Array.newInstance(targetComponentType, length);
+            for (int i = 0; i < length; i++) {
+                targetArray[i] = convertObjectAcrossClassLoaders(sourceArray[i], targetComponentType);
+            }
+            return targetArray;
+        } else {
+            final Object targetObject;
+            try {
+                targetObject = targetClass.newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            Class<?> sourceClass = source.getClass();
+            for (Field targetField : targetClass.getFields()) {
+                // Only copy public fields that are not static nor final
+                if ((targetField.getModifiers() & (Modifier.STATIC | Modifier.FINAL | Modifier.PUBLIC)) != Modifier.PUBLIC) {
+                    continue;
+                }
+
+                try {
+                    final Field sourceField = sourceClass.getField(targetField.getName());
+                    final Class<?> sourceType = sourceField.getType();
+                    final Class<?> targetType = targetField.getType();
+
+                    final Object sourceValue = sourceField.get(source);
+                    final Object targetValue;
+
+                    if (sourceType == targetType) {
+                        targetValue = sourceValue;
+                    } else if (sourceType.getName().equals(targetType.getName())) {
+                        targetValue = convertObjectAcrossClassLoaders(sourceValue, targetType);
+                    } else {
+                        throw new Exception("Unmatched types for field " + targetField.getName());
+                    }
+                    targetField.set(targetObject, targetValue);
+                } catch (Exception e) {
+                    // Might happen if versions are out-of-sync
+                    e.printStackTrace();
+                }
+            }
+            return targetObject;
+        }
+    }
+
+    private static Class<?> getTargetTypeIfMayCast(Class<?> aClass, ClassLoader toClassLoader) {
         if (aClass.isInterface() &&
-                aClass.getName().startsWith("com.github.michalbednarski.intentslab.xposedhooks.api.")) {
+                (aClass.getName().startsWith("com.github.michalbednarski.intentslab.xposedhooks.api.") ||
+                aClass.getName().startsWith("[Lcom/github/michalbednarski/intentslab/xposedhooks/api/"))
+                ) {
             try {
                 return toClassLoader.loadClass(aClass.getName());
             } catch (ClassNotFoundException e) {
@@ -130,7 +188,4 @@ public class XHUtils {
         return newStackTrace;
     }
 
-    public static StackTraceWrapper getHookedMethodWrappedStackTrace() {
-        return new StackTraceWrapper(getHookedMethodStackTrace());
-    }
 }

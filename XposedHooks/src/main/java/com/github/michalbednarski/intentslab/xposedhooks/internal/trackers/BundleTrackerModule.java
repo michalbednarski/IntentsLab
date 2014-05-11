@@ -5,6 +5,7 @@ import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
 
+import com.github.michalbednarski.intentslab.xposedhooks.api.ReadBundleEntryInfo;
 import com.github.michalbednarski.intentslab.xposedhooks.internal.IBundleTracker;
 import com.github.michalbednarski.intentslab.xposedhooks.internal.ParcelOffsets;
 import com.github.michalbednarski.intentslab.xposedhooks.internal.XHUtils;
@@ -140,12 +141,12 @@ public class BundleTrackerModule extends ObjectTrackerModule<Bundle, IBundleTrac
                     protected void afterHookedMethod(MethodHookParam param) {
                         IBundleTracker tracker = getTracker((Bundle) param.thisObject);
                         if (tracker != null) {
+                            ReadBundleEntryInfo info = new ReadBundleEntryInfo();
+                            info.name = (String) param.args[0];
+                            info.methodName = methodName;
+                            info.stackTrace = XHUtils.getHookedMethodStackTrace();
                             try {
-                                tracker.reportRead(
-                                        (String) param.args[0],
-                                        methodName,
-                                        XHUtils.getHookedMethodWrappedStackTrace()
-                                );
+                                tracker.reportRead(info);
                             } catch (RemoteException e) {
                                 e.printStackTrace(); // Probably tracker is dead
                             }

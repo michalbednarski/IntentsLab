@@ -1,5 +1,6 @@
 package com.github.michalbednarski.intentslab.editor;
 
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -11,10 +12,14 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
 import android.view.*;
 import android.view.View.OnClickListener;
 import android.widget.*;
 import android.widget.AdapterView.OnItemSelectedListener;
+
+import com.github.michalbednarski.intentslab.FormattedTextBuilder;
 import com.github.michalbednarski.intentslab.NameAutocompleteAdapter;
 import com.github.michalbednarski.intentslab.PackageNameAutocompleteAdapter;
 import com.github.michalbednarski.intentslab.R;
@@ -24,6 +29,7 @@ import com.github.michalbednarski.intentslab.providerlab.proxy.ProxyProvider;
 import com.github.michalbednarski.intentslab.providerlab.proxy.ProxyProviderForGrantUriPermission;
 import com.github.michalbednarski.intentslab.providerlab.UriAutocompleteAdapter;
 import com.github.michalbednarski.intentslab.xposedhooks.api.IntentTracker;
+import com.github.michalbednarski.intentslab.xposedhooks.api.ReadBundleEntryInfo;
 import com.github.michalbednarski.intentslab.xposedhooks.api.TrackerUpdateListener;
 
 import java.util.*;
@@ -120,6 +126,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
         mComponentFieldWithButtons = v.findViewById(R.id.component_field_with_buttons);
         mPackageNameHeader = v.findViewById(R.id.package_name_header);
         mIntentTrackerSummary = (TextView) v.findViewById(R.id.intent_tracker_summary);
+        mIntentTrackerSummary.setMovementMethod(LinkMovementMethod.getInstance());
 
         // Apparently using android:scrollHorizontally="true" does not work.
         // http://stackoverflow.com/questions/9011944/android-ice-cream-sandwich-edittext-disabling-spell-check-and-word-wrap
@@ -957,10 +964,28 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
     @Override
     public void onTrackerUpdate() {
         IntentTracker tracker = getIntentEditor().getIntentTracker();
-        mIntentTrackerSummary.setText(
-                "[Tracking intent]\naction " + (tracker.actionRead() ? "" : "NOT ") + "read\n" +
-                "Read extras: " + Arrays.toString(tracker.getExtrasTracker().getExtrasRead())
-        );
+        FormattedTextBuilder ftb = new FormattedTextBuilder();
+        ftb.appendRaw("[Tracking intent]\naction " + (tracker.actionRead() ? "" : "NOT ") + "read");
+        ftb.appendText("Read extras:");
+        for (final ReadBundleEntryInfo entryInfo : tracker.getExtrasTracker().getReadEntries()) {
+            ftb.appendClickable(entryInfo.name, new ClickableSpan() {
+                @Override
+                public void onClick(View widget) {
+                    String message = entryInfo.methodName;
+                    if (entryInfo.stackTrace != null) {
+                        message += "\n\n";
+                        for (StackTraceElement element : entryInfo.stackTrace) {
+                            message += element.getClassName() + " " + element.getMethodName() + " " + element.getLineNumber() + "\n";
+                        }
+                    }
+                    new AlertDialog.Builder(getActivity())
+                            .setTitle(entryInfo.name)
+                            .setMessage(message)
+                            .show();
+                }
+            });
+        }
+        mIntentTrackerSummary.setText(ftb.getText());
         mIntentTrackerSummary.setVisibility(View.VISIBLE);
     }
 

@@ -4,8 +4,8 @@ import android.os.Bundle;
 import android.os.RemoteException;
 
 import com.github.michalbednarski.intentslab.xposedhooks.api.BundleTracker;
+import com.github.michalbednarski.intentslab.xposedhooks.api.ReadBundleEntryInfo;
 import com.github.michalbednarski.intentslab.xposedhooks.internal.IBundleTracker;
-import com.github.michalbednarski.intentslab.xposedhooks.internal.StackTraceWrapper;
 import com.github.michalbednarski.intentslab.xposedhooks.internal.XHUtils;
 import com.github.michalbednarski.intentslab.xposedhooks.internal.trackers.ObjectTrackerModule;
 
@@ -15,14 +15,16 @@ import java.util.HashSet;
  * API implementation for Bundle Tracker
  */
 public class BundleTrackerImpl extends BaseTrackerImpl implements BundleTracker {
-    private final HashSet<String> mReadExtras = new HashSet<String>();
+    private final HashSet<ReadBundleEntryInfo> mReadExtras = new HashSet<ReadBundleEntryInfo>();
+    private final HashSet<String> mReadExtrasLegacy = new HashSet<String>();
 
 
     private final IBundleTracker.Stub mStub = new IBundleTracker.Stub() {
         @Override
-        public void reportRead(String itemName, String methodName, StackTraceWrapper wrappedStackTrace) throws RemoteException {
-            synchronized (mReadExtras) {
-                mReadExtras.add(itemName);
+        public void reportRead(ReadBundleEntryInfo info) throws RemoteException {
+            synchronized (mReadExtrasLegacy) {
+                mReadExtras.add(info);
+                mReadExtrasLegacy.add(info.name);
                 dispatchUpdate();
             }
         }
@@ -45,6 +47,11 @@ public class BundleTrackerImpl extends BaseTrackerImpl implements BundleTracker 
 
     @Override
     public String[] getExtrasRead() {
-        return mReadExtras.toArray(new String[mReadExtras.size()]);
+        return mReadExtrasLegacy.toArray(new String[mReadExtrasLegacy.size()]);
+    }
+
+    @Override
+    public ReadBundleEntryInfo[] getReadEntries() {
+        return mReadExtras.toArray(new ReadBundleEntryInfo[mReadExtras.size()]);
     }
 }
