@@ -117,7 +117,9 @@
 
         <provider
             android:name=".AssetProvider"
-            android:authorities="intentslab.assetsprovider"/>
+            android:authorities="intentslab.assetsprovider"
+            android:exported="false"
+            android:grantUriPermissions="true"/>
         <provider
             android:name=".providerlab.proxy.ProxyProvider"
             android:authorities="intentslab.proxyprovider"

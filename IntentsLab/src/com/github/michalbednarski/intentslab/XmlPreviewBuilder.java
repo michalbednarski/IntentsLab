@@ -216,6 +216,7 @@ public class XmlPreviewBuilder {
                                                         "/" + xmlOwnerContext.getPackageName() + "/" + resStringValue
                                         )
                                 );
+                                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
                                 // Get mime type
                                 intent.resolveType(xmlOwnerContext.getContentResolver());
