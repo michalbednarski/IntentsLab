@@ -11,6 +11,7 @@ import android.content.pm.ProviderInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PatternMatcher;
 import android.support.v4.app.Fragment;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
@@ -111,6 +112,21 @@ public class ProviderInfoFragment extends Fragment {
             }
         }
 
+        // Permission granting
+        if (mProviderInfo.grantUriPermissions) {
+            if (mProviderInfo.uriPermissionPatterns != null) {
+                PatternMatcher[] uriPermissionPatterns = mProviderInfo.uriPermissionPatterns;
+                String[] listItems = new String[uriPermissionPatterns.length];
+                for (int i = 0; i < uriPermissionPatterns.length; i++) {
+                    PatternMatcher pattern = uriPermissionPatterns[i];
+                    listItems[i] = pattern.getPath() + (pattern.getType() == PatternMatcher.PATTERN_PREFIX ? "*" : "");
+                }
+                text.appendList(getString(R.string.provider_grant_uri_permission_for), listItems);
+            } else {
+                text.appendHeader(getString(R.string.provider_grant_uri_permission_for_all_paths));
+            }
+        }
+
         // <meta-data>
         text.appendFormattedText(ComponentInfoFragment.dumpMetaData(getActivity(), mPackageName, mProviderInfo.metaData));
 
@@ -158,7 +174,8 @@ public class ProviderInfoFragment extends Fragment {
         mProviderInfo = getActivity().getPackageManager().getProviderInfo(
                 new ComponentName(mPackageName, mComponentName),
                 PackageManager.GET_DISABLED_COMPONENTS |
-                        PackageManager.GET_META_DATA
+                        PackageManager.GET_META_DATA |
+                        PackageManager.GET_URI_PERMISSION_PATTERNS
         );
     }
 
@@ -167,7 +184,8 @@ public class ProviderInfoFragment extends Fragment {
                 mPackageName,
                 PackageManager.GET_PROVIDERS |
                         PackageManager.GET_DISABLED_COMPONENTS |
-                        PackageManager.GET_META_DATA
+                        PackageManager.GET_META_DATA |
+                        PackageManager.GET_URI_PERMISSION_PATTERNS
         );
         for (ProviderInfo provider : packageInfo.providers) {
             if (provider.name.equals(mComponentName)) {

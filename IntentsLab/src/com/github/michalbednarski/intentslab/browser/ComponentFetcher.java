@@ -119,6 +119,7 @@ public class ComponentFetcher extends Fetcher {
 
     public boolean testWritePermissionForProviders = false;
 
+    public boolean includeOnlyProvidersAllowingPermissionGranting = false;
 
     public ComponentFetcher() {}
 
@@ -220,6 +221,12 @@ public class ComponentFetcher extends Fetcher {
             }
             if (!checkPermissionFilter(pm, cmp)) {
                 continue;
+            }
+            if (includeOnlyProvidersAllowingPermissionGranting && cmp instanceof ProviderInfo) {
+                ProviderInfo providerInfo = (ProviderInfo) cmp;
+                if (!providerInfo.grantUriPermissions) {
+                    continue;
+                }
             }
             Component component = new Component();
             String name = cmp.name;
@@ -408,18 +415,22 @@ public class ComponentFetcher extends Fetcher {
         dialog.setBoxChecked(R.id.permission_filter_unknown, (protection & PROTECTION_UNKNOWN) != 0);
 
         dialog.setBoxChecked(testWritePermissionForProviders ? R.id.write_permission : R.id.read_permission, true);
+        dialog.setBoxChecked(R.id.only_providers_with_grant_uri_permission, includeOnlyProvidersAllowingPermissionGranting);
 
         dialog.setBoxChecked(R.id.metadata, requireMetaDataSubstring != null);
         dialog.setTextInField(R.id.metadata_substring, requireMetaDataSubstring);
 
         // Set up sections showing when their checkboxes are checked
         dialog.findView(R.id.content_provider_permission_type).setVisibility(testWritePermissionForProviders ? View.VISIBLE : View.GONE);
+        dialog.findView(R.id.content_provider_options).setVisibility((type & PackageManager.GET_PROVIDERS) != 0 ? View.VISIBLE : View.GONE);
         ((CheckBox) dialog.findView(R.id.content_providers)).setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 dialog.findView(R.id.content_provider_permission_type).setVisibility(isChecked ? View.VISIBLE : View.GONE);
+                dialog.findView(R.id.content_provider_options).setVisibility(isChecked ? View.VISIBLE : View.GONE);
                 if (!isChecked) {
                     dialog.setBoxChecked(R.id.read_permission, true);
+                    dialog.setBoxChecked(R.id.only_providers_with_grant_uri_permission, false);
                 }
             }
         });
@@ -457,6 +468,8 @@ public class ComponentFetcher extends Fetcher {
                 (dialog.isBoxChecked(R.id.permission_filter_development) ? PROTECTION_DEVELOPMENT : 0) |
                 (dialog.isBoxChecked(R.id.permission_filter_unexported) ? PROTECTION_UNEXPORTED : 0) |
                 (dialog.isBoxChecked(R.id.permission_filter_unknown) ? PROTECTION_UNKNOWN : 0);
+
+        includeOnlyProvidersAllowingPermissionGranting = dialog.isBoxChecked(R.id.only_providers_with_grant_uri_permission);
 
         boolean requireMetaData = dialog.isBoxChecked(R.id.metadata);
         requireMetaDataSubstring =

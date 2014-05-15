@@ -233,5 +233,9 @@
     <string name="method_invoke">Invoke</string>
     <string name="broadcast_action_protected_comment">Protected</string>
     <string name="exclude_protected_actions">Exculde protected actions</string>
+    <string name="provider_grant_uri_permission_for">Provider allows granting permissions for following paths</string>
+    <string name="provider_grant_uri_permission_for_all_paths">Provider allows granting permissions for all paths</string>
+    <string name="include_only_with_grant_uri_group">Content provider permission granting</string>
+    <string name="include_only_with_grant_uri">Include only providers allowing granting of URI permissions</string>
 
 </resources>

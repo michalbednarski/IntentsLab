@@ -52,6 +52,25 @@
         android:text="@string/content_providers"
         android:id="@+id/content_providers"/>
 
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:id="@+id/content_provider_options">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/include_only_with_grant_uri_group"
+            />
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/include_only_with_grant_uri"
+            android:id="@+id/only_providers_with_grant_uri_permission"/>
+    </LinearLayout>
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
