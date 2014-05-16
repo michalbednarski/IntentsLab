@@ -5,6 +5,8 @@ import android.content.pm.PackageManager;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.github.michalbednarski.intentslab.sandbox.remote.SandboxInit;
+
 /**
  * Description of ClassLoader to be used to load classes of AIDL interfaces and sandboxed objects
  */
@@ -16,6 +18,7 @@ public class ClassLoaderDescriptor implements Parcelable {
     }
 
     public ClassLoader getClassLoader(Context topContext) {
+        SandboxInit.ensureItsOkayToLoadUntrustedCode();
         if (mPackageName != null) {
             try {
                 return topContext.createPackageContext(mPackageName, Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY).getClassLoader();
