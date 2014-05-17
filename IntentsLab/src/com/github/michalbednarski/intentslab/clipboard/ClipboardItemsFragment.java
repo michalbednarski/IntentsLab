@@ -16,7 +16,7 @@ import com.github.michalbednarski.intentslab.CategorizedAdapter;
 import com.github.michalbednarski.intentslab.MasterDetailActivity;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.bindservice.AidlControlsFragment;
-import com.github.michalbednarski.intentslab.bindservice.BaseServiceFragment;
+import com.github.michalbednarski.intentslab.bindservice.manager.BaseServiceFragment;
 import com.github.michalbednarski.intentslab.bindservice.callback.CallbackInterfacesManager;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.bindservice.manager.ServiceDescriptor;

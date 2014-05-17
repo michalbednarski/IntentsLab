@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.Utils;
+import com.github.michalbednarski.intentslab.bindservice.manager.BaseServiceFragment;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.clipboard.ClipboardService;
 import com.github.michalbednarski.intentslab.runas.IRemoteInterface;

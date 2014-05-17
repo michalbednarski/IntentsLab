@@ -149,7 +149,7 @@
         <activity android:name=".ActivityMonitorActivity"/>
 
         <service android:name=".ActivityMonitorActivity$ActivityRecorderService" />
-        <service android:name=".sandbox.SandboxManager$AService"/>
+        <service android:name=".clipboard.KeepAliveService"/>
 
         <activity android:name=".SingleFragmentActivity" />
 

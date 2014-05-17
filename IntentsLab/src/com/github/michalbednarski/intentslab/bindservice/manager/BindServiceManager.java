@@ -3,13 +3,15 @@ package com.github.michalbednarski.intentslab.bindservice.manager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.RemoteException;
 
+import com.github.michalbednarski.intentslab.BuildConfig;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.bindservice.AidlControlsFragment;
-import com.github.michalbednarski.intentslab.bindservice.BaseServiceFragment;
 import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
@@ -23,28 +25,21 @@ import java.util.Set;
  */
 public class BindServiceManager {
 
+    private static final int UNBIND_UNUSED_SERVICE_TIMEOUT = 10 * 1000;
+    private static final Handler sHandler = new Handler(Looper.getMainLooper());
+
     public static void prepareBinderAndShowUI(final Context context, final ServiceDescriptor descriptor) {
-        final Helper helper = getBoundService(descriptor);
-        helper.bindServiceAndRunWhenReady(context, new BinderReadyCallback() {
-            @Override
-            public void onBinderReady(IBinder binder) {
-                if (binder != null) {
-                    context.startActivity(
-                            new Intent(context, SingleFragmentActivity.class)
-                                    .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, AidlControlsFragment.class.getName())
-                                    .putExtra(BaseServiceFragment.ARG_SERVICE_DESCRIPTOR, descriptor)
-                    );
-                } else {
-                    helper.unbindAndRemove();
-                }
-            }
-        });
+        context.startActivity(
+                new Intent(context, SingleFragmentActivity.class)
+                        .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, AidlControlsFragment.class.getName())
+                        .putExtra(BaseServiceFragment.ARG_SERVICE_DESCRIPTOR, descriptor)
+        );
     }
 
 
     private static HashMap<ServiceDescriptor, Helper> sBoundServices = new HashMap<ServiceDescriptor, Helper>();
 
-    public static Helper getBoundService(ServiceDescriptor descriptor) {
+    static Helper getBoundService(ServiceDescriptor descriptor) {
         final Helper serviceHelper = sBoundServices.get(descriptor);
         if (serviceHelper != null) {
             return serviceHelper;
@@ -80,6 +75,37 @@ public class BindServiceManager {
         private boolean mSandboxRefd = false;
         private boolean mBound = false;
 
+        private int mUserRefs = 0;
+        private boolean mPersistInClipboard; // TODO: require this flag to show service in ClipbardActivity
+        private Runnable mShutdownMessage;
+
+        void userRef() {
+            mUserRefs++;
+            if (mShutdownMessage != null) {
+                sHandler.removeCallbacks(mShutdownMessage);
+                mShutdownMessage = null;
+            }
+        }
+
+        void userUnref() {
+            mUserRefs--;
+            if (BuildConfig.DEBUG && mUserRefs < 0) {
+                throw new AssertionError("mUserRefs < 0");
+            }
+            if (BuildConfig.DEBUG && mShutdownMessage != null) {
+                throw new AssertionError("mShutdownMessage already queued");
+            }
+            if (mUserRefs == 0 && !mPersistInClipboard) {
+                mShutdownMessage = new Runnable() {
+                    @Override
+                    public void run() {
+                        unbindAndRemove();
+                    }
+                };
+                sHandler.postDelayed(mShutdownMessage, UNBIND_UNUSED_SERVICE_TIMEOUT);
+            }
+        }
+
         private Helper(ServiceDescriptor descriptor) {
             mDescriptor = descriptor;
             mConnectionManager = descriptor.getConnectionManager();
@@ -104,7 +130,7 @@ public class BindServiceManager {
             mBinderReadyCallbacks = null;
         }
 
-        public void unbind() {
+        private void unbindAndRemove() {
             if (mBound) {
                 mConnectionManager.unbind();
                 mBound = false;
@@ -113,10 +139,6 @@ public class BindServiceManager {
                 SandboxManager.unrefSandbox();
                 mSandboxRefd = false;
             }
-        }
-
-        public void unbindAndRemove() {
-            unbind();
             sBoundServices.remove(mDescriptor);
         }
 

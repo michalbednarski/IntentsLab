@@ -89,10 +89,10 @@ public class BundleAdapter<OwnerFragment extends Fragment & BundleAdapter.Bundle
     private OwnerFragment mOwnerFragment;
 
     public BundleAdapter(Bundle map, EditorLauncher editorLauncher, OwnerFragment ownerFragment) {
-		setBundle(map);
         mEditorLauncher = editorLauncher;
         mEditorLauncher.setCallback(this);
         mOwnerFragment = ownerFragment;
+        setBundle(map);
     }
 
 	private void updateKeySet() {

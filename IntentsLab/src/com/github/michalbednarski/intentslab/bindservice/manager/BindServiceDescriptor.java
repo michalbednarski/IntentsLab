@@ -1,7 +1,6 @@
 package com.github.michalbednarski.intentslab.bindservice.manager;
 
 import android.app.IServiceConnection;
-import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -9,6 +8,7 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
+
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.runas.IRemoteInterface;
 import com.github.michalbednarski.intentslab.runas.RunAsManager;
@@ -85,9 +85,8 @@ public class BindServiceDescriptor extends ServiceDescriptor {
 
         @Override
         void bind() {
-            Service sandboxService = SandboxManager.getService();
             try {
-                sandboxService.bindService(mIntent, this, Context.BIND_AUTO_CREATE);
+                SandboxManager.getService().bindService(mIntent, this, Context.BIND_AUTO_CREATE);
             } catch (SecurityException e) {
                 try {
                     IRemoteInterface remoteInterface = RunAsManager.getRemoteInterfaceForSystemDebuggingCommands();

@@ -13,6 +13,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 import com.github.michalbednarski.intentslab.bindservice.SystemServicesDialog;
 import com.github.michalbednarski.intentslab.browser.BrowseComponentsActivity;
+import com.github.michalbednarski.intentslab.clipboard.ClipboardActivity;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
 import com.github.michalbednarski.intentslab.editor.IntentEditorInterceptedActivity;
 import com.github.michalbednarski.intentslab.providerlab.AdvancedQueryActivity;
@@ -71,6 +72,13 @@ public class StartActivity extends FragmentActivity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 startActivity(new Intent(StartActivity.this, ActivityMonitorActivity.class));
+                return true;
+            }
+        });
+        menu.add("Current objects (experimental)").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                startActivity(new Intent(StartActivity.this, ClipboardActivity.class));
                 return true;
             }
         });

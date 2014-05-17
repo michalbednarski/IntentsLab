@@ -15,6 +15,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
+import com.github.michalbednarski.intentslab.bindservice.manager.BaseServiceFragment;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;

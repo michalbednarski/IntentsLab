@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.bindservice.manager.BaseServiceFragment;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 
 /**
@@ -32,7 +33,6 @@ public class UnrecognizedAidlFragment extends BaseServiceFragment {
         view.findViewById(R.id.unbind).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getServiceHelper().unbind();
                 getActivity().finish();
             }
         });
