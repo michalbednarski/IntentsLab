@@ -33,7 +33,7 @@ import com.github.michalbednarski.intentslab.valueeditors.object.InlineValueEdit
 /**
  * Created by mb on 03.10.13.
  */
-public class InvokeAidlMethodDialog extends BaseServiceFragment implements BindServiceManager.AidlReadyCallback {
+public class InvokeAidlMethodFragment extends BaseServiceFragment implements BindServiceManager.AidlReadyCallback {
     static final String ARG_METHOD_NUMBER = "method-number";
     private static final String STATE_METHOD_ARGUMENTS = "method-arguments";
     private static final String STATE_EDITOR_LAUNCHER_TAG = "launcher-tag";

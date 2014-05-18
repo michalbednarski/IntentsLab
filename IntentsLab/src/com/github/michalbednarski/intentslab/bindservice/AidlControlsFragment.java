@@ -106,9 +106,9 @@ public class AidlControlsFragment extends BaseServiceFragment {
                                     int methodNumber = (Integer) v.getTag();
                                     startActivity(
                                             new Intent(getActivity(), SingleFragmentActivity.class)
-                                                    .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, InvokeAidlMethodDialog.class.getName())
+                                                    .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, InvokeAidlMethodFragment.class.getName())
                                                     .putExtra(ARG_SERVICE_DESCRIPTOR, getArguments().getParcelable(ARG_SERVICE_DESCRIPTOR))
-                                                    .putExtra(InvokeAidlMethodDialog.ARG_METHOD_NUMBER, methodNumber)
+                                                    .putExtra(InvokeAidlMethodFragment.ARG_METHOD_NUMBER, methodNumber)
                                     );
                                 }
                             });
