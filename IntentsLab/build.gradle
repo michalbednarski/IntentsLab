@@ -34,5 +34,12 @@ android {
         // by a similar customization.
         debug.setRoot('build-types/debug')
         release.setRoot('build-types/release')
+
+        // http://blog.danlew.net/2014/04/16/android-localization-tips/
+        applicationVariants.all { variant ->
+            if (variant.buildType.isDebuggable()) {
+                variant.mergedFlavor.addResourceConfiguration("zz_ZZ")
+            }
+        }
     }
 }
