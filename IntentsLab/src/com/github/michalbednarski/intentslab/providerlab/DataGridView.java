@@ -186,8 +186,9 @@ public class DataGridView extends LinearLayout {
     }
 
     // Gesture detection
-    private int mEditedColumn = -1;
+    private int mResizedColumn = -1;
     private int mColumnExtraSpace;
+    private int mInitialScrollBeforeResizingStart;
 
     Scroller mScroller;
     VelocityTracker mVelocityTracker = null;
@@ -222,44 +223,47 @@ public class DataGridView extends LinearLayout {
 
                 // Start column resizing
                 if (event.getPointerCount() == 2) {
-                    int pos = ((int) Math.min(event.getX(0), event.getX(1))) + mScroller.getCurrX();
-                    mEditedColumn = -1;
+                    final int touchedXPosition = mScroller.getCurrX() + ((int) (event.getX(0) + event.getX(1))) / 2;
+                    int pos = touchedXPosition;
+                    mResizedColumn = -1;
                     for (int i = 0, columnCount = mColumns.length; i < columnCount; i++) {
                         int columnWidth = mColumns[i].width;
                         if (pos < columnWidth) {
-                            mEditedColumn = i;
+                            mResizedColumn = i;
                             break;
                         }
                         pos -= columnWidth;
                     }
-                    if (mEditedColumn != -1) {
-                        mColumnExtraSpace = mColumns[mEditedColumn].width - (Math.abs((int) (event.getX(0) - event.getX(1))));
+                    if (mResizedColumn != -1) {
+                        mColumnExtraSpace = mColumns[mResizedColumn].width - (Math.abs((int) (event.getX(0) - event.getX(1))));
+                        mInitialScrollBeforeResizingStart = touchedXPosition;
                     }
                 }
                 break;
 
             case MotionEvent.ACTION_MOVE:
                 // Resize column
-                if (mEditedColumn != -1) {
+                if (mResizedColumn != -1) {
                     if (event.getPointerCount() == 2) {
-                        // If we are scrolled to right edge keep that position
-                        boolean stickToRight = mMaxScroll > 5 && mScroller.getCurrX() >= mMaxScroll;
-
                         // Actually resize column and recalculate space
-                        mColumns[mEditedColumn].width = Math.max(Math.abs((int)(event.getX(0) - event.getX(1))) + mColumnExtraSpace, MIN_COLUMN_WIDTH);
+                        mColumns[mResizedColumn].width = Math.max(Math.abs((int)(event.getX(0) - event.getX(1))) + mColumnExtraSpace, MIN_COLUMN_WIDTH);
                         calculateMaxScroll();
 
                         // Keep position
-                        if (stickToRight) {
-                            mScroller.setFinalX(mMaxScroll);
-                            mScroller.abortAnimation();
+                        int newScrollX = mInitialScrollBeforeResizingStart - ((int) (event.getX(0) + event.getX(1))) / 2;
+                        if (newScrollX < 0) {
+                            newScrollX = 0;
+                        } else if (newScrollX > mMaxScroll) {
+                            newScrollX = mMaxScroll;
                         }
+                        mScroller.setFinalX(newScrollX);
+                        mScroller.abortAnimation();
 
                         // Do redraw
                         invalidateAllRows();
                     } else {
                         // End resizing
-                        mEditedColumn = -1;
+                        mResizedColumn = -1;
                     }
                 }
 
@@ -286,7 +290,7 @@ public class DataGridView extends LinearLayout {
 
             case MotionEvent.ACTION_POINTER_UP:
                 // End resizing column
-                mEditedColumn = -1;
+                mResizedColumn = -1;
                 break;
 
             case MotionEvent.ACTION_UP:
