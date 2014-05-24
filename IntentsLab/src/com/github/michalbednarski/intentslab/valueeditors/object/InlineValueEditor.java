@@ -20,6 +20,8 @@ package com.github.michalbednarski.intentslab.valueeditors.object;
 
 import android.content.Context;
 import android.text.Editable;
+import android.text.InputFilter;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.ContextMenu;
@@ -122,6 +124,30 @@ public class InlineValueEditor {
         final TextView fieldOrButton = (TextView) view.findViewById(R.id.value);
         if (mStringLike) {
             final Object value = mValueAccessors.getValue();
+
+            // Configure input type
+            if (mValueType == Byte.TYPE || mValueType == Byte.class ||
+                    mValueType == Short.TYPE || mValueType == Short.class ||
+                    mValueType == Integer.TYPE || mValueType == Integer.class ||
+                    mValueType == Long.TYPE || mValueType == Long.class
+                    ) {
+                fieldOrButton.setInputType(
+                        InputType.TYPE_CLASS_NUMBER |
+                                InputType.TYPE_NUMBER_FLAG_SIGNED
+                );
+
+            } else if (mValueType == Float.TYPE || mValueType == Float.class ||
+                    mValueType == Double.TYPE || mValueType == Double.class
+                    ) {
+                fieldOrButton.setInputType(
+                        InputType.TYPE_CLASS_NUMBER |
+                                InputType.TYPE_NUMBER_FLAG_SIGNED |
+                                InputType.TYPE_NUMBER_FLAG_DECIMAL
+                );
+
+            } else if (mValueType == Character.TYPE || mValueType == Character.class) {
+                fieldOrButton.setFilters(new InputFilter[] { new InputFilter.LengthFilter(1) });
+            }
 
             // Use empty text for null
             if (value == null) {
