@@ -111,9 +111,9 @@ public class ConstructorDialog extends ValueEditorDialogFragment implements Dial
     }
 
     // Information about creation
-    public static class ValueCreator implements CreateNewDialog.SyncCreator {
+    public static class ValueCreator implements CreateNewDialog.ValueCreator {
         @Override
-        public CreateNewDialog.CreatorOption[] getCreatorOptions(final SandboxedType sandboxedType, boolean allowSandbox) {
+        public CreateNewDialog.CreatorOption[] getCreatorOptions(final SandboxedType sandboxedType, boolean allowSandbox, Callback callback) {
             // Check if we'll be able to construct this object
             if (sandboxedType.type != SandboxedType.Type.OBJECT || sandboxedType.aClass == null) {
                 return null;

@@ -28,6 +28,8 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.github.michalbednarski.intentslab.BuildConfig;
 import com.github.michalbednarski.intentslab.CategorizedAdapter;
 import com.github.michalbednarski.intentslab.bindservice.callback.CreateCallbackDialog;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
@@ -42,19 +44,11 @@ import java.util.Arrays;
  */
 public class CreateNewDialog extends ValueEditorDialogFragment {
 
-    private static final CreatorBase[] CREATOR_REGISTRY = new CreatorBase[] {
+    private static final ValueCreator[] CREATOR_REGISTRY = new ValueCreator[] {
             new ConstructorDialog.ValueCreator(),
             new CreateCallbackDialog.ValueCreator()
     };
 
-
-    /**
-     * Common interface for SyncCreator and AsyncCreator
-     * must not be implemented directly
-     */
-    interface CreatorBase {
-        int getCategoryNameResource();
-    }
 
     /**
      * Option in creator chooser
@@ -69,17 +63,16 @@ public class CreateNewDialog extends ValueEditorDialogFragment {
         public abstract void onOptionSelected(EditorRedirect redirect);
     }
 
-    public interface SyncCreator extends CreatorBase {
-        CreatorOption[] getCreatorOptions(SandboxedType sandboxedType, boolean allowSandbox);
-    }
+    public interface ValueCreator {
+        CreatorOption[] getCreatorOptions(SandboxedType sandboxedType, boolean allowSandbox, Callback callback);
 
-    public interface AsyncCreator extends CreatorBase {
+        int getCategoryNameResource();
+
         public interface Callback {
+            void goAsync();
             void creatorOptionsReady(CreatorOption[] options);
             void noCreatorOptionsAvailable();
         }
-
-        void getCreatorOptionsAsync(SandboxedType sandboxedType, boolean allowSandbox, Callback callback);
     }
 
     /**
@@ -107,7 +100,7 @@ public class CreateNewDialog extends ValueEditorDialogFragment {
 
     private ListView mListView;
     private CreatorOption[][] mOptions = new CreatorOption[CREATOR_REGISTRY.length][];
-    private int mOptionsToLoadLeft = 1; // Dummy
+    private int mOptionsToLoadLeft = CREATOR_REGISTRY.length;
 
     static final String ARG_SANDBOXED_TYPE = "CreateNewDialog.sandboxedType";
     static final String ARG_ALLOW_SANDBOX = "CreateNewDialog.allowSandbox";
@@ -122,51 +115,35 @@ public class CreateNewDialog extends ValueEditorDialogFragment {
         SandboxedType sandboxedType = getArguments().getParcelable(ARG_SANDBOXED_TYPE);
         boolean allowSandbox = getArguments().getBoolean(ARG_ALLOW_SANDBOX);
 
-
+        // Query creators
         for (int i = 0, j = CREATOR_REGISTRY.length; i < j; i++) {
-            CreatorBase creator = CREATOR_REGISTRY[i];
-            if (creator instanceof SyncCreator) {
-                CreatorOption[] options = ((SyncCreator) creator).getCreatorOptions(sandboxedType, allowSandbox);
+            ValueCreator creator = CREATOR_REGISTRY[i];
+            CreatorCallbackImpl callback = new CreatorCallbackImpl(i);
+            CreatorOption[] options = creator.getCreatorOptions(sandboxedType, allowSandbox, callback);
+
+            if (callback.mState == CreatorCallbackState.SYNCHRONOUS_MODE) {
+                // Synchronous mode
+                callback.mState = CreatorCallbackState.FINISHED;
                 if (options != null && options.length != 0) {
                     mOptions[i] = options;
                 }
+                mOptionsToLoadLeft--;
             } else {
-                mOptionsToLoadLeft++;
-                final int mI = i;
-                ((AsyncCreator) creator).getCreatorOptionsAsync(sandboxedType, allowSandbox, new AsyncCreator.Callback() {
-                    private boolean mCalled = false;
-
-                    @Override
-                    public void creatorOptionsReady(CreatorOption[] options) {
-                        assert !mCalled;
-                        mCalled = true;
-
-                        if (options != null && options.length != 0) {
-                            mOptions[mI] = options;
-                        }
-
-                        mOptionsToLoadLeft--;
-                        checkAllCreatorsReady();
-                   }
-
-                    @Override
-                    public void noCreatorOptionsAvailable() {
-                        assert !mCalled;
-                        mCalled = true;
-                        mOptionsToLoadLeft--;
-                        checkAllCreatorsReady();
-                    }
-                });
+                // Asynchronous mode
+                if (BuildConfig.DEBUG && options != null) {
+                    throw new AssertionError("Creator " + creator.getClass().getName() + " returned non-null value after goAsync()");
+                }
             }
         }
 
-        // Count dummy for actually-sync AsyncCreators and check if everything is ready
-        mOptionsToLoadLeft--;
+        // Check if no creators went async
         checkAllCreatorsReady();
     }
 
     private void checkAllCreatorsReady() {
-        assert mOptionsToLoadLeft >= 0;
+        if (BuildConfig.DEBUG && mOptionsToLoadLeft < 0) {
+            throw new AssertionError("mOptionsToLoadLeft < 0");
+        }
         if (mOptionsToLoadLeft == 0 && mListView != null) {
             mListView.setAdapter(new Adapter());
         }
@@ -302,6 +279,50 @@ public class CreateNewDialog extends ValueEditorDialogFragment {
         @Override
         public int getViewTypeCount() {
             return 2;
+        }
+    }
+
+    private enum CreatorCallbackState {
+        SYNCHRONOUS_MODE,
+        WENT_ASYNC,
+        FINISHED
+    }
+
+    private class CreatorCallbackImpl implements ValueCreator.Callback {
+
+        private final int mCreatorIndex;
+        private CreatorCallbackState mState = CreatorCallbackState.SYNCHRONOUS_MODE;
+
+        public CreatorCallbackImpl(int creatorIndex) {
+            mCreatorIndex = creatorIndex;
+        }
+
+        @Override
+        public void goAsync() {
+            if (BuildConfig.DEBUG && mState != CreatorCallbackState.SYNCHRONOUS_MODE) {
+                throw new AssertionError("Cannot goAsync() when state=" + mState);
+            }
+            mState = CreatorCallbackState.WENT_ASYNC;
+        }
+
+        @Override
+        public void creatorOptionsReady(CreatorOption[] options) {
+            if (BuildConfig.DEBUG && mState != CreatorCallbackState.SYNCHRONOUS_MODE) {
+                throw new AssertionError("Cannot creatorOptionsReady() when state=" + mState);
+            }
+            mState = CreatorCallbackState.FINISHED;
+
+            if (options != null && options.length != 0) {
+                mOptions[mCreatorIndex] = options;
+            }
+
+            mOptionsToLoadLeft--;
+            checkAllCreatorsReady();
+        }
+
+        @Override
+        public void noCreatorOptionsAvailable() {
+            creatorOptionsReady(null);
         }
     }
 }

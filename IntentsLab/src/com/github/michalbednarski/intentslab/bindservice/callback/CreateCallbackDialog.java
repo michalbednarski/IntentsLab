@@ -49,10 +49,10 @@ public class CreateCallbackDialog extends ValueEditorDialogFragment {
                 .create();
     }
 
-    public static final class ValueCreator implements CreateNewDialog.SyncCreator {
+    public static final class ValueCreator implements CreateNewDialog.ValueCreator {
 
         @Override
-        public CreateNewDialog.CreatorOption[] getCreatorOptions(final SandboxedType sandboxedType, boolean allowSandbox) {
+        public CreateNewDialog.CreatorOption[] getCreatorOptions(final SandboxedType sandboxedType, boolean allowSandbox, Callback callback) {
             if (sandboxedType.aClass != null &&
                     sandboxedType.aClass.getInterfaces().length == 1 &&
                     sandboxedType.aClass.getInterfaces()[0] == IInterface.class) {
