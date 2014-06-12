@@ -10,7 +10,7 @@ import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
  * Created by mb on 30.09.13.
  */
 interface ISandbox {
-    IAidlInterface queryInterface(IBinder binder, in ClassLoaderDescriptor fromPackage);
+    IAidlInterface queryInterface(IBinder binder, in ClassLoaderDescriptor classLoaderDescriptor);
 
     ISandboxedBundle sandboxBundle(in Bundle bundle, in ClassLoaderDescriptor classLoaderDescriptor);
 

@@ -18,11 +18,10 @@
 
 package com.github.michalbednarski.intentslab.sandbox.remote;
 
-import android.app.Service;
 import android.os.Bundle;
 import android.os.RemoteException;
+
 import com.github.michalbednarski.intentslab.editor.BundleAdapter;
-import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.ISandboxedBundle;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 
@@ -36,9 +35,9 @@ public class SandboxedBundleImpl extends ISandboxedBundle.Stub {
     private final ClassLoader mClassLoader;
     private Bundle mBundle;
 
-    public SandboxedBundleImpl(Bundle bundle, ClassLoaderDescriptor classLoaderDescriptor, Service sandboxService) {
-        mClassLoader = classLoaderDescriptor.getClassLoader(sandboxService);
-        bundle.setClassLoader(mClassLoader);
+    public SandboxedBundleImpl(Bundle bundle, ClassLoader classLoader) {
+        bundle.setClassLoader(classLoader);
+        mClassLoader = classLoader;
         mBundle = bundle;
     }
 

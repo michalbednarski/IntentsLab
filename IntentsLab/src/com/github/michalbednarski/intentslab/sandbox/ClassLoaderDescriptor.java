@@ -18,34 +18,37 @@
 
 package com.github.michalbednarski.intentslab.sandbox;
 
-import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.Parcel;
 import android.os.Parcelable;
-
-import com.github.michalbednarski.intentslab.sandbox.remote.SandboxInit;
 
 /**
  * Description of ClassLoader to be used to load classes of AIDL interfaces and sandboxed objects
  */
-public class ClassLoaderDescriptor implements Parcelable {
-    private String mPackageName;
+public final class ClassLoaderDescriptor implements Parcelable {
+    public String packageName;
 
     public ClassLoaderDescriptor(String packageName) {
-        mPackageName = packageName;
-    }
-
-    public ClassLoader getClassLoader(Context topContext) {
-        SandboxInit.ensureItsOkayToLoadUntrustedCode();
-        if (mPackageName != null) {
-            try {
-                return topContext.createPackageContext(mPackageName, Context.CONTEXT_INCLUDE_CODE | Context.CONTEXT_IGNORE_SECURITY).getClassLoader();
-            } catch (PackageManager.NameNotFoundException ignored) {}
-        }
-        return topContext.getClassLoader();
+        this.packageName = packageName;
     }
 
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ClassLoaderDescriptor that = (ClassLoaderDescriptor) o;
+
+        if (packageName != null ? !packageName.equals(that.packageName) : that.packageName != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return packageName != null ? packageName.hashCode() : 0;
+    }
 
 
     /*
@@ -61,7 +64,7 @@ public class ClassLoaderDescriptor implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(mPackageName);
+        dest.writeString(packageName);
     }
 
     public static final Creator<ClassLoaderDescriptor> CREATOR = new Creator<ClassLoaderDescriptor>() {

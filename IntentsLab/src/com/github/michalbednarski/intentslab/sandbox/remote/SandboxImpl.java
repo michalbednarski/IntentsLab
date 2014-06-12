@@ -38,16 +38,18 @@ import java.lang.reflect.Field;
  * Created by mb on 01.10.13.
  */
 class SandboxImpl extends ISandbox.Stub {
-    final Service mService;
+    private final Service mService;
+    private final UntrustedCodeLoader mUntrustedCodeLoader;
 
     SandboxImpl(Service service) {
         mService = service;
+        mUntrustedCodeLoader = new UntrustedCodeLoader(service);
     }
 
     @Override
-    public IAidlInterface queryInterface(IBinder binder, ClassLoaderDescriptor fromPackage) throws RemoteException {
+    public IAidlInterface queryInterface(IBinder binder, ClassLoaderDescriptor classLoaderDescriptor) throws RemoteException {
         try {
-            return new SandboxedAidlInterfaceImpl(binder, fromPackage, mService);
+            return new SandboxedAidlInterfaceImpl(binder, mUntrustedCodeLoader.getClassLoader(classLoaderDescriptor));
         } catch (SandboxedAidlInterfaceImpl.UnknownInterfaceException e) {
             return null;
         }
@@ -55,13 +57,12 @@ class SandboxImpl extends ISandbox.Stub {
 
     @Override
     public ISandboxedBundle sandboxBundle(Bundle bundle, ClassLoaderDescriptor classLoaderDescriptor) throws RemoteException {
-        return new SandboxedBundleImpl(bundle, classLoaderDescriptor, mService);
+        return new SandboxedBundleImpl(bundle, mUntrustedCodeLoader.getClassLoader(classLoaderDescriptor));
     }
 
     @Override
     public ISandboxedObject sandboxObject(SandboxedObject wrappedObject, ClassLoaderDescriptor classLoaderDescriptor) throws RemoteException {
-
-        final ClassLoader classLoader = classLoaderDescriptor.getClassLoader(mService);
+        final ClassLoader classLoader = mUntrustedCodeLoader.getClassLoader(classLoaderDescriptor);
         return new SandboxedObjectImpl(wrappedObject.unwrap(classLoader), classLoader);
     }
 
