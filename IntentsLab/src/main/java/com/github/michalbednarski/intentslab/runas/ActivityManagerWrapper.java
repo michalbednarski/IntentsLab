@@ -18,6 +18,7 @@
 
 package com.github.michalbednarski.intentslab.runas;
 
+import android.app.ActivityManager;
 import android.app.IActivityController;
 import android.app.IServiceConnection;
 import android.content.Context;
@@ -27,6 +28,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+
+import com.github.michalbednarski.intentslab.PickRecentlyRunningActivity;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -47,6 +50,7 @@ class ActivityManagerWrapper {
     private final CrossVersionReflectedMethod mBroadcastIntentMethod;
     private final CrossVersionReflectedMethod mBindServiceMethod;
     private final CrossVersionReflectedMethod mSetActivityControllerMethod;
+    private final CrossVersionReflectedMethod mGetRecentTasksMethod;
 
 
 
@@ -202,6 +206,14 @@ class ActivityManagerWrapper {
                             "setActivityController",
                             IActivityController.class, "watcher", null
                     );
+            mGetRecentTasksMethod =
+                    new CrossVersionReflectedMethod(mAmClass)
+                    .tryMethodVariant(
+                            "getRecentTasks",
+                            int.class,              "maxNum",           PickRecentlyRunningActivity.MAX_TASKS,
+                            int.class,              "flags",            ActivityManager.RECENT_WITH_EXCLUDED,
+                            int.class,              "userId",           0
+                    );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -255,5 +267,15 @@ class ActivityManagerWrapper {
             return false;
         }
         return true;
+    }
+
+    Intent[] getRecentTasks() {
+        try {
+            return PickRecentlyRunningActivity.getIntentsFromTasks(
+                    (java.util.List<ActivityManager.RecentTaskInfo>) mGetRecentTasksMethod.invoke(mAm)
+            );
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

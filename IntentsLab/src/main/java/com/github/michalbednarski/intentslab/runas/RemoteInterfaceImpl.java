@@ -81,4 +81,9 @@ class RemoteInterfaceImpl extends IRemoteInterface.Stub {
             }
         };
     }
+
+    @Override
+    public Intent[] getRecentTasks() throws RemoteException {
+        return ActivityManagerWrapper.get().getRecentTasks();
+    }
 }

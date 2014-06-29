@@ -19,4 +19,6 @@ interface IRemoteInterface {
     oneway void dumpServiceAsync(IBinder service, in ParcelFileDescriptor fd, in String[] args);
 
     IBinder createOneShotProxyBinder(IBinder binder);
+
+    Intent[] getRecentTasks();
 }

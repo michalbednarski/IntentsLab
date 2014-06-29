@@ -42,6 +42,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
+import com.github.michalbednarski.intentslab.runas.IRemoteInterface;
+import com.github.michalbednarski.intentslab.runas.RunAsManager;
 
 import java.util.HashSet;
 import java.util.List;
@@ -51,6 +53,7 @@ import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 
 public class PickRecentlyRunningActivity extends ListActivity implements AdapterView.OnItemClickListener {
 
+    public static final int MAX_TASKS = 30;
     private ListView mListView;
     private RecentsAdapter mAdapter;
 
@@ -139,7 +142,7 @@ public class PickRecentlyRunningActivity extends ListActivity implements Adapter
 
     public void onItemClick(AdapterView<?> parent, View view, int position,
                             long id) {
-        Intent baseIntent = mAdapter.getItem(position).baseIntent;
+        Intent baseIntent = mAdapter.getItem(position);
         Intent i = new Intent(this, IntentEditorActivity.class);
         i.putExtra("intent", baseIntent);
         startActivity(i);
@@ -150,7 +153,7 @@ public class PickRecentlyRunningActivity extends ListActivity implements Adapter
         Intent intent;
         try {
             AdapterView.AdapterContextMenuInfo aMenuInfo = (AdapterView.AdapterContextMenuInfo) menuInfo;
-            intent = mAdapter.getItem(aMenuInfo.position).baseIntent;
+            intent = mAdapter.getItem(aMenuInfo.position);
         } catch (ClassCastException e) {
             return;
         }
@@ -185,7 +188,7 @@ public class PickRecentlyRunningActivity extends ListActivity implements Adapter
         });
     }
 
-    private class RecentsAdapter extends ArrayAdapter<RecentTaskInfo> {
+    private class RecentsAdapter extends ArrayAdapter<Intent> {
         private ActivityManager mAm;
         private LayoutInflater mInflater;
         private PackageManager mPm;
@@ -201,15 +204,30 @@ public class PickRecentlyRunningActivity extends ListActivity implements Adapter
         void refresh() {
             setNotifyOnChange(false);
             clear();
-            List<RecentTaskInfo> tasks = mAm.getRecentTasks(30, ActivityManager.RECENT_WITH_EXCLUDED);
-            for (RecentTaskInfo task : tasks) {
-                Intent baseIntent = task.baseIntent;
+            Intent[] allIntents = null;
+            // On Android 4.1+ getRecentTasks has details stripped, route through adb shell to get them
+            if (android.os.Build.VERSION.SDK_INT >= 16) {
+                IRemoteInterface remoteInterface = RunAsManager.getRemoteInterfaceForSystemDebuggingCommands();
+                if (remoteInterface != null) {
+                    try {
+                        allIntents = remoteInterface.getRecentTasks();
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            // Otherwise we just use getRecentTasks
+            if (allIntents == null) {
+                allIntents = getIntentsFromTasks(
+                        mAm.getRecentTasks(MAX_TASKS, ActivityManager.RECENT_WITH_EXCLUDED)
+                );
+            }
+            for (Intent intent : allIntents) {
                 if (excludeBoringIntents &&
-                        (mExcludedComponents.contains(baseIntent.getComponent().flattenToShortString()) ||
-                                isLauncherIntent(baseIntent))) {
+                        (mExcludedComponents.contains(intent.getComponent().flattenToShortString()) ||
+                                isLauncherIntent(intent))) {
                     continue;
                 }
-                add(task);
+                add(intent);
             }
             setNotifyOnChange(true);
             notifyDataSetChanged();
@@ -221,8 +239,7 @@ public class PickRecentlyRunningActivity extends ListActivity implements Adapter
                 convertView = mInflater.inflate(R.layout.simple_list_item_2_with_icon, parent, false);
             }
 
-            ActivityManager.RecentTaskInfo task = getItem(position);
-            Intent baseIntent = task.baseIntent;
+            Intent baseIntent = getItem(position);
 
             // Icon
             ImageView iconView = (ImageView) convertView.findViewById(R.id.app_icon);
@@ -248,5 +265,14 @@ public class PickRecentlyRunningActivity extends ListActivity implements Adapter
 
             return convertView;
         }
+    }
+
+    public static Intent[] getIntentsFromTasks(List<RecentTaskInfo> tasks) {
+        Intent[] intents = new Intent[tasks.size()];
+        int i = 0;
+        for (RecentTaskInfo task : tasks) {
+            intents[i++] = task.baseIntent;
+        }
+        return intents;
     }
 }
