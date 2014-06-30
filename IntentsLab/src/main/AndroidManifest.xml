@@ -20,10 +20,6 @@
           xmlns:tools="http://schemas.android.com/tools"
           package="com.github.michalbednarski.intentslab">
 
-    <uses-sdk
-        android:minSdkVersion="7"
-        android:targetSdkVersion="18"/>
-
     <uses-permission android:name="android.permission.GET_TASKS"/>
     <uses-permission android:name="android.permission.BROADCAST_STICKY"/>
     <uses-permission android:name="android.permission.DUMP"
