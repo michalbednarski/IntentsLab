@@ -25,6 +25,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.os.IInterface;
 import android.os.RemoteException;
+
+import com.github.michalbednarski.intentslab.bindservice.manager.SandboxedAidlInterfaceImpl;
 import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.ISandbox;
@@ -47,9 +49,9 @@ class SandboxImpl extends ISandbox.Stub {
     }
 
     @Override
-    public IAidlInterface queryInterface(IBinder binder, ClassLoaderDescriptor classLoaderDescriptor) throws RemoteException {
+    public IAidlInterface queryInterface(IBinder binder, ClassLoaderDescriptor classLoaderDescriptor, String interfaceDescriptor) throws RemoteException {
         try {
-            return new SandboxedAidlInterfaceImpl(binder, mUntrustedCodeLoader.getClassLoader(classLoaderDescriptor));
+            return new SandboxedAidlInterfaceImpl(binder, mUntrustedCodeLoader.getClassLoader(classLoaderDescriptor), interfaceDescriptor);
         } catch (SandboxedAidlInterfaceImpl.UnknownInterfaceException e) {
             return null;
         }

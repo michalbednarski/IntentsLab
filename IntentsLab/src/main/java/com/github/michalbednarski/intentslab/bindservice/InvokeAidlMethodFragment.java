@@ -35,6 +35,7 @@ import android.widget.Toast;
 
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.Utils;
+import com.github.michalbednarski.intentslab.bindservice.manager.AidlInterface;
 import com.github.michalbednarski.intentslab.bindservice.manager.BaseServiceFragment;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.clipboard.ClipboardService;
@@ -56,7 +57,7 @@ public class InvokeAidlMethodFragment extends BaseServiceFragment implements Bin
     private static final String STATE_METHOD_ARGUMENTS = "method-arguments";
     private static final String STATE_EDITOR_LAUNCHER_TAG = "launcher-tag";
 
-    private IAidlInterface mAidlInterface;
+    private AidlInterface mAidlInterface;
     private int mMethodNumber;
     private SandboxedObject[] mMethodArgumentsToRestore;
     private EditorLauncher mEditorLauncher;
@@ -104,9 +105,9 @@ public class InvokeAidlMethodFragment extends BaseServiceFragment implements Bin
     }
 
     @Override
-    public void onAidlReady(IAidlInterface anInterface) {
+    public void onAidlReady(AidlInterface anInterface) {
         mAidlInterface = anInterface;
-        if (mAidlInterface == null || !mAidlInterface.asBinder().isBinderAlive()) {
+        if (mAidlInterface == null) {
             getActivity().finish();
             return;
         }
@@ -115,7 +116,7 @@ public class InvokeAidlMethodFragment extends BaseServiceFragment implements Bin
         SandboxedMethod sandboxedMethod;
         try {
             sandboxedMethod = mAidlInterface.getMethods()[mMethodNumber];
-        } catch (RemoteException e) {
+        } catch (Exception e) { // TODO: remove?
             e.printStackTrace();
             getActivity().finish();
             return;

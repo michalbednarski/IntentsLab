@@ -20,18 +20,15 @@ package com.github.michalbednarski.intentslab.bindservice.manager;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.RemoteException;
 
 import com.github.michalbednarski.intentslab.BuildConfig;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.bindservice.AidlControlsFragment;
 import com.github.michalbednarski.intentslab.sandbox.ClassLoaderDescriptor;
-import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.SandboxManager;
 
 import java.util.ArrayList;
@@ -75,14 +72,14 @@ public class BindServiceManager {
     }
 
     public interface AidlReadyCallback {
-        void onAidlReady(IAidlInterface anInterface);
+        void onAidlReady(AidlInterface anInterface);
     }
 
     public static class Helper {
         private IBinder mBoundService = null;
         private final ServiceDescriptor mDescriptor;
         private final ServiceDescriptor.ConnectionManager mConnectionManager;
-        private IAidlInterface mAidlInterface;
+        private AidlInterface mAidlInterface;
         String mPackageName = null;
         private String mInterfaceDescriptor = null;
         private boolean mInterfaceDescriptorValid = false;
@@ -94,7 +91,7 @@ public class BindServiceManager {
         private boolean mBound = false;
 
         private int mUserRefs = 0;
-        private boolean mPersistInClipboard; // TODO: require this flag to show service in ClipbardActivity
+        private boolean mPersistInClipboard; // TODO: require this flag to show service in ClipboardActivity
         private Runnable mShutdownMessage;
 
         void userRef() {
@@ -172,11 +169,7 @@ public class BindServiceManager {
                 mBinderReadyCallbacks = new ArrayList<BinderReadyCallback>();
                 mBinderReadyCallbacks.add(whenReady);
 
-                // Ref sandbox if needed
-                if (!mSandboxRefd) {
-                    SandboxManager.refSandbox();
-                    mSandboxRefd = true;
-                }
+                new AidlInterfaceMediator().refSandbox(); // TODO: don't init sandbox here
 
                 // Start preparing service
                 SandboxManager.initSandboxAndRunWhenReady(context, new Runnable() {
@@ -193,8 +186,8 @@ public class BindServiceManager {
             }
         }
 
-        public void prepareAidlAndRunWhenReady(Context context, AidlReadyCallback whenReady) {
-            if (mAidlInterface != null && mAidlInterface.asBinder().isBinderAlive()) {
+        public void prepareAidlAndRunWhenReady(final Context context, AidlReadyCallback whenReady) {
+            if (mAidlInterface != null && mAidlInterface.isReady()) {
                 // Aidl is ready already
                 if (whenReady != null) {
                     whenReady.onAidlReady(mAidlInterface);
@@ -213,26 +206,8 @@ public class BindServiceManager {
                 bindServiceAndRunWhenReady(context, new BinderReadyCallback() {
                     @Override
                     public void onBinderReady(IBinder binder) {
-                        (new AsyncTask<Object, Object, IAidlInterface>() {
-                            @Override
-                            protected IAidlInterface doInBackground(Object... params) {
-                                try {
-                                    return SandboxManager.getSandbox().queryInterface(mBoundService, new ClassLoaderDescriptor(mPackageName));
-                                } catch (RemoteException e) {
-                                    e.printStackTrace();
-                                    return null;
-                                }
-                            }
-
-                            @Override
-                            protected void onPostExecute(IAidlInterface aidlInterface) {
-                                mAidlInterface = aidlInterface;
-                                for (AidlReadyCallback aidlReadyCallback : mAidlReadyCallbacks) {
-                                    aidlReadyCallback.onAidlReady(aidlInterface);
-                                }
-                                mAidlReadyCallbacks = null;
-                            }
-                        }).execute();
+                        ClassLoaderDescriptor classLoaderDescriptor = new ClassLoaderDescriptor(mPackageName);
+                        AidlInterface.getAidlInterface(binder, classLoaderDescriptor, context, new AidlInterfaceMediator());
                     }
                 });
             }
@@ -250,8 +225,8 @@ public class BindServiceManager {
             return mDescriptor;
         }
 
-        public IAidlInterface getAidlIfAvailable() {
-            if (mAidlInterface != null && mAidlInterface.asBinder().isBinderAlive()
+        public AidlInterface getAidlIfAvailable() {
+            if (mAidlInterface != null && mAidlInterface.isReady()
                     && mBoundService != null && mBoundService.isBinderAlive()) {
                 return mAidlInterface;
             } else {
@@ -264,6 +239,28 @@ public class BindServiceManager {
                 return mBoundService;
             } else {
                 return null;
+            }
+        }
+
+        class AidlInterfaceMediator { // TODO: better name?
+            private AidlInterfaceMediator() {}
+
+            void refSandbox() {
+                // Ref sandbox if needed
+                if (!mSandboxRefd) {
+                    SandboxManager.refSandbox();
+                    mSandboxRefd = true;
+                }
+            }
+
+            void handleAidlReady(AidlInterface aidlInterface) {
+
+
+                mAidlInterface = aidlInterface;
+                for (AidlReadyCallback aidlReadyCallback : mAidlReadyCallbacks) {
+                    aidlReadyCallback.onAidlReady(aidlInterface);
+                }
+                mAidlReadyCallbacks = null;
             }
         }
     }

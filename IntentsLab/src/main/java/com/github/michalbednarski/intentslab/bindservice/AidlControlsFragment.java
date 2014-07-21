@@ -33,6 +33,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
+import com.github.michalbednarski.intentslab.bindservice.manager.AidlInterface;
 import com.github.michalbednarski.intentslab.bindservice.manager.BaseServiceFragment;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
@@ -43,7 +44,7 @@ import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
  */
 public class AidlControlsFragment extends BaseServiceFragment {
 
-    private IAidlInterface mAidlInterface;
+    private AidlInterface mAidlInterface;
     private BaseAdapter mAdapter;
     private ListView mListView;
 
@@ -54,7 +55,7 @@ public class AidlControlsFragment extends BaseServiceFragment {
 
         getServiceHelper().prepareAidlAndRunWhenReady(getActivity(), new BindServiceManager.AidlReadyCallback() {
             @Override
-            public void onAidlReady(IAidlInterface anInterface) {
+            public void onAidlReady(AidlInterface anInterface) {
                 mAidlInterface = anInterface;
                 if (anInterface != null) {
                     createAdapter();
@@ -150,7 +151,7 @@ public class AidlControlsFragment extends BaseServiceFragment {
             if (mListView != null) {
                 mListView.setAdapter(mAdapter);
             }
-        } catch (RemoteException e) {
+        } catch (Exception e) {
             // TODO: handle crashed sandbox
         }
     }
