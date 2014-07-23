@@ -78,9 +78,9 @@ public class BindServiceManager {
     public static class Helper {
         private IBinder mBoundService = null;
         private final ServiceDescriptor mDescriptor;
-        private final ServiceDescriptor.ConnectionManager mConnectionManager;
+        private Runnable mUnbindRunnable;
         private AidlInterface mAidlInterface;
-        String mPackageName = null;
+        private String mPackageName = null;
         private String mInterfaceDescriptor = null;
         private boolean mInterfaceDescriptorValid = false;
 
@@ -88,7 +88,6 @@ public class BindServiceManager {
         private ArrayList<AidlReadyCallback> mAidlReadyCallbacks = null;
 
         private boolean mSandboxRefd = false;
-        private boolean mBound = false;
 
         private int mUserRefs = 0;
         private boolean mPersistInClipboard; // TODO: require this flag to show service in ClipboardActivity
@@ -123,32 +122,14 @@ public class BindServiceManager {
 
         private Helper(ServiceDescriptor descriptor) {
             mDescriptor = descriptor;
-            mConnectionManager = descriptor.getConnectionManager();
-            mConnectionManager.mHelper = this;
 
             sBoundServices.put(mDescriptor, this);
         }
 
-        void dispatchBound(IBinder binder) {
-            try {
-                mInterfaceDescriptor = binder.getInterfaceDescriptor();
-                mInterfaceDescriptorValid = true;
-            } catch (Exception e) {
-                mInterfaceDescriptor = Utils.describeException(e);
-                mInterfaceDescriptorValid = false;
-            }
-
-            mBoundService = binder;
-            for (BinderReadyCallback aidlReadyCallback : mBinderReadyCallbacks) {
-                aidlReadyCallback.onBinderReady(binder);
-            }
-            mBinderReadyCallbacks = null;
-        }
-
         private void unbindAndRemove() {
-            if (mBound) {
-                mConnectionManager.unbind();
-                mBound = false;
+            if (mUnbindRunnable != null) {
+                mUnbindRunnable.run();
+                mUnbindRunnable = null;
             }
             if (mSandboxRefd) {
                 SandboxManager.unrefSandbox();
@@ -169,20 +150,58 @@ public class BindServiceManager {
                 mBinderReadyCallbacks = new ArrayList<BinderReadyCallback>();
                 mBinderReadyCallbacks.add(whenReady);
 
-                new AidlInterfaceMediator().refSandbox(); // TODO: don't init sandbox here
-
                 // Start preparing service
-                SandboxManager.initSandboxAndRunWhenReady(context, new Runnable() {
-                    @Override
-                    public void run() {
-                        if (!mBound) {
-                            mBound = true;
-                            mConnectionManager.bind();
-                        } else {
-                            dispatchBound(mBoundService);
-                        }
+                mDescriptor.doBind(new BindServiceMediator(context.getApplicationContext()));
+            }
+        }
+
+        class BindServiceMediator {
+            private final Context mContext;
+
+            private BindServiceMediator(Context context) {
+                mContext = context;
+            }
+
+            Context getContext() {
+                return mContext;
+            }
+
+            void setPackageName(String packageName) {
+                mPackageName = packageName;
+            }
+
+            void refSandbox() {
+                new AidlInterfaceMediator().refSandbox();
+            }
+
+            void registerUnbindRunnable(Runnable unbindRunnable) {
+                if (BuildConfig.DEBUG && mUnbindRunnable != null) {
+                    throw new AssertionError("unbindRunnable already registered");
+                }
+
+                mUnbindRunnable = unbindRunnable;
+            }
+
+            void dispatchBound(IBinder binder) {
+                if (BuildConfig.DEBUG && Looper.myLooper() != Looper.getMainLooper()) {
+                    throw new AssertionError("dispatchBound() must be called on main thread");
+                }
+
+                try {
+                    mInterfaceDescriptor = binder.getInterfaceDescriptor();
+                    mInterfaceDescriptorValid = true;
+                } catch (Exception e) {
+                    mInterfaceDescriptor = Utils.describeException(e);
+                    mInterfaceDescriptorValid = false;
+                }
+
+                mBoundService = binder;
+                if (mBinderReadyCallbacks != null) {
+                    for (BinderReadyCallback aidlReadyCallback : mBinderReadyCallbacks) {
+                        aidlReadyCallback.onBinderReady(binder);
                     }
-                });
+                }
+                mBinderReadyCallbacks = null;
             }
         }
 
@@ -254,7 +273,9 @@ public class BindServiceManager {
             }
 
             void handleAidlReady(AidlInterface aidlInterface) {
-
+                if (BuildConfig.DEBUG && Looper.myLooper() != Looper.getMainLooper()) {
+                    throw new AssertionError("handleAidlReady() must be called on main thread");
+                }
 
                 mAidlInterface = aidlInterface;
                 for (AidlReadyCallback aidlReadyCallback : mAidlReadyCallbacks) {

@@ -33,27 +33,16 @@ public class SystemServiceDescriptor extends ServiceDescriptor {
     }
 
     @Override
-    ConnectionManager getConnectionManager() {
-        return new ConnectionManagerImpl();
-    }
-
-    @Override
     public String getTitle() {
         return mServiceName;
     }
 
-    class ConnectionManagerImpl extends ConnectionManager {
-
-        @Override
-        void bind() {
-            IBinder service = getSystemService(mServiceName);
-            if (service != null) {
-                mHelper.dispatchBound(service);
-            }
+    @Override
+    void doBind(BindServiceManager.Helper.BindServiceMediator callback) {
+        IBinder service = getSystemService(mServiceName);
+        if (service != null) {
+            callback.dispatchBound(service);
         }
-
-        @Override
-        void unbind() {}
     }
 
     public static IBinder getSystemService(String serviceName) {

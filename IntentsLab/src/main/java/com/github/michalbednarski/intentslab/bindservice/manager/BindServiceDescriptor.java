@@ -23,6 +23,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.ResolveInfo;
+import android.os.Handler;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
@@ -75,6 +77,7 @@ public class BindServiceDescriptor extends ServiceDescriptor {
         }
     };
 
+    // equals() and hashCode()
     public boolean equals(Object o) {
         if (o instanceof BindServiceDescriptor) {
             BindServiceDescriptor b = (BindServiceDescriptor) o;
@@ -87,55 +90,107 @@ public class BindServiceDescriptor extends ServiceDescriptor {
         return mIntent.filterHashCode();
     }
 
-    @Override
-    ConnectionManager getConnectionManager() {
-        return new ConnectionManagerImpl(mIntent);
-    }
 
-    private static class ConnectionManagerImpl extends ConnectionManager implements ServiceConnection {
+    // Actual binding to service
+    private static class ConnectionManagerImpl implements ServiceConnection, Runnable {
+        private final BindServiceManager.Helper.BindServiceMediator mCallback;
 
-        private final Intent mIntent;
-
-        public ConnectionManagerImpl(Intent intent) {
-            mIntent = intent;
-        }
-
-
-        @Override
-        void bind() {
-            try {
-                SandboxManager.getService().bindService(mIntent, this, Context.BIND_AUTO_CREATE);
-            } catch (SecurityException e) {
-                try {
-                    IRemoteInterface remoteInterface = RunAsManager.getRemoteInterfaceForSystemDebuggingCommands();
-                    remoteInterface.bindService(
-                            SandboxManager.getSandbox().getApplicationToken(),
-                            mIntent,
-                            new IServiceConnection.Stub() {
-                                @Override
-                                public void connected(ComponentName name, IBinder service) throws RemoteException {
-                                    onServiceConnected(name, service);
-                                }
-                            }
-                    );
-                } catch (RemoteException e1) {
-                    e1.printStackTrace();
-                }
-            }
+        private ConnectionManagerImpl(BindServiceManager.Helper.BindServiceMediator callback) {
+            mCallback = callback;
         }
 
         @Override
-        void unbind() {
-            SandboxManager.getService().unbindService(this);
+        public void run() { // unbind
+            mCallback.getContext().unbindService(this);
         }
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mHelper.mPackageName = name.getPackageName();
-            mHelper.dispatchBound(service);
+            mCallback.setPackageName(name.getPackageName());
+            mCallback.dispatchBound(service);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {}
+    }
+
+    @Override
+    void doBind(final BindServiceManager.Helper.BindServiceMediator callback) {
+        Context context = callback.getContext();
+
+        try {
+            // Try using standard bindService()
+            final ConnectionManagerImpl connection = new ConnectionManagerImpl(callback);
+            context.bindService(mIntent, connection, Context.BIND_AUTO_CREATE);
+            callback.registerUnbindRunnable(connection);
+
+        } catch (SecurityException e) {
+            // We don't have permission to bind this service,
+            // Try using run-as mode
+            try {
+                // Get required permission
+                ResolveInfo resolvedService = context.getPackageManager().resolveService(mIntent, 0);
+                String permission = resolvedService.serviceInfo.permission;
+
+                // Get remote interface with that permission
+                final IRemoteInterface remoteInterface = RunAsManager.getRemoteInterfaceHavingPermission(context, permission);
+                if (remoteInterface == null) {
+                    throw new Exception("No interface with permission");
+                }
+
+                // Prepare sandbox to get service token
+                callback.refSandbox();
+                final Handler handler = new Handler();
+                SandboxManager.initSandboxAndRunWhenReady(context, new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+
+                            // Call bindService() using remote interface
+                            final IServiceConnection.Stub conn = new IServiceConnection.Stub() {
+                                @Override
+                                public void connected(final ComponentName name, final IBinder service) throws RemoteException {
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            callback.setPackageName(name.getPackageName());
+                                            callback.dispatchBound(service);
+                                        }
+                                    });
+                                }
+                            };
+                            remoteInterface.bindService(
+                                    SandboxManager.getSandbox().getApplicationToken(),
+                                    mIntent,
+                                    conn
+                            );
+
+                            // Register unbind callback
+                            callback.registerUnbindRunnable(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        Object am =
+                                                Class.forName("android.app.ActivityManagerNative")
+                                                .getMethod("getDefault")
+                                                .invoke(null);
+                                        am.getClass()
+                                                .getMethod("unbindService", IServiceConnection.class)
+                                                .invoke(am, conn);
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
+                        } catch (RemoteException e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+                });
+            } catch (Exception e1) {
+                e1.printStackTrace();
+                // TODO: send failure message
+            }
+        }
     }
 }
