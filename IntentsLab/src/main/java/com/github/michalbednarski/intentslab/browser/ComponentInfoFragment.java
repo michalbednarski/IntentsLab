@@ -46,7 +46,7 @@ import com.github.michalbednarski.intentslab.FormattedTextBuilder;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.Utils;
-import com.github.michalbednarski.intentslab.XMLViewerFragment;
+import com.github.michalbednarski.intentslab.XmlViewerFragment;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
 import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
 
@@ -201,9 +201,9 @@ public class ComponentInfoFragment extends Fragment {
                                 public void onClick(View widget) {
                                     context.startActivity(
                                             new Intent(context, SingleFragmentActivity.class)
-                                                    .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, XMLViewerFragment.class.getName())
-                                                    .putExtra(XMLViewerFragment.ARG_PACKAGE_NAME, packageName)
-                                                    .putExtra(XMLViewerFragment.ARG_RESOURCE_ID, resId)
+                                                    .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, XmlViewerFragment.class.getName())
+                                                    .putExtra(XmlViewerFragment.ARG_PACKAGE_NAME, packageName)
+                                                    .putExtra(XmlViewerFragment.ARG_RESOURCE_ID, resId)
                                     );
                                 }
                             });

@@ -26,15 +26,10 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
-import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.util.TypedValue;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
-import android.widget.TextView;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,8 +46,6 @@ public class XmlPreviewBuilder {
      *
      * If we're splitting text for efficient display in ListView
      * then this is last chunk
-     *
-     * Will become null after call to {@link #createFakeTextListAdapter(android.content.Context)}
      */
     private SpannableStringBuilder mSsb;
 
@@ -210,9 +203,9 @@ public class XmlPreviewBuilder {
                                     public void onClick(View widget) {
                                         widget.getContext().startActivity(
                                                 new Intent(widget.getContext(), SingleFragmentActivity.class)
-                                                .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, XMLViewerFragment.class.getName())
-                                                .putExtra(XMLViewerFragment.ARG_PACKAGE_NAME, attrOwnerPackageName)
-                                                .putExtra(XMLViewerFragment.ARG_RESOURCE_ID, resourceId)
+                                                .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, XmlViewerFragment.class.getName())
+                                                .putExtra(XmlViewerFragment.ARG_PACKAGE_NAME, attrOwnerPackageName)
+                                                .putExtra(XmlViewerFragment.ARG_RESOURCE_ID, resourceId)
                                         );
                                     }
                                 });
@@ -376,60 +369,21 @@ public class XmlPreviewBuilder {
         }
     }
 
-
     /**
-     * Create ListAdapter for displaying items for fake text on ListView mode
+     * Create final possibly-chunked text for use in
+     * {@link com.github.michalbednarski.intentslab.TextFragment#publishText(Object)}
      *
-     * Only use when {@link #shouldUseFakeListText()} returned true
+     * Do not modify text after calling this method
      */
-    public ListAdapter createFakeTextListAdapter(Context context) {
-        assert mTextChunks != null && mSsb == null;
-        return new ArrayAdapter<SpannableStringBuilder>(context, 0, mTextChunks) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                if (convertView == null) {
-                    final TextView textView = new TextView(getContext());
-                    textView.setMovementMethod(LinkMovementMethod.getInstance());
-                    convertView = textView;
-                }
-                ((TextView) convertView).setText(getItem(position));
-                return convertView;
-            }
-
-            @Override
-            public boolean areAllItemsEnabled() {
-                return false;
-            }
-
-            @Override
-            public boolean isEnabled(int position) {
-                return false;
-            }
-        };
-    }
-
-    /**
-     * Get the text
-     *
-     * Only use when {@link #shouldUseFakeListText()} returned false
-     */
-    public CharSequence getText() {
-        assert mSsb != null && mTextChunks == null; // We must be in non-chunked mode and normalized
-        return mSsb;
-    }
-
-    /**
-     * Check if ListView faking long text should be used,
-     *
-     * Note: after calling this method don't add more text
-     * Note: must be called before {@link #createFakeTextListAdapter(android.content.Context)}
-     */
-    public boolean shouldUseFakeListText() {
+    public Object getPossiblyChunkedText() {
         normalizeChunks();
-        return mTextChunks != null;
+
+        if (mTextChunks != null) {
+            return mTextChunks.toArray(new CharSequence[mTextChunks.size()]);
+        } else {
+            return mSsb;
+        }
     }
-
-
 
 
 

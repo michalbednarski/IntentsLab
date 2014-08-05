@@ -18,41 +18,32 @@
 
 package com.github.michalbednarski.intentslab;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.XmlResourceParser;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.text.method.LinkMovementMethod;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ListView;
-import android.widget.TextView;
+
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
 
-public class XMLViewerFragment extends Fragment {
+public class XmlViewerFragment extends TextFragment {
     public static final String ARG_PACKAGE_NAME = "packageName__Arg";
     public static final String ARG_RESOURCE_ID = "resIdArg";
 
-    private View mLoaderView;
-    private View mXmlWrapperView;
-    private TextView mXmlTextView;
-    private ListView mFakeLongText;
-    private ReserializeXMLTask mTask = null;
-    private XmlPreviewBuilder mXmlPreviewBuilder = null;
+    private ReserializeXmlTask mTask = null;
 
-    public static XMLViewerFragment create(String packageName, int resourceId) {
+    public static XmlViewerFragment create(String packageName, int resourceId) {
         Bundle arguments = new Bundle();
         arguments.putString(ARG_PACKAGE_NAME, packageName);
         arguments.putInt(ARG_RESOURCE_ID, resourceId);
-        final XMLViewerFragment fragment = new XMLViewerFragment();
+        final XmlViewerFragment fragment = new XmlViewerFragment();
         fragment.setArguments(arguments);
         return fragment;
     }
@@ -61,20 +52,8 @@ public class XMLViewerFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        mTask = new ReserializeXMLTask();
+        mTask = new ReserializeXmlTask();
         mTask.execute();
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        final View view = inflater.inflate(R.layout.xml_viewer, container, false);
-        mLoaderView = view.findViewById(R.id.loader);
-        mXmlWrapperView = view.findViewById(R.id.xml_wrapper);
-        mXmlTextView = (TextView) view.findViewById(R.id.xml);
-        mXmlTextView.setMovementMethod(LinkMovementMethod.getInstance());
-        mFakeLongText = (ListView) view.findViewById(R.id.xml_fake_long_view);
-        publishTextIfReady();
-        return view;
     }
 
     @Override
@@ -86,10 +65,11 @@ public class XMLViewerFragment extends Fragment {
         }
     }
 
-    private class ReserializeXMLTask extends AsyncTask<Object, Object, CharSequence[]> {
+    private class ReserializeXmlTask extends AsyncTask<Object, Object, CharSequence[]> {
         private String mPackageName;
         private int mResourceId;
 
+        private XmlPreviewBuilder mXmlPreviewBuilder = null;
         private Context mApplicationContext;
 
         @Override
@@ -152,25 +132,9 @@ public class XMLViewerFragment extends Fragment {
         @Override
         protected void onPostExecute(CharSequence[] text) {
             mTask = null;
-            publishTextIfReady();
+            publishText(mXmlPreviewBuilder.getPossiblyChunkedText());
         }
     }
-
-    private void publishTextIfReady() {
-        if (mTask != null || mLoaderView == null) {
-            return;
-        }
-        if (mXmlPreviewBuilder.shouldUseFakeListText()) {
-            mFakeLongText.setAdapter(mXmlPreviewBuilder.createFakeTextListAdapter(getActivity()));
-            mFakeLongText.setVisibility(View.VISIBLE);
-        } else {
-            mXmlTextView.setText(mXmlPreviewBuilder.getText());
-            mXmlWrapperView.setVisibility(View.VISIBLE);
-        }
-
-        mLoaderView.setVisibility(View.GONE);
-    }
-
 
 
 
@@ -221,6 +185,7 @@ public class XMLViewerFragment extends Fragment {
     /**
      * Get manifest for given package
      */
+    @TargetApi(Build.VERSION_CODES.FROYO) // We can fallback to non-workaround version
     public static XmlResourceParser getManifest(Context context, String packageName) throws IOException, PackageManager.NameNotFoundException {
         // "android" package is special, we will always use workaround for it
         final boolean isSystemPackage = "android".equals(packageName);

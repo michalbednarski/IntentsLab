@@ -39,7 +39,7 @@ public class SingleFragmentActivity extends FragmentActivity {
 
     @SuppressWarnings("unchecked")
     private static final Class<? extends Fragment>[] WHITE_LIST = new Class[] {
-            XMLViewerFragment.class,
+            XmlViewerFragment.class,
             ComponentInfoFragment.class,
             ProviderInfoFragment.class,
             RegisteredReceiverInfoFragment.class,

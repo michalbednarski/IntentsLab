@@ -40,7 +40,7 @@ public class AppInfoActivity extends FragmentTabsActivity implements AppComponen
         }
 
         addTab("Components", new AppComponentsFragment());
-        addTab("Manifest", XMLViewerFragment.create(packageName, 0));
+        addTab("Manifest", XmlViewerFragment.create(packageName, 0));
 		allTabsAdded();
     }
 
