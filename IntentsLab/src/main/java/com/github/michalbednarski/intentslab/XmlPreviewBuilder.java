@@ -110,7 +110,7 @@ public class XmlPreviewBuilder {
             return ""; // Shouldn't happen
         }
         // http://stackoverflow.com/a/4903603
-        return new String(new char[spacesAmount]).replace('\0', ' ');
+        return new String(new char[spacesAmount]).replace('\0', '\u00a0');
     }
 
 
