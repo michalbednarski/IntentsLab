@@ -66,7 +66,7 @@ public class ReceiveBroadcastService extends Service {
                 if (stickyBroadcastIntent != null) {
                     context.startActivity(
                             new Intent(context, IntentEditorActivity.class)
-                                    .putExtra("intent", stickyBroadcastIntent)
+                                    .putExtra(IntentEditorActivity.EXTRA_INTENT, stickyBroadcastIntent)
                                     .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, IntentEditorConstants.BROADCAST)
                     );
                     Toast.makeText(context, R.string.received_sticky_broadcast, Toast.LENGTH_SHORT).show();
@@ -164,7 +164,7 @@ public class ReceiveBroadcastService extends Service {
 		mGotBroadcast = true;
 
 		Intent runEditor = new Intent(this, IntentEditorActivity.class);
-		runEditor.putExtra("intent", receivedBroadcast);
+		runEditor.putExtra(IntentEditorActivity.EXTRA_INTENT, receivedBroadcast);
 		runEditor.putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, IntentEditorConstants.BROADCAST);
 		runEditor.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
@@ -347,7 +347,7 @@ public class ReceiveBroadcastService extends Service {
             startActivity(
                     new Intent(this, IntentEditorActivity.class)
                             .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, IntentEditorConstants.BROADCAST)
-                            .putExtra("intent", mAdapter.getItem(position).intent)
+                            .putExtra(IntentEditorActivity.EXTRA_INTENT, mAdapter.getItem(position).intent)
             );
         }
 

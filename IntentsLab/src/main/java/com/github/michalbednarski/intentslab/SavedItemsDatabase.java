@@ -98,7 +98,7 @@ public class SavedItemsDatabase {
                                 try {
                                     context.startActivity(
                                         new Intent(context, IntentEditorActivity.class)
-                                            .putExtra("intent", Intent.parseUri(cursor.getString(2), 0))
+                                            .putExtra(IntentEditorActivity.EXTRA_INTENT, Intent.parseUri(cursor.getString(2), 0))
                                             .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, cursor.getInt(3))
                                             .putExtra(IntentEditorActivity.EXTRA_METHOD_ID, cursor.getInt(4))
                                     );

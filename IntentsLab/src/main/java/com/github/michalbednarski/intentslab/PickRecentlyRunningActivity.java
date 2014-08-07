@@ -144,7 +144,7 @@ public class PickRecentlyRunningActivity extends ListActivity implements Adapter
                             long id) {
         Intent baseIntent = mAdapter.getItem(position);
         Intent i = new Intent(this, IntentEditorActivity.class);
-        i.putExtra("intent", baseIntent);
+        i.putExtra(IntentEditorActivity.EXTRA_INTENT, baseIntent);
         startActivity(i);
     }
 

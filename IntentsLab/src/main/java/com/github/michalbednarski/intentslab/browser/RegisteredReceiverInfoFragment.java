@@ -149,7 +149,7 @@ public class RegisteredReceiverInfoFragment extends Fragment {
                 }
                 startActivity(
                         new Intent(getActivity(), IntentEditorActivity.class)
-                                .putExtra("intent", new Intent())
+                                .putExtra(IntentEditorActivity.EXTRA_INTENT, new Intent())
                                 .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, IntentEditorConstants.BROADCAST)
                                 .putExtra(IntentEditorActivity.EXTRA_INTENT_FILTERS, mReceiverInfo.intentFilters)
                 );

@@ -70,6 +70,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
     private static final int REQUEST_CODE_RESULT_INTENT_EDITOR = 754;
     public static final int REQUEST_CODE_REQUEST_INTENT_TRACKER_PERMISSION = 2243;
 
+    public static final String EXTRA_INTENT = "intent";
     public static final String EXTRA_COMPONENT_TYPE = "componentType_";
     public static final String EXTRA_METHOD_ID = "intents_lab.intent_editor.methodId";
     public static final String EXTRA_INTENT_FILTERS = "intentFilters_";
@@ -125,7 +126,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
             mGenericEditorMode = true;
         } else {
             // Start of editor
-            mEditedIntent = getIntent().getParcelableExtra("intent");
+            mEditedIntent = getIntent().getParcelableExtra(EXTRA_INTENT);
             mComponentType = getIntent().getIntExtra(EXTRA_COMPONENT_TYPE, IntentEditorConstants.ACTIVITY);
             mMethodId = getIntent().getIntExtra(EXTRA_METHOD_ID, 0);
             uncastedIntentFilters = getIntent().getParcelableArrayExtra(EXTRA_INTENT_FILTERS);
@@ -566,7 +567,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                         public void onClick(DialogInterface dialog, int which) {
                             startActivityForResult(
                                     new Intent(IntentEditorActivity.this, IntentEditorActivity.class)
-                                            .putExtra("intent", resultIntent)
+                                            .putExtra(EXTRA_INTENT, resultIntent)
                                             .putExtra(EXTRA_COMPONENT_TYPE, IntentEditorConstants.RESULT)
                                             .putExtra(EXTRA_METHOD_ID, resultCode)
                                             .putExtra(EXTRA_FORWARD_ABLE_RESULT, true),
@@ -588,7 +589,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                         public void onClick(DialogInterface dialog, int which) {
                             startActivity(
                                     new Intent(IntentEditorActivity.this, IntentEditorActivity.class)
-                                            .putExtra("intent", resultIntent)
+                                            .putExtra(EXTRA_INTENT, resultIntent)
                                             .putExtra(EXTRA_COMPONENT_TYPE, IntentEditorConstants.RESULT)
                             );
                         }

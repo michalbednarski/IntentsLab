@@ -84,7 +84,7 @@ public class ActivityMonitorActivity extends ListActivity {
                 if (item instanceof Intent) {
                     startActivity(
                             new Intent(ActivityMonitorActivity.this, IntentEditorActivity.class)
-                            .putExtra("intent", (Intent) item)
+                            .putExtra(IntentEditorActivity.EXTRA_INTENT, (Intent) item)
                     );
                 }
             }

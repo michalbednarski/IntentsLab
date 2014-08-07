@@ -368,7 +368,7 @@ public class ComponentInfoFragment extends Fragment {
                 }
                 startActivity(
                         new Intent(getActivity(), IntentEditorActivity.class)
-                                .putExtra("intent", new Intent().setClassName(mPackageName, mComponentName))
+                                .putExtra(IntentEditorActivity.EXTRA_INTENT, new Intent().setClassName(mPackageName, mComponentName))
                                 .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, mExtendedComponentInfo.componentType)
                                 .putExtra(IntentEditorActivity.EXTRA_INTENT_FILTERS, mExtendedComponentInfo.intentFilters)
                 );
