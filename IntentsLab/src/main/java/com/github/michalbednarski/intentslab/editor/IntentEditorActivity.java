@@ -34,6 +34,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.Menu;
@@ -77,6 +78,7 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
     private static final String EXTRA_FORWARD_ABLE_RESULT = "intents_lab.intent_editor.internal.forward_result";
     private static final String EXTRA_FORWARD_RESULT_CODE = "intents_lab.intent_editor.internal.forward_result.code";
     private static final String EXTRA_FORWARD_RESULT_INTENT = "intents_lab.intent_editor.internal.forward_result.intent";
+    private static final String EXTRA_LOCAL_STATE = "intents_lab.intent_editor.internal.local";
 
     //private BundleAdapter mExtrasAdapter;
 
@@ -133,6 +135,12 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
             if (mEditedIntent == null) {
                 mEditedIntent = new Intent();
             }
+
+            // Restore instance state
+            Object localState = getIntent().getExtras().get(EXTRA_LOCAL_STATE);
+            if (localState instanceof LocalIntentEditorState) {
+                mLocalState = (LocalIntentEditorState) localState;
+            }
         }
 
         // Manually cast array of intent filters
@@ -174,8 +182,58 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
         outState.putInt("methodId", mMethodId);
         outState.putParcelableArray("intentFilters", mAttachedIntentFilters);
         RunAsInitReceiver.putBinderInBundle(outState, "localIEState", mLocalState);
+        mDestroyExpected = true;
     }
 
+    // Anti force finish
+    private static long sLastForceFinish;
+    private boolean mDestroyExpected = false;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mDestroyExpected = false;
+    }
+
+    @Override
+    public void finish() {
+        mDestroyExpected = true;
+        super.finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        // System is destroying activity for no apparent reason...
+        // Since we haven't saved state nor called finish we'll restart ourselves
+        // https://android.googlesource.com/platform/frameworks/base/+/f83c555d8a153662d067702c0df5761b5e71b1bf%5E%21/services/java/com/android/server/am/ActivityManagerService.java
+        if (
+                !mDestroyExpected &&
+                getCallingActivity() == null && // Not started for result
+                sLastForceFinish + 3000 < SystemClock.uptimeMillis() // Last crash more than 3 s ago
+                ) {
+            // Save crash time
+            sLastForceFinish = SystemClock.uptimeMillis();
+
+            // Restart activity
+            updateIntent();
+            Intent intent = new Intent(this, IntentEditorActivity.class);
+            intent.putExtra(EXTRA_INTENT, mEditedIntent);
+            intent.putExtra(EXTRA_COMPONENT_TYPE, mComponentType);
+            intent.putExtra(EXTRA_METHOD_ID, mMethodId);
+            intent.putExtra(EXTRA_INTENT_FILTERS, mAttachedIntentFilters);
+            if (mLocalState != null) {
+                Bundle extra = new Bundle(1);
+                RunAsInitReceiver.putBinderInBundle(extra, EXTRA_LOCAL_STATE, mLocalState);
+                intent.putExtras(extra);
+            }
+
+            startActivity(intent);
+        }
+
+        super.onDestroy();
+    }
+
+    // Intent tracking
     boolean isIntentTrackerAvailable() {
         XIntentsLab xIntentsLab = XIntentsLabStatic.getInstance();
         return xIntentsLab != null && xIntentsLab.supportsObjectTracking();
