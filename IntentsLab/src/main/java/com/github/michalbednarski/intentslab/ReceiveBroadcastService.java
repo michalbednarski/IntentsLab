@@ -167,8 +167,12 @@ public class ReceiveBroadcastService extends Service {
 		runEditor.putExtra(IntentEditorActivity.EXTRA_INTENT, receivedBroadcast);
 		runEditor.putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, IntentEditorConstants.BROADCAST);
 		runEditor.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-					runEditor, 0);
+		PendingIntent contentIntent = PendingIntent.getActivity(
+                this,
+                0,
+                runEditor,
+                PendingIntent.FLAG_UPDATE_CURRENT
+        );
 
 		if (isAutoEditEnabled()) {
 			startActivity(runEditor);
