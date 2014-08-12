@@ -137,9 +137,11 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
             }
 
             // Restore instance state
-            Object localState = getIntent().getExtras().get(EXTRA_LOCAL_STATE);
-            if (localState instanceof LocalIntentEditorState) {
-                mLocalState = (LocalIntentEditorState) localState;
+            if (getIntent().getExtras() != null) {
+                Object localState = getIntent().getExtras().get(EXTRA_LOCAL_STATE);
+                if (localState instanceof LocalIntentEditorState) {
+                    mLocalState = (LocalIntentEditorState) localState;
+                }
             }
         }
 
