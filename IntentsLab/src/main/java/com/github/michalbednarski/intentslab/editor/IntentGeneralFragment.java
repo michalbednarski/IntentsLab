@@ -22,8 +22,6 @@ import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
@@ -32,10 +30,22 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
-import android.view.*;
+import android.view.ContextMenu;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.*;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.github.michalbednarski.intentslab.FormattedTextBuilder;
 import com.github.michalbednarski.intentslab.NameAutocompleteAdapter;
@@ -43,14 +53,18 @@ import com.github.michalbednarski.intentslab.PackageNameAutocompleteAdapter;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.providerlab.AdvancedQueryActivity;
+import com.github.michalbednarski.intentslab.providerlab.UriAutocompleteAdapter;
 import com.github.michalbednarski.intentslab.providerlab.proxy.ProxyProvider;
 import com.github.michalbednarski.intentslab.providerlab.proxy.ProxyProviderForGrantUriPermission;
-import com.github.michalbednarski.intentslab.providerlab.UriAutocompleteAdapter;
 import com.github.michalbednarski.intentslab.xposedhooks.api.IntentTracker;
 import com.github.michalbednarski.intentslab.xposedhooks.api.ReadBundleEntryInfo;
 import com.github.michalbednarski.intentslab.xposedhooks.api.TrackerUpdateListener;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSelectedListener, TrackerUpdateListener {
 
@@ -487,27 +501,11 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
 
     // COMPONENT
     private void pickComponent() {
-        Intent intent = new Intent(getEditedIntent(true)).setComponent(null);
-        PackageManager pm = getActivity().getPackageManager();
-        List<ResolveInfo> ri = null;
+        updateEditedIntent(mEditedIntent);
 
-        switch (getComponentType()) {
-            case IntentEditorConstants.ACTIVITY:
-                ri = pm.queryIntentActivities(intent, 0);
-                break;
-            case IntentEditorConstants.BROADCAST:
-                ri = pm.queryBroadcastReceivers(intent, 0);
-                break;
-            case IntentEditorConstants.SERVICE:
-                ri = pm.queryIntentServices(intent, 0);
-                break;
-        }
-        if (ri.isEmpty()) {
-            Toast.makeText(getActivity(), R.string.no_matching_components_found, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        new ComponentPickerDialogFragment(ri, this).show(getActivity().getSupportFragmentManager(), "component-picker");
-
+        ComponentPickerDialogFragment componentPickerDialog = new ComponentPickerDialogFragment();
+        componentPickerDialog.setTargetFragment(this, 0);
+        componentPickerDialog.show(getActivity().getSupportFragmentManager(), "component-picker");
     }
 
     private void findComponent() {

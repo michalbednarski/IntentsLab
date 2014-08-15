@@ -22,8 +22,10 @@ import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.pm.ServiceInfo;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
@@ -38,6 +40,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.Utils;
@@ -46,25 +50,64 @@ import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Fragment for choosing component for intent
+ *
+ * Must be in {@link IntentEditorActivity}
+ * and have target fragment set to {@link IntentGeneralFragment}
+ */
 public class ComponentPickerDialogFragment extends DialogFragment implements OnItemClickListener, OnItemLongClickListener {
-    private static final String ARG_CHOICES = "ComPicker.choices";
 
-    private ArrayList<ResolveInfo> mChoices;
-
-	ComponentPickerDialogFragment(List<ResolveInfo> choices, IntentGeneralFragment targetFragment) {
-        try {
-            mChoices = (ArrayList<ResolveInfo>) choices;
-        } catch (ClassCastException e) {
-            mChoices = new ArrayList<ResolveInfo>(choices);
-        }
-        Bundle arguments = new Bundle();
-        arguments.putParcelableArrayList(ARG_CHOICES, mChoices);
-        setArguments(arguments);
-
-        setTargetFragment(targetFragment, 0);
-    }
+    private ResolveInfo[] mChoices;
+    private int mEnabledChoicesCount;
 
     public ComponentPickerDialogFragment() {}
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+
+        // Get edited intent
+        IntentEditorActivity intentEditor = (IntentEditorActivity) getActivity();
+        Intent intent = new Intent(intentEditor.getEditedIntent());
+        intent.setComponent(null);
+
+        // Get components
+        PackageManager pm = intentEditor.getPackageManager();
+        List<ResolveInfo> ri = null;
+
+        switch (intentEditor.getComponentType()) {
+            case IntentEditorConstants.ACTIVITY:
+                ri = pm.queryIntentActivities(intent, PackageManager.GET_DISABLED_COMPONENTS);
+                break;
+            case IntentEditorConstants.BROADCAST:
+                ri = pm.queryBroadcastReceivers(intent, PackageManager.GET_DISABLED_COMPONENTS);
+                break;
+            case IntentEditorConstants.SERVICE:
+                ri = pm.queryIntentServices(intent, PackageManager.GET_DISABLED_COMPONENTS);
+                break;
+        }
+
+        // Cancel if no components
+        if (ri.isEmpty()) {
+            Toast.makeText(getActivity(), R.string.no_matching_components_found, Toast.LENGTH_SHORT).show();
+            dismiss();
+            return;
+        }
+
+        // Split enabled and disabled choices
+        ArrayList<ResolveInfo> choices = new ArrayList<ResolveInfo>();
+        ArrayList<ResolveInfo> disabledChoices = new ArrayList<ResolveInfo>();
+        for (ResolveInfo resolveInfo : ri) {
+            (isComponentEnabled(pm, resolveInfo) ? choices : disabledChoices)
+                    .add(resolveInfo);
+        }
+
+        mEnabledChoicesCount = choices.size();
+        choices.addAll(disabledChoices);
+        mChoices = choices.toArray(new ResolveInfo[choices.size()]);
+    }
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -75,10 +118,12 @@ public class ComponentPickerDialogFragment extends DialogFragment implements OnI
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        // Abort if nothing found, onCreate called dismiss()
         if (mChoices == null) {
-            mChoices = getArguments().getParcelableArrayList(ARG_CHOICES);
+            return null;
         }
 
+        // Create list
         ListView lv = new ListView(getActivity(), null);
         lv.setId(android.R.id.list);
         lv.setAdapter(new Adapter());
@@ -95,6 +140,35 @@ public class ComponentPickerDialogFragment extends DialogFragment implements OnI
 				isService ? info.serviceInfo.name : info.activityInfo.name
 			).flattenToShortString();
 	}
+
+    private static boolean isComponentEnabled(PackageManager pm, ResolveInfo info) {
+        final boolean defaultEnabled;
+        final ComponentName componentName;
+
+        ActivityInfo activityInfo = info.activityInfo;
+        if (activityInfo != null) {
+            if (!activityInfo.applicationInfo.enabled) {
+                return false;
+            }
+            defaultEnabled = activityInfo.enabled;
+            componentName = new ComponentName(activityInfo.packageName, activityInfo.name);
+        } else {
+            ServiceInfo serviceInfo = info.serviceInfo;
+            if (!serviceInfo.applicationInfo.enabled) {
+                return false;
+            }
+            defaultEnabled = serviceInfo.enabled;
+            componentName = new ComponentName(serviceInfo.packageName, serviceInfo.name);
+        }
+
+        int enabledSetting = pm.getComponentEnabledSetting(componentName);
+        if (enabledSetting == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT) {
+            return defaultEnabled;
+        } else {
+            return enabledSetting != PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+        }
+    }
+
 
     private class Adapter extends ArrayAdapter<ResolveInfo> {
         private LayoutInflater mInflater;
@@ -120,6 +194,9 @@ public class ComponentPickerDialogFragment extends DialogFragment implements OnI
                 .setText(getComponentName(info));
 
             ((ImageView)convertView.findViewById(R.id.app_icon)).setImageDrawable(info.loadIcon(mPm));
+
+            setTextViewsEnabled(convertView, position < mEnabledChoicesCount);
+
             return convertView;
         }
     }
@@ -129,7 +206,7 @@ public class ComponentPickerDialogFragment extends DialogFragment implements OnI
      */
 	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        ((IntentGeneralFragment) getTargetFragment()).setComponentText(getComponentName(mChoices.get(position)));
+        ((IntentGeneralFragment) getTargetFragment()).setComponentText(getComponentName(mChoices[position]));
 		dismiss();
 	}
 
@@ -138,7 +215,7 @@ public class ComponentPickerDialogFragment extends DialogFragment implements OnI
      */
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-        ResolveInfo info = mChoices.get(position);
+        ResolveInfo info = mChoices[position];
         boolean isService = info.activityInfo == null;
         startActivity(
                 new Intent(getActivity(), SingleFragmentActivity.class)
@@ -148,5 +225,18 @@ public class ComponentPickerDialogFragment extends DialogFragment implements OnI
                 .putExtra(ComponentInfoFragment.ARG_LAUNCHED_FROM_INTENT_EDITOR, true)
         );
         return true;
+    }
+
+    private static void setTextViewsEnabled(View v, boolean enabled) {
+        if (v instanceof TextView) {
+            v.setEnabled(enabled);
+        }
+
+        if (v instanceof ViewGroup) {
+            final ViewGroup vg = (ViewGroup) v;
+            for (int i = vg.getChildCount() - 1; i >= 0; i--) {
+                setTextViewsEnabled(vg.getChildAt(i), enabled);
+            }
+        }
     }
 }
