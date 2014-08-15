@@ -42,7 +42,7 @@
 
     <item
         android:id="@+id/save"
-        android:title="Save"/>
+        android:title="@string/save"/>
 
     <item
         android:id="@+id/track_intent"

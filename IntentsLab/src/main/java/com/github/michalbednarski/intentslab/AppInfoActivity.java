@@ -39,8 +39,8 @@ public class AppInfoActivity extends FragmentTabsActivity implements AppComponen
             setTitle(packageName);
         }
 
-        addTab("Components", new AppComponentsFragment());
-        addTab("Manifest", XmlViewerFragment.create(packageName, 0));
+        addTab(getString(R.string.app_components), new AppComponentsFragment());
+        addTab(getString(R.string.app_manifest), XmlViewerFragment.create(packageName, 0));
 		allTabsAdded();
     }
 

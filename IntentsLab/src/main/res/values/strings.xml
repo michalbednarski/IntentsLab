@@ -51,7 +51,8 @@
     <string name="item_name">Name:</string>
     <string name="item_type">Type:</string>
     <string name="item_value">Value:</string>
-    <!-- <string name="title_activity_start">StartActivity</string> -->
+
+    <string name="flags">Flags</string>
 
     <string name="startactivityforresult_no_result">Activity finished without result\nresultCode=%1$d</string>
     <string name="startactivityforresult_got_result">Got activity result</string>
@@ -68,6 +69,8 @@
     <string name="filters_filter_substring_and_insensitive">Match just substring and case insensitively</string>
     <string name="attach_intent_filter_all">All</string>
     <string name="intent_filter_attached">IntentFilter attached</string>
+    <string name="filter_options">Filter options</string>
+    <string name="dont_filter">Don\'t filter</string>
 
     <!-- Unused -->
     <!--<string name="hello_world">Hello world!</string>-->
@@ -202,6 +205,8 @@
     <string name="disable_interception">Disable interception</string>
 
     <!-- App info -->
+    <string name="app_components">Components</string>
+    <string name="app_manifest">Manifest</string>
     <string name="activities_not_exported">Activities (Not exported)</string>
     <string name="defined_permissions">Permissions defined by</string>
     <string name="granted_permissions">Granted permissions</string>
@@ -214,6 +219,7 @@
     <string name="save">Save</string>
     <string name="save_as_name">Name:</string>
     <string name="saved">Saved</string>
+    <string name="saved_items">Saved items</string>
     <string name="no_saved_items">No saved items</string>
     <string name="value_parse_error">Parse error</string>
     <string name="show_non_public_fields">Show non-public fields</string>

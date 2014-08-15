@@ -33,12 +33,12 @@
             android:layout_height="wrap_content"
             android:id="@+id/options"
             android:layout_weight="1"
-            android:text="Filter options"/>
+            android:text="@string/filter_options"/>
 
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Don't filter"
+            android:text="@string/dont_filter"
             android:id="@+id/skip_filters_checkbox"/>
     </LinearLayout>
 

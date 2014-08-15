@@ -62,7 +62,7 @@
         <activity android:name=".providerlab.QueryResultActivity"/>
         <activity
             android:name=".SavedItemsActivity"
-            android:label="Saved items"/>
+            android:label="@string/saved_items"/>
         <activity
             android:name=".providerlab.AdvancedQueryActivity"
             android:windowSoftInputMode="stateHidden"/>
