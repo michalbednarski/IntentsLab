@@ -39,6 +39,9 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".StartActivityMultitask"
+            android:taskAffinity="" />
+        <activity
             android:name=".editor.IntentEditorActivity"
             android:windowSoftInputMode="stateHidden">
         </activity>

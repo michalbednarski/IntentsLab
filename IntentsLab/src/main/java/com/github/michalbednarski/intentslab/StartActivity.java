@@ -39,6 +39,8 @@ import com.github.michalbednarski.intentslab.providerlab.proxy.LogViewerActivity
 import com.github.michalbednarski.intentslab.runas.RemoteEntryPoint;
 import com.github.michalbednarski.intentslab.runas.RunAsInitReceiver;
 
+import java.util.Random;
+
 public class StartActivity extends FragmentActivity {
 
     private ComponentName mInterceptActivityComponentName;
@@ -97,6 +99,20 @@ public class StartActivity extends FragmentActivity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 startActivity(new Intent(StartActivity.this, ClipboardActivity.class));
+                return true;
+            }
+        });
+        menu.add("Another instance (experimental)").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                startActivity(
+                        new Intent(
+                                StartActivity.this,
+                                StartActivityMultitask.class
+                        )
+                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                        .setAction("mi" + new Random().nextLong())
+                );
                 return true;
             }
         });
