@@ -24,6 +24,7 @@ import android.support.v4.app.FragmentActivity;
 import android.widget.Toast;
 
 import com.github.michalbednarski.intentslab.bindservice.AidlControlsFragment;
+import com.github.michalbednarski.intentslab.bindservice.DumpSysFragment;
 import com.github.michalbednarski.intentslab.bindservice.InvokeAidlMethodFragment;
 import com.github.michalbednarski.intentslab.bindservice.callback.CallbackCallsFragment;
 import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
@@ -46,7 +47,8 @@ public class SingleFragmentActivity extends FragmentActivity {
             PermissionInfoFragment.class,
             AidlControlsFragment.class,
             InvokeAidlMethodFragment.class,
-            CallbackCallsFragment.class
+            CallbackCallsFragment.class,
+            DumpSysFragment.class
     };
 
 

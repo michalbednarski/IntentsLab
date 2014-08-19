@@ -28,6 +28,7 @@ import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -64,6 +65,12 @@ class RemoteInterfaceImpl extends IRemoteInterface.Stub {
     public void dumpServiceAsync(IBinder service, ParcelFileDescriptor fd, String[] args) throws RemoteException {
         // This is oneway call and therefore it's already async so we behave normally here
         service.dump(fd.getFileDescriptor(), args);
+        try {
+            fd.close();
+        } catch (IOException e) {
+            // ignore
+            e.printStackTrace();
+        }
     }
 
     @Override

@@ -25,13 +25,13 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.github.michalbednarski.intentslab.R;
-import com.github.michalbednarski.intentslab.bindservice.manager.BaseServiceFragment;
+import com.github.michalbednarski.intentslab.bindservice.manager.BaseServiceFragmentWithMenu;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 
 /**
  * Created by mb on 16.10.13.
  */
-public class UnrecognizedAidlFragment extends BaseServiceFragment {
+public class UnrecognizedAidlFragment extends BaseServiceFragmentWithMenu {
 
     String mMessage;
 
@@ -39,6 +39,7 @@ public class UnrecognizedAidlFragment extends BaseServiceFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+        setHasOptionsMenu(true);
 
         BindServiceManager.Helper serviceHelper = getServiceHelper();
         mMessage = "No AIDL found\ngetInterfaceDescriptor() = " + serviceHelper.getInterfaceDescriptor();

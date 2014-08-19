@@ -20,7 +20,6 @@ package com.github.michalbednarski.intentslab.bindservice;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.RelativeSizeSpan;
@@ -34,15 +33,14 @@ import android.widget.TextView;
 
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.bindservice.manager.AidlInterface;
-import com.github.michalbednarski.intentslab.bindservice.manager.BaseServiceFragment;
+import com.github.michalbednarski.intentslab.bindservice.manager.BaseServiceFragmentWithMenu;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
-import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 
 /**
  * Created by mb on 30.09.13.
  */
-public class AidlControlsFragment extends BaseServiceFragment {
+public class AidlControlsFragment extends BaseServiceFragmentWithMenu {
 
     private AidlInterface mAidlInterface;
     private BaseAdapter mAdapter;
@@ -52,6 +50,7 @@ public class AidlControlsFragment extends BaseServiceFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+        setHasOptionsMenu(true);
 
         getServiceHelper().prepareAidlAndRunWhenReady(getActivity(), new BindServiceManager.AidlReadyCallback() {
             @Override

@@ -68,7 +68,7 @@ public class XmlPreviewBuilder {
     private final int mAttributeValueColor;
 
 
-    private static final int CHUNK_LINES = 50;
+    public static final int CHUNK_LINES = 50;
     private ArrayList<SpannableStringBuilder> mTextChunks = null;
     private int mLinesToNextTextSplit = CHUNK_LINES;
 
