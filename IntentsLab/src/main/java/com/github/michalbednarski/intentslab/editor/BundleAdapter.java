@@ -108,7 +108,6 @@ public class BundleAdapter<OwnerFragment extends Fragment & BundleAdapter.Bundle
 
     public BundleAdapter(Bundle map, EditorLauncher editorLauncher, OwnerFragment ownerFragment) {
         mEditorLauncher = editorLauncher;
-        mEditorLauncher.setCallback(this);
         mOwnerFragment = ownerFragment;
         setBundle(map);
     }

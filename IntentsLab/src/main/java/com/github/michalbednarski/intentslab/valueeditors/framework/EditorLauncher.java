@@ -21,13 +21,15 @@ package com.github.michalbednarski.intentslab.valueeditors.framework;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.util.SparseArray;
 import android.widget.Toast;
+
+import com.github.michalbednarski.intentslab.BuildConfig;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.editor.BundleAdapter;
@@ -37,8 +39,10 @@ import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
 import com.github.michalbednarski.intentslab.valueeditors.ArrayEditorFragment;
 import com.github.michalbednarski.intentslab.valueeditors.BundleEditorFragment;
 import com.github.michalbednarski.intentslab.valueeditors.EnumEditor;
-import com.github.michalbednarski.intentslab.valueeditors.object.ObjectEditorFragment;
 import com.github.michalbednarski.intentslab.valueeditors.StringLikeItemEditor;
+import com.github.michalbednarski.intentslab.valueeditors.object.ObjectEditorFragment;
+
+import java.util.HashMap;
 
 /**
  * Editor launcher for object editing
@@ -82,13 +86,15 @@ public class EditorLauncher {
             new ObjectEditorFragment.LaunchableEditor()
     };
 
+    interface EditorLauncherCallbackBase {}
+
     /**
      * EditorLauncher Callback
      *
      * This is interface implemented by caller of launchEditor
      * returning data after edit, passed to constructor
      */
-    public interface EditorLauncherCallback {
+    public interface EditorLauncherCallback extends EditorLauncherCallbackBase {
         void onEditorResult(String key, Object newValue);
     }
 
@@ -102,64 +108,96 @@ public class EditorLauncher {
         void onSandboxedEditorResult(String key, SandboxedObject newWrappedValue);
     }
 
+    /**
+     * EditorLauncher Callback Delegate
+     *
+     * This is interface implemented by caller of launchEditor
+     * returning data after edit, passed to constructor
+     */
+    public interface EditorLauncherCallbackDelegate extends EditorLauncherCallbackBase {
+        EditorLauncherCallback getEditorLauncherCallback();
+    }
+
 
     private static final int REQUEST_CODE_INTERNAL_EDITOR = 0;
 
-    final ActivityHandlingHeadlessFragment mFragment;
+    private HelperFragment mHelperFragment;
 
-    //private final ActivityResultHandler mActivityResultHandler;
-    private EditorLauncherCallback mEditorLauncherCallback = null;
+    HelperFragment getHelperFragment() {
+        return mHelperFragment;
+    }
+
+    private Fragment getOwnerFragment() {
+        return mHelperFragment.getParentFragment();
+    }
+
+    private EditorLauncherCallback getCallback() {
+        Fragment ownerFragment = getOwnerFragment();
+        if (ownerFragment instanceof EditorLauncherCallbackDelegate) {
+            return ((EditorLauncherCallbackDelegate) ownerFragment).getEditorLauncherCallback();
+        } else {
+            return (EditorLauncherCallback) ownerFragment;
+        }
+    }
 
 
     /**
-     * Constructor
+     * For state restoring after process being killed
      *
-     * Note: creating this object immediately triggers pending calls to onEditorResult's
-     *       Only use this when you are ready to receive them
-     *
-     * @param tag Tag for helper fragment, use null to auto-generate
-     *            then save value of {@link #getTag()} and pass it here when restoring
-     *
+     * ownerFragment -> editorLauncher
      */
-    public EditorLauncher(FragmentActivity fragmentActivity, String tag) {
-        final FragmentManager fragmentManager = fragmentActivity.getSupportFragmentManager();
+    private static HashMap<Fragment, EditorLauncher> sPendingInitializations = new HashMap<Fragment, EditorLauncher>();
 
-        // Create tag if null was passed
-        if (tag == null) {
-            tag = "AutoEdLaTag_" + Math.random();
-            while (fragmentManager.findFragmentByTag(tag) != null) {
-                tag += "c";
-            }
+    EditorLauncher(final Fragment ownerFragment) {
+        // Verify interface
+        if (BuildConfig.DEBUG && !(
+                ownerFragment instanceof EditorLauncherCallback ||
+                ownerFragment instanceof EditorLauncherCallbackDelegate
+                )) {
+            throw new AssertionError("Fragment doesn't implement callback interface");
         }
 
-        // Try finding existing fragment
-        ActivityHandlingHeadlessFragment fragment = (ActivityHandlingHeadlessFragment) fragmentManager.findFragmentByTag(tag);
+        // Find existing helper fragment
+        FragmentManager fragmentManager = ownerFragment.getChildFragmentManager();
+        mHelperFragment = (HelperFragment) fragmentManager.findFragmentByTag(TAG_HELPER_FRAGMENT);
 
-        // Create new fragment if we don't have existing
-        if (fragment == null) {
-            fragment = new ActivityHandlingHeadlessFragment();
-            fragmentManager.beginTransaction().add(fragment, tag).commit();
+        // Create it if it doesn't exist
+        if (mHelperFragment == null) {
+            mHelperFragment = new HelperFragment();
+            fragmentManager.beginTransaction().add(mHelperFragment, TAG_HELPER_FRAGMENT).commit();
+            fragmentManager.executePendingTransactions();
+
+            // If our process has been restarted fragment manager won't
+            // use fragment we added above.
+            // Add owner (parent) fragment to pending initializations and let it
+            // associate with us in it's onCreate
+            sPendingInitializations.put(ownerFragment, this);
+            (new Handler()).post(new Runnable() {
+                @Override
+                public void run() {
+                    sPendingInitializations.remove(ownerFragment);
+                }
+            });
         }
 
-        // Save references between us and fragment
-        fragment.mEditorLauncher = this;
-        mFragment = fragment;
+        // Assign to helper fragment
+        mHelperFragment.mEditorLauncher = this;
     }
 
-    /**
-     * Set this to same value as hosting fragment
-     */
-    public void setRetainFragmentInstance(boolean retain) {
-        mFragment.setRetainInstance(retain);
+    static EditorLauncher getExistingForFragment(Fragment ownerFragment) {
+        HelperFragment helperFragment = (HelperFragment) ownerFragment.getChildFragmentManager().findFragmentByTag(TAG_HELPER_FRAGMENT);
+        if (helperFragment != null) {
+            return helperFragment.mEditorLauncher;
+        }
+        return null;
     }
 
-    /***/
-    public String getTag() {
-        return mFragment.getTag();
-    }
-
-    public void setCallback(EditorLauncherCallback callback) {
-        mEditorLauncherCallback = callback;
+    public static <F extends Fragment & EditorLauncher.EditorLauncherCallbackBase> EditorLauncher getForFragment(F ownerFragment) {
+        EditorLauncher editorLauncher = getExistingForFragment(ownerFragment);
+        if (editorLauncher == null) {
+            editorLauncher = new EditorLauncher(ownerFragment);
+        }
+        return editorLauncher;
     }
 
     /**
@@ -209,8 +247,8 @@ public class EditorLauncher {
             if (editor.canEdit(value)) {
                 if (editor instanceof Editor.EditorActivity) {
                     // Editor in activity
-                    Intent editorIntent = ((Editor.EditorActivity) editor).getEditorIntent(mFragment.getActivity());
-                    mFragment.startEditorInActivity(editorIntent, key, value);
+                    Intent editorIntent = ((Editor.EditorActivity) editor).getEditorIntent(mHelperFragment.getActivity());
+                    mHelperFragment.startEditorInActivity(editorIntent, key, value);
                 } else if (editor instanceof Editor.DialogFragmentEditor) {
                     // Editor in DialogFragment
                     ValueEditorDialogFragment d = ((Editor.DialogFragmentEditor) editor).getEditorDialogFragment();
@@ -219,8 +257,8 @@ public class EditorLauncher {
                     args.putString(Editor.EXTRA_TITLE, title);
                     BundleAdapter.putInBundle(args, Editor.EXTRA_VALUE, value);
                     d.setArguments(args);
-                    d.setTargetFragment(mFragment, 0);
-                    d.show(mFragment.getActivity().getSupportFragmentManager(), "DFEditorFor" + key);
+                    d.setTargetFragment(mHelperFragment, 0);
+                    d.show(mHelperFragment.getActivity().getSupportFragmentManager(), "DFEditorFor" + key + Math.random());
                 } else if (editor instanceof Editor.FragmentEditor) {
                     Bundle args = new Bundle();
                     args.putString(SingleEditorActivity.EXTRA_ECHOED_KEY, key);
@@ -229,12 +267,12 @@ public class EditorLauncher {
                 } else if (editor instanceof Editor.InPlaceValueToggler) {
                     // In place value toggler (eg. for Boolean)
                     Object newValue = ((Editor.InPlaceValueToggler) editor).toggleObjectValue(value);
-                    mEditorLauncherCallback.onEditorResult(key, newValue);
+                    getCallback().onEditorResult(key, newValue);
                 }
                 return;
             }
         }
-        Toast.makeText(mFragment.getActivity(), R.string.type_unsupported, Toast.LENGTH_SHORT).show();
+        Toast.makeText(mHelperFragment.getActivity(), R.string.type_unsupported, Toast.LENGTH_SHORT).show();
     }
 
     public void launchEditorForNew(String key, SandboxedType type) {
@@ -244,8 +282,8 @@ public class EditorLauncher {
         args.putParcelable(CreateNewDialog.ARG_SANDBOXED_TYPE, type);
         args.putBoolean(CreateNewDialog.ARG_ALLOW_SANDBOX, false);
         d.setArguments(args);
-        d.setTargetFragment(mFragment, 0);
-        d.show(mFragment.getActivity().getSupportFragmentManager(), "DFNewFor" + key);
+        d.setTargetFragment(mHelperFragment, 0);
+        d.show(mHelperFragment.getActivity().getSupportFragmentManager(), "DFNewFor" + key);
     }
 
     /**
@@ -277,9 +315,9 @@ unwrap: {
 
     void openEditorFragment(Class<? extends ValueEditorFragment> editorFragment, Bundle args) {
         args.putString(SingleEditorActivity.EXTRA_FRAGMENT_CLASS_NAME, editorFragment.getName());
-        Intent intent = new Intent(mFragment.getActivity(), SingleEditorActivity.class);
+        Intent intent = new Intent(mHelperFragment.getActivity(), SingleEditorActivity.class);
         intent.replaceExtras(args);
-        mFragment.startActivityForResult(intent, REQUEST_CODE_INTERNAL_EDITOR);
+        ChildFragmentWorkaround.startActivityForResultFromFragment(mHelperFragment, intent, REQUEST_CODE_INTERNAL_EDITOR);
     }
 
     /**
@@ -390,9 +428,10 @@ unwrap: {
 
     /**
      * Fragment used for activity handling and retaining state
+     * Added as child fragment of EditorLauncher owner fragment
      */
-    public static class ActivityHandlingHeadlessFragment extends Fragment {
-        public ActivityHandlingHeadlessFragment() {}
+    public static class HelperFragment extends Fragment {
+        public HelperFragment() {}
         private EditorLauncher mEditorLauncher;
         private EditorLauncherState mState;
 
@@ -402,7 +441,7 @@ unwrap: {
                 if (resultCode == Activity.RESULT_OK) {
                     final String key = data.getStringExtra(SingleEditorActivity.EXTRA_ECHOED_KEY);
                     final SandboxedObject sandboxedObject = data.getParcelableExtra(SingleEditorActivity.EXTRA_RESULT);
-                    EditorLauncherCallback callback = mEditorLauncher.mEditorLauncherCallback;
+                    EditorLauncherCallback callback = mEditorLauncher.getCallback();
                     if (callback instanceof EditorLauncherWithSandboxCallback) {
                         ((EditorLauncherWithSandboxCallback) callback).onSandboxedEditorResult(key, sandboxedObject);
                     } else {
@@ -415,10 +454,10 @@ unwrap: {
                 if (data != null && data.getExtras() != null) {
                     Object newValue = data.getExtras().get(Editor.EXTRA_VALUE);
                     if (requestInfo.isSandboxed) {
-                        ((EditorLauncherWithSandboxCallback) mEditorLauncher.mEditorLauncherCallback)
+                        ((EditorLauncherWithSandboxCallback) mEditorLauncher.getCallback())
                                 .onSandboxedEditorResult(key, (SandboxedObject) newValue);
                     } else {
-                        mEditorLauncher.mEditorLauncherCallback.onEditorResult(key, requestInfo.deepCastIfNeeded(newValue));
+                        mEditorLauncher.getCallback().onEditorResult(key, requestInfo.deepCastIfNeeded(newValue));
                     }
                 }
             } else {
@@ -430,17 +469,18 @@ unwrap: {
             Bundle extras = new Bundle(1);
             BundleAdapter.putInBundle(extras, Editor.EXTRA_VALUE, value);
             int requestCode = mState.saveRequestInfoAndGetCode(new ActivityRequestInfo(key, value.getClass()));
-            startActivityForResult(baseEditorIntent.putExtras(extras), requestCode);
+            ChildFragmentWorkaround.startActivityForResultFromFragment(this, baseEditorIntent.putExtras(extras), requestCode);
         }
 
         void handleDialogResponse(String key, Object newValue) {
-            mEditorLauncher.mEditorLauncherCallback.onEditorResult(key, newValue);
+            mEditorLauncher.getCallback().onEditorResult(key, newValue);
         }
 
         @Override
         public void onSaveInstanceState(Bundle outState) {
             super.onSaveInstanceState(outState);
             outState.putParcelable(STATE_EDITOR_LAUNCHER_STATE, mState);
+            Utils.putLiveRefInBundle(outState, STATE_EDITOR_LAUNCHER_INSTANCE, mEditorLauncher);
         }
 
         @Override
@@ -450,10 +490,22 @@ unwrap: {
                 mState = new EditorLauncherState();
             } else {
                 mState = savedInstanceState.getParcelable(STATE_EDITOR_LAUNCHER_STATE);
+                if (mEditorLauncher == null) {
+                    mEditorLauncher = Utils.getLiveRefFromBundle(savedInstanceState, STATE_EDITOR_LAUNCHER_INSTANCE);
+                    if (mEditorLauncher == null) {
+                        mEditorLauncher = sPendingInitializations.get(getParentFragment());
+                    }
+                    if (mEditorLauncher != null) {
+                        mEditorLauncher.mHelperFragment = this;
+                    }
+                }
             }
         }
     }
 
     private static final String STATE_EDITOR_LAUNCHER_STATE = "EditorLauncher.internal.genericState";
+    private static final String STATE_EDITOR_LAUNCHER_INSTANCE = "EditorLauncher.internal.this";
+
+    private static final String TAG_HELPER_FRAGMENT = "EditorLauncher.HF";
 
 }

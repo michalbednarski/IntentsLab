@@ -40,13 +40,11 @@ import java.util.ArrayList;
 /**
  * Dialog for creating object using it's constructor
  */
-public class ConstructorDialog extends ValueEditorDialogFragment implements DialogInterface.OnClickListener {
+public class ConstructorDialog extends ValueEditorDialogFragment implements DialogInterface.OnClickListener, EditorLauncher.EditorLauncherCallbackDelegate {
 
     private static final String ARG_CONSTRUCTOR_NR = "ConstructorDialog.nr";
     private static final String ARG_SANDBOXED_TYPE = "ConstructorDialog.type";
     private static final String ARG_METHOD_INFO = "ConstructorDialog.method-info";
-
-    private static final String STATE_EDITOR_LAUNCHER_TAG = "ConstructorDialog.s.EditorLauncherTag";
 
     private EditorLauncher mEditorLauncher;
     private ArgumentsEditorHelper mArgumentsEditorHelper;
@@ -57,14 +55,14 @@ public class ConstructorDialog extends ValueEditorDialogFragment implements Dial
         super.onCreate(savedInstanceState);
 
         // Prepare EditorLauncher and ArgumentsEditorHelper
-        mEditorLauncher = new EditorLauncher(
-                getActivity(),
-                savedInstanceState != null ?
-                        savedInstanceState.getString(STATE_EDITOR_LAUNCHER_TAG) :
-                        null
-        );
+        mEditorLauncher = EditorLauncher.getForFragment(this);
         mArgumentsEditorHelper = new ArgumentsEditorHelper(getArguments().<SandboxedMethod>getParcelable(ARG_METHOD_INFO), false);
         mArgumentsEditorHelper.setEditorLauncher(mEditorLauncher);
+    }
+
+    @Override
+    public EditorLauncher.EditorLauncherCallback getEditorLauncherCallback() {
+        return mArgumentsEditorHelper;
     }
 
     @Override
@@ -102,12 +100,6 @@ public class ConstructorDialog extends ValueEditorDialogFragment implements Dial
             // We don't expect any other exceptions
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putString(STATE_EDITOR_LAUNCHER_TAG, mEditorLauncher.getTag());
     }
 
     // Information about creation

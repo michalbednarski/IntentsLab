@@ -18,7 +18,6 @@
 
 package com.github.michalbednarski.intentslab.bindservice;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -41,7 +40,6 @@ import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceMana
 import com.github.michalbednarski.intentslab.clipboard.ClipboardService;
 import com.github.michalbednarski.intentslab.runas.IRemoteInterface;
 import com.github.michalbednarski.intentslab.runas.RunAsManager;
-import com.github.michalbednarski.intentslab.sandbox.IAidlInterface;
 import com.github.michalbednarski.intentslab.sandbox.InvokeMethodResult;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedMethod;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
@@ -52,10 +50,9 @@ import com.github.michalbednarski.intentslab.valueeditors.object.InlineValueEdit
 /**
  * Created by mb on 03.10.13.
  */
-public class InvokeAidlMethodFragment extends BaseServiceFragment implements BindServiceManager.AidlReadyCallback {
+public class InvokeAidlMethodFragment extends BaseServiceFragment implements BindServiceManager.AidlReadyCallback, EditorLauncher.EditorLauncherCallbackDelegate {
     static final String ARG_METHOD_NUMBER = "method-number";
     private static final String STATE_METHOD_ARGUMENTS = "method-arguments";
-    private static final String STATE_EDITOR_LAUNCHER_TAG = "launcher-tag";
 
     private AidlInterface mAidlInterface;
     private int mMethodNumber;
@@ -67,28 +64,13 @@ public class InvokeAidlMethodFragment extends BaseServiceFragment implements Bin
 
 
     @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-
-        if (mArgumentsEditorHelper != null) {
-            mArgumentsEditorHelper.setEditorLauncher(mEditorLauncher);
-        }
-    }
-
-    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
         setHasOptionsMenu(true);
 
         // Prepare editor launcher
-        mEditorLauncher = new EditorLauncher(
-                getActivity(),
-                savedInstanceState != null ?
-                        savedInstanceState.getString(STATE_EDITOR_LAUNCHER_TAG) :
-                        null
-        );
-        mEditorLauncher.setRetainFragmentInstance(true);
+        mEditorLauncher = EditorLauncher.getForFragment(this);
 
         // Restore method arguments from state
         if (savedInstanceState != null) {
@@ -102,6 +84,11 @@ public class InvokeAidlMethodFragment extends BaseServiceFragment implements Bin
         Bundle args = getArguments();
         mMethodNumber = args.getInt(ARG_METHOD_NUMBER);
         getServiceHelper().prepareAidlAndRunWhenReady(getActivity(), this);
+    }
+
+    @Override
+    public EditorLauncher.EditorLauncherCallback getEditorLauncherCallback() {
+        return mArgumentsEditorHelper;
     }
 
     @Override
@@ -124,6 +111,7 @@ public class InvokeAidlMethodFragment extends BaseServiceFragment implements Bin
 
         // Prepare arguments editor helper
         mArgumentsEditorHelper = new ArgumentsEditorHelper(sandboxedMethod, true);
+        // TODO: merge ArgumentEditorHelper and EditorLauncher lifecycles
         mArgumentsEditorHelper.setEditorLauncher(mEditorLauncher);
 
         // Restore arguments
@@ -144,9 +132,8 @@ public class InvokeAidlMethodFragment extends BaseServiceFragment implements Bin
         outState.putParcelableArray(
                 STATE_METHOD_ARGUMENTS,
                 mMethodArgumentsToRestore != null ? mMethodArgumentsToRestore : // Not fully restored
-                mArgumentsEditorHelper != null ? mArgumentsEditorHelper.getSandboxedArguments() : null
+                        mArgumentsEditorHelper != null ? mArgumentsEditorHelper.getSandboxedArguments() : null
         );
-        outState.putString(STATE_EDITOR_LAUNCHER_TAG, mEditorLauncher.getTag());
     }
 
     @Override

@@ -38,7 +38,7 @@ import com.github.michalbednarski.intentslab.valueeditors.framework.ValueEditorF
 /**
  * Activity for editing general objects
  */
-public class ObjectEditorFragment extends ValueEditorFragment implements ObjectEditorHelper.ObjectEditorHelperCallback {
+public class ObjectEditorFragment extends ValueEditorFragment implements ObjectEditorHelper.ObjectEditorHelperCallback, EditorLauncher.EditorLauncherCallbackDelegate {
 
     private static final String STATE_SHOW_NON_PUBLIC_FIELDS = "ObjectEditorActivity.showNonPublicFields";
 
@@ -58,7 +58,7 @@ public class ObjectEditorFragment extends ValueEditorFragment implements ObjectE
         }
 
         // Init EditorLauncher and ObjectEditorHelper
-        EditorLauncher editorLauncher = new EditorLauncher(getActivity(), "PaScEdLa");
+        EditorLauncher editorLauncher = EditorLauncher.getForFragment(this);
         boolean sandboxed = false;
         SandboxedObject sandboxedObject = getSandboxedEditedObject();
         Object object;
@@ -70,7 +70,6 @@ public class ObjectEditorFragment extends ValueEditorFragment implements ObjectE
         }
         if (sandboxed) {
             final SandboxedObjectEditorHelper helper = new SandboxedObjectEditorHelper(getActivity(), sandboxedObject, editorLauncher, this);
-            editorLauncher.setCallback(helper);
             mObjectEditorHelper = helper;
             helper.initializeAndRunWhenReady(new Runnable() {
                 @Override
@@ -81,12 +80,16 @@ public class ObjectEditorFragment extends ValueEditorFragment implements ObjectE
             });
         } else {
             final LocalObjectEditorHelper helper = new LocalObjectEditorHelper(getActivity(), object, editorLauncher, this);
-            editorLauncher.setCallback(helper);
             mObjectEditorHelper = helper;
         }
 
         // Enable options menu
         setHasOptionsMenu(true);
+    }
+
+    @Override
+    public EditorLauncher.EditorLauncherCallback getEditorLauncherCallback() {
+        return mObjectEditorHelper;
     }
 
     @Override

@@ -29,7 +29,7 @@ import java.util.HashMap;
 /**
  * Created by mb on 16.11.13.
  */
-class LocalObjectEditorHelper implements EditorLauncher.EditorLauncherCallback, ObjectEditorHelper {
+class LocalObjectEditorHelper implements ObjectEditorHelper {
 
     final private Object mObject;
     private final ObjectEditorHelperCallback mObjectEditorHelperCallback;

@@ -48,8 +48,7 @@ public class ArrayEditorFragment extends ValueEditorFragment implements EditorLa
 
         mArray = getSandboxedEditedObject().unwrap(null);
 
-        mEditorLauncher = new EditorLauncher(getActivity(), "ArrEdiEdLa");
-        mEditorLauncher.setCallback(this);
+        mEditorLauncher = EditorLauncher.getForFragment(this);
 
         setHasOptionsMenu(true);
     }

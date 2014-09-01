@@ -46,7 +46,7 @@ import java.util.ArrayList;
 /**
 * Created by mb on 15.02.14.
 */
-public class ClipboardItemsFragment extends ListFragment {
+public class ClipboardItemsFragment extends ListFragment implements EditorLauncher.EditorLauncherCallback {
     static ArrayList<ClipboardItemsFragment> sObservers = new ArrayList<ClipboardItemsFragment>();
 
     public static void refreshAll() {
@@ -104,9 +104,9 @@ public class ClipboardItemsFragment extends ListFragment {
         super.onCreate(savedInstanceState);
         FragmentActivity activity = getActivity();
         if (activity instanceof MasterDetailActivity) {
-            mEditorLauncher = new EditorLauncherForMasterDetail((MasterDetailActivity) activity, "clipboardLauncher");
+            mEditorLauncher = EditorLauncherForMasterDetail.getForFragment(this);
         } else {
-            mEditorLauncher = new EditorLauncher(activity, "clipboardLauncherEmb");
+            mEditorLauncher = EditorLauncher.getForFragment(this);
         }
         update();
         sObservers.add(this);
@@ -190,5 +190,10 @@ public class ClipboardItemsFragment extends ListFragment {
             super.unregisterDataSetObserver(observer);
             CallbackInterfacesManager.unregisterCallbacksObserver(observer);
         }
+    }
+
+    @Override
+    public void onEditorResult(String key, Object newValue) {
+        // TODO: handle result
     }
 }

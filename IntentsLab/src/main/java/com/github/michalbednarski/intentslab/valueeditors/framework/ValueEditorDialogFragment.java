@@ -35,6 +35,6 @@ public class ValueEditorDialogFragment extends DialogFragment {
     }
 
     protected void sendResult(Object newValue) {
-        ((EditorLauncher.ActivityHandlingHeadlessFragment) getTargetFragment()).handleDialogResponse(getArguments().getString(EXTRA_KEY), newValue);
+        ((EditorLauncher.HelperFragment) getTargetFragment()).handleDialogResponse(getArguments().getString(EXTRA_KEY), newValue);
     }
 }

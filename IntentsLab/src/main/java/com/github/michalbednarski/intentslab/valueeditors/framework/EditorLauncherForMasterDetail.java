@@ -19,7 +19,9 @@
 package com.github.michalbednarski.intentslab.valueeditors.framework;
 
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 
+import com.github.michalbednarski.intentslab.BuildConfig;
 import com.github.michalbednarski.intentslab.MasterDetailActivity;
 
 /**
@@ -29,19 +31,29 @@ import com.github.michalbednarski.intentslab.MasterDetailActivity;
  * TODO: auto-save on switch and add method for explicit save for use on exit
  */
 public class EditorLauncherForMasterDetail extends EditorLauncher {
-    /**
-     * Constructor
-     *
-     * @param activity
-     * @param tag
-     */
-    public EditorLauncherForMasterDetail(MasterDetailActivity activity, String tag) {
-        super(activity, tag);
+
+
+    public static <F extends Fragment & EditorLauncher.EditorLauncherCallbackBase> EditorLauncherForMasterDetail getForFragment(F ownerFragment) {
+        if (BuildConfig.DEBUG && !(
+                ownerFragment.getActivity() instanceof MasterDetailActivity
+                )) {
+            throw new AssertionError("Not in master-detail activity");
+        }
+
+        EditorLauncherForMasterDetail editorLauncher = (EditorLauncherForMasterDetail) getExistingForFragment(ownerFragment);
+        if (editorLauncher == null) {
+            editorLauncher = new EditorLauncherForMasterDetail(ownerFragment);
+        }
+        return editorLauncher;
+    }
+
+    private EditorLauncherForMasterDetail(Fragment fragment) {
+        super(fragment);
     }
 
     @Override
     void openEditorFragment(Class<? extends ValueEditorFragment> editorFragment, Bundle args) {
-        MasterDetailActivity activity = (MasterDetailActivity) mFragment.getActivity();
+        MasterDetailActivity activity = (MasterDetailActivity) getHelperFragment().getActivity();
         if (activity.usingTabletView()) {
             activity.openFragment(
                     editorFragment,

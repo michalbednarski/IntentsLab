@@ -138,11 +138,10 @@ public class ArgumentsEditorHelper implements EditorLauncher.EditorLauncherWithS
 
     /**
      * Set EditorLauncher for use by our editors.
-     * This will also set it's callback
+     * TODO: move to constructor
      */
     public void setEditorLauncher(EditorLauncher editorLauncher) {
         mEditorLauncher = editorLauncher;
-        editorLauncher.setCallback(this);
     }
 
 

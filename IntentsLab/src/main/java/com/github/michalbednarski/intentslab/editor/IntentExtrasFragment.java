@@ -26,7 +26,7 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
 
-public class IntentExtrasFragment extends IntentEditorPanel implements BundleAdapter.BundleAdapterAggregate {
+public class IntentExtrasFragment extends IntentEditorPanel implements BundleAdapter.BundleAdapterAggregate, EditorLauncher.EditorLauncherCallbackDelegate {
     public IntentExtrasFragment() {}
 
 	ListView mExtrasList;
@@ -49,7 +49,11 @@ public class IntentExtrasFragment extends IntentEditorPanel implements BundleAda
 		mExtrasList = new ListView(inflater.getContext());
 
         if (mBundleAdapter == null) {
-            mBundleAdapter = new BundleAdapter<IntentExtrasFragment>(getEditedIntent().getExtras(), new EditorLauncher(getActivity(), "IntentExtrasEditorLauncher"), this);
+            mBundleAdapter = new BundleAdapter<IntentExtrasFragment>(
+                    getEditedIntent().getExtras(),
+                    EditorLauncher.getForFragment(this),
+                    this
+            );
         }
 		mBundleAdapter.settleOnList(mExtrasList);
 		return mExtrasList;
@@ -71,4 +75,9 @@ public class IntentExtrasFragment extends IntentEditorPanel implements BundleAda
 
 	@Override
 	public void onComponentTypeChanged(int newComponentType) {}
+
+    @Override
+    public EditorLauncher.EditorLauncherCallback getEditorLauncherCallback() {
+        return mBundleAdapter;
+    }
 }

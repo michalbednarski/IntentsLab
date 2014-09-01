@@ -18,10 +18,12 @@
 
 package com.github.michalbednarski.intentslab.valueeditors.object;
 
+import com.github.michalbednarski.intentslab.valueeditors.framework.EditorLauncher;
+
 /**
  * Created by mb on 16.11.13.
  */
-interface ObjectEditorHelper {
+interface ObjectEditorHelper extends EditorLauncher.EditorLauncherCallback {
     InlineValueEditor[] getInlineValueEditors();
     boolean hasNonPublicFields();
     Object getObject();

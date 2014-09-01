@@ -34,7 +34,7 @@ import com.github.michalbednarski.intentslab.valueeditors.framework.ValueEditorF
  *
  * @see com.github.michalbednarski.intentslab.valueeditors.framework.Editor.EditorActivity
  */
-public class BundleEditorFragment extends ValueEditorFragment implements BundleAdapter.BundleAdapterAggregate {
+public class BundleEditorFragment extends ValueEditorFragment implements BundleAdapter.BundleAdapterAggregate, EditorLauncher.EditorLauncherCallbackDelegate {
 
     private BundleAdapter<BundleEditorFragment> mBundleAdapter;
 
@@ -56,7 +56,12 @@ public class BundleEditorFragment extends ValueEditorFragment implements BundleA
         Bundle bundle = (Bundle) getSandboxedEditedObject().unwrap(null);
 
         // Create bundle adapter and use it
-        mBundleAdapter = new BundleAdapter<BundleEditorFragment>(bundle, new EditorLauncher(getActivity(), "editorLauncherInBundleEditor"), this);
+        mBundleAdapter = new BundleAdapter<BundleEditorFragment>(bundle, EditorLauncher.getForFragment(this), this);
+    }
+
+    @Override
+    public EditorLauncher.EditorLauncherCallback getEditorLauncherCallback() {
+        return mBundleAdapter;
     }
 
     @Override
