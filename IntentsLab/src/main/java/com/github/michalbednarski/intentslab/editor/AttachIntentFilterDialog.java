@@ -21,10 +21,14 @@ package com.github.michalbednarski.intentslab.editor;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.*;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ComponentInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -32,12 +36,24 @@ import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.*;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.browser.ExtendedPackageInfo;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 
@@ -598,11 +614,15 @@ public class AttachIntentFilterDialog extends DialogFragment implements AdapterV
      *   (new ListFiltersTask()).execute();
      */
     private class ListFiltersTask extends AsyncTask<String, AppWithMatchingFilters, Object> {
-        private int mComponentTypeFlag;
+        private int mComponentType;
         private String mAction;
         private Set<String> mCategories;
 
         boolean mInsensitiveAndSubstring;
+
+        // TODO: replace this hack with proper threading
+        final Object mLock = new Object();
+        ExtendedPackageInfo[] mPackageInfos = null;
 
         @Override
         protected void onPreExecute() {
@@ -629,11 +649,7 @@ public class AttachIntentFilterDialog extends DialogFragment implements AdapterV
             // Get requested component type
             final IntentEditorActivity intentEditor = (IntentEditorActivity) getActivity();
 
-            int componentType = intentEditor.getComponentType();
-            mComponentTypeFlag =
-                    componentType == IntentEditorConstants.ACTIVITY ? PackageManager.GET_ACTIVITIES :
-                    componentType == IntentEditorConstants.BROADCAST ? PackageManager.GET_RECEIVERS :
-                    componentType == IntentEditorConstants.SERVICE ? PackageManager.GET_SERVICES : 0;
+            mComponentType = intentEditor.getComponentType();
 
             // Set filtering constraints
             if ((usedFlags & FLAG_TEST_ACTION) != 0) {
@@ -655,74 +671,76 @@ public class AttachIntentFilterDialog extends DialogFragment implements AdapterV
                     mCategories = mIntent.getCategories();
                 }
             }
+
+            // Prepare package info
+            if (mScanComponentsInPackage != null) {
+                ExtendedPackageInfo.getExtendedPackageInfo(getActivity(), mScanComponentsInPackage, new ExtendedPackageInfo.Callback() {
+                    @Override
+                    public void onPackageInfoAvailable(ExtendedPackageInfo extendedPackageInfo) {
+                        synchronized (mLock) {
+                            mPackageInfos = new ExtendedPackageInfo[] { extendedPackageInfo };
+                            mLock.notifyAll();
+                        }
+                    }
+                });
+            } else {
+                ExtendedPackageInfo.getAllPackageInfos(getActivity(), new ExtendedPackageInfo.AllCallback() {
+                    @Override
+                    public void onAllPackagesInfosAvailable(ExtendedPackageInfo[] infos) {
+                        synchronized (mLock) {
+                            mPackageInfos = infos;
+                            mLock.notifyAll();
+                        }
+                    }
+                });
+            }
         }
 
         @Override
         protected Object doInBackground(String... params) {
-            if (mComponentTypeFlag == 0) {
-                return null;
+            // Wait for mPackageInfos
+            synchronized (mLock) {
+                if (mPackageInfos == null) {
+                    try {
+                        mLock.wait();
+                    } catch (InterruptedException e) {
+                        return null;
+                    }
+                }
             }
 
             // If we're requested to scan just one app, scan one app
             if (mScanComponentsInPackage != null) {
-                try {
-                    final PackageInfo packageInfo = mPm.getPackageInfo(mScanComponentsInPackage, mComponentTypeFlag);
-                    scanIntentFiltersInPackage(packageInfo, null);
-                } catch (PackageManager.NameNotFoundException e) {
-                    e.printStackTrace();
-                }
+                scanIntentFiltersInPackage(mPackageInfos[0], null);
                 return null;
-            }
-
-            // Get list of packages
-            List<PackageInfo> installedPackages = mPm.getInstalledPackages(mComponentTypeFlag);
-            boolean workAroundSmallBinderBuffer = false;
-            if (installedPackages == null || installedPackages.size() == 0) {
-                installedPackages = mPm.getInstalledPackages(0);
-                workAroundSmallBinderBuffer = true;
             }
 
             // Temporary list holding currently scanned intent filters
             ArrayList<IntentFilter> matchingIntentFilters = new ArrayList<IntentFilter>();
 
             // Iterate through packages
-            for (PackageInfo packageInfo : installedPackages) {
+            for (ExtendedPackageInfo extendedPackageInfo : mPackageInfos) {
                 // End if we're cancelled
                 if (isCancelled()) {
                     return null;
                 }
 
-                // Get package details it they haven't fit in buffer earlier
-                if (workAroundSmallBinderBuffer) {
-                    try {
-                        packageInfo = mPm.getPackageInfo(packageInfo.packageName, mComponentTypeFlag);
-                    } catch (PackageManager.NameNotFoundException e) {
-                        // Shouldn't happen
-                        e.printStackTrace();
-                        continue; // Skip app
-                    }
-                }
-
                 // Scan intent filters in package
-                scanIntentFiltersInPackage(packageInfo, matchingIntentFilters);
+                scanIntentFiltersInPackage(extendedPackageInfo, matchingIntentFilters);
 
                 // Add IntentFilters to list
                 if (matchingIntentFilters.size() != 0) {
-                    publishProgress(new AppWithMatchingFilters(matchingIntentFilters, packageInfo.packageName));
+                    publishProgress(new AppWithMatchingFilters(matchingIntentFilters, extendedPackageInfo.packageName));
                     matchingIntentFilters.clear(); // Clear list so we can use it again for next app
                 }
             }
             return null;
         }
 
-        private void scanIntentFiltersInPackage(PackageInfo packageInfo, ArrayList<IntentFilter> matchingIntentFilters) {
-            // Synchronously scan IntentFilters
-            ExtendedPackageInfo extendedPackageInfo = new ExtendedPackageInfo(getActivity(), packageInfo, true);
+        private void scanIntentFiltersInPackage(ExtendedPackageInfo extendedPackageInfo, ArrayList<IntentFilter> matchingIntentFilters) {
 
             // Get components list and skip app if it's null
-            final ComponentInfo[] components =
-                    mComponentTypeFlag == PackageManager.GET_ACTIVITIES ? packageInfo.activities :
-                    mComponentTypeFlag == PackageManager.GET_RECEIVERS ? packageInfo.receivers : packageInfo.services;
+            final ExtendedPackageInfo.ExtendedComponentInfo[] components = extendedPackageInfo.getComponentsByType(mComponentType);
             if (components == null) {
                 return;
             }
@@ -735,13 +753,9 @@ public class AttachIntentFilterDialog extends DialogFragment implements AdapterV
 
 
             // Iterate over components
-            for (ComponentInfo component : components) {
-                final ExtendedPackageInfo.ExtendedComponentInfo extendedComponentInfo = extendedPackageInfo.getComponentInfo(component.name);
-                if (extendedComponentInfo == null) {
-                    // Shouldn't happen
-                    continue;
-                }
-                IntentFilter[] intentFilters = extendedComponentInfo.intentFilters;
+            for (ExtendedPackageInfo.ExtendedComponentInfo component : components) {
+                // Test the intent filters
+                IntentFilter[] intentFilters = component.intentFilters;
                 if (intentFilters != null) {
                     for (IntentFilter intentFilter : intentFilters) {
                         if (testIntentFilter(intentFilter)) {
@@ -752,7 +766,7 @@ public class AttachIntentFilterDialog extends DialogFragment implements AdapterV
 
                 // If we're scanning components of one app send results now
                 if (publishComponents && matchingIntentFilters.size() != 0) {
-                    publishProgress(new AppWithMatchingFilters(matchingIntentFilters, packageInfo.packageName, component));
+                    publishProgress(new AppWithMatchingFilters(matchingIntentFilters, extendedPackageInfo.packageName, component.systemComponentInfo));
                     matchingIntentFilters.clear();
                 }
             }

@@ -340,10 +340,9 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 if (mEditedIntent.getComponent() != null) {
                     // We have specified component, just find IntentFilters for it
                     final ComponentName componentName = mEditedIntent.getComponent();
-                    final ExtendedPackageInfo extendedPackageInfo = new ExtendedPackageInfo(this, componentName.getPackageName());
-                    extendedPackageInfo.runWhenReady(new Runnable() {
+                    ExtendedPackageInfo.getExtendedPackageInfo(this, componentName.getPackageName(), new ExtendedPackageInfo.Callback() {
                         @Override
-                        public void run() {
+                        public void onPackageInfoAvailable(ExtendedPackageInfo extendedPackageInfo) {
                             try {
                                 setAttachedIntentFilters(extendedPackageInfo.getComponentInfo(componentName.getClassName()).intentFilters);
                                 Toast.makeText(IntentEditorActivity.this, R.string.intent_filter_attached, Toast.LENGTH_SHORT).show();

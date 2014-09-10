@@ -18,7 +18,9 @@
 
 package com.github.michalbednarski.intentslab.browser;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ComponentInfo;
@@ -28,24 +30,27 @@ import android.content.pm.ServiceInfo;
 import android.os.AsyncTask;
 import android.os.Looper;
 import android.os.PatternMatcher;
+import android.support.v4.util.ArrayMap;
 import android.util.Log;
+
+import com.github.michalbednarski.intentslab.BuildConfig;
 import com.github.michalbednarski.intentslab.XmlViewerFragment;
 import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
+
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 
 public class ExtendedPackageInfo {
     private static final String TAG = "IntentFilterScanner";
-    private String mPackageName;
-    private Context mContext;
-    private ArrayList<Runnable> mRunWhenReadyList = new ArrayList<Runnable>(1);
-    private HashMap<String, ExtendedComponentInfo> mComponents = new HashMap<String, ExtendedComponentInfo>();
-    private PackageInfo mPackageInfo = null;
-    private int mExtraPackageInfoRequest = 0;
+    public final String packageName;
+
+    private ArrayList<Callback> mRunWhenReadyList = new ArrayList<Callback>(1);
+    private ArrayMap<String, ExtendedComponentInfo> mComponents = new ArrayMap<String, ExtendedComponentInfo>();
+
 
     public static class ExtendedComponentInfo {
         public int componentType;
@@ -67,19 +72,24 @@ public class ExtendedPackageInfo {
 
         private static final String ANDROID_NAMESPACE = "http://schemas.android.com/apk/res/android";
 
+        private Context mContext;
+        private PackageInfo mPackageInfo;
+
+        private ScanManifestTask(Context context) {
+            mContext = context.getApplicationContext();
+        }
+
         @Override
         protected Object doInBackground(Object... params) {
             try {
                 PackageManager pm = mContext.getPackageManager();
-                if (mPackageInfo == null) {
-                    mPackageInfo = pm.getPackageInfo(mPackageName,
-                            PackageManager.GET_ACTIVITIES |
-                                    PackageManager.GET_RECEIVERS |
-                                    PackageManager.GET_SERVICES |
-                                    PackageManager.GET_DISABLED_COMPONENTS |
-                                    mExtraPackageInfoRequest);
-                }
-                XmlPullParser manifest = XmlViewerFragment.getManifest(mContext, mPackageName);
+                mPackageInfo = pm.getPackageInfo(packageName,
+                        PackageManager.GET_ACTIVITIES |
+                                PackageManager.GET_RECEIVERS |
+                                PackageManager.GET_SERVICES |
+                                PackageManager.GET_DISABLED_COMPONENTS |
+                                PackageManager.GET_META_DATA);
+                XmlPullParser manifest = XmlViewerFragment.getManifest(mContext, packageName);
                 preScanPackageComponents(IntentEditorConstants.ACTIVITY, mPackageInfo.activities);
                 preScanPackageComponents(IntentEditorConstants.BROADCAST, mPackageInfo.receivers);
                 preScanPackageComponents(IntentEditorConstants.SERVICE, mPackageInfo.services);
@@ -104,11 +114,10 @@ public class ExtendedPackageInfo {
 
         private ExtendedComponentInfo getComponentByNameFromManifest(/*PackageInfo app, */String componentName, int expectedComponentType) {
             if (componentName.charAt(0) == '.') {
-                componentName = mPackageName + componentName;
+                componentName = packageName + componentName;
             } else if (!componentName.contains(".")) {
                 // TODO: is this documented? Some system apps rely on this
-                Log.w(TAG, "Auto-extending android:name attribute using undocumented no-dot syntax: " + mPackageName + "/" + componentName);
-                componentName = mPackageName + "." + componentName;
+                componentName = packageName + "." + componentName;
             }
 
             ExtendedComponentInfo component = mComponents.get(componentName);
@@ -253,60 +262,159 @@ public class ExtendedPackageInfo {
 
         @Override
         protected void onPostExecute(Object result) {
-            for (Runnable run : mRunWhenReadyList) {
-                run.run();
-            }
+            ArrayList<Callback> runWhenReadyList = mRunWhenReadyList;
             mRunWhenReadyList = null;
-        }
-    }
-
-    public void runWhenReady(Runnable run) {
-        if (mRunWhenReadyList == null) {
-            run.run();
-        } else {
-            mRunWhenReadyList.add(run);
-        }
-    }
-
-    private void executeScan(boolean synchronous) {
-        if (synchronous) {
-            // Disallow synchronous scan on main thread
-            if (Looper.getMainLooper() == Looper.myLooper()) {
-                throw new RuntimeException("Synchronous scan on main thread");
+            for (Callback run : runWhenReadyList) {
+                run.onPackageInfoAvailable(ExtendedPackageInfo.this);
             }
-
-            // Run synchronous scan
-            (new ScanManifestTask()).doInBackground();
-
-            // Mark scanning as done
-            mRunWhenReadyList = null;
-        } else {
-            // Run asynchronous scan
-            (new ScanManifestTask()).execute();
         }
     }
 
-    public ExtendedPackageInfo(Context context, PackageInfo basePackageInfo) {
-        this(context, basePackageInfo, false);
+    public ExtendedComponentInfo[] getComponentsByType(int type) {
+        ArrayList<ExtendedComponentInfo> matchingComponents = new ArrayList<ExtendedComponentInfo>();
+        for (ExtendedComponentInfo componentInfo : mComponents.values()) {
+            if (componentInfo.componentType == type) {
+                matchingComponents.add(componentInfo);
+            }
+        }
+        return matchingComponents.toArray(new ExtendedComponentInfo[matchingComponents.size()]);
     }
 
-    public ExtendedPackageInfo(Context context, PackageInfo basePackageInfo, boolean synchronous) {
-        mContext = context;
-        mPackageName = basePackageInfo.packageName;
-        mPackageInfo = basePackageInfo;
-        executeScan(synchronous);
+    private boolean isReady() {
+        return mRunWhenReadyList == null;
     }
 
-    public ExtendedPackageInfo(Context context, String packageName) {
-        mContext = context;
-        mPackageName = packageName;
-        (new ScanManifestTask()).execute();
+    private ExtendedPackageInfo(String packageName) {
+        this.packageName = packageName;
     }
 
-    public ExtendedPackageInfo(Context context, String packageName, int extraPackageInfoRequest) {
-        mContext = context;
-        mPackageName = packageName;
-        mExtraPackageInfoRequest = extraPackageInfoRequest;
-        (new ScanManifestTask()).execute();
+    /*
+      Getting the instance for package
+    */
+
+
+    private static final ArrayMap<String, ExtendedPackageInfo> sPackageCache = new ArrayMap<String, ExtendedPackageInfo>();
+
+    public interface Callback {
+        void onPackageInfoAvailable(ExtendedPackageInfo extendedPackageInfo);
+    }
+
+
+
+    public static void getExtendedPackageInfo(Context context, String packageName, final Callback callback) {
+        // Ensure this is called from main thread
+        if (BuildConfig.DEBUG && Looper.myLooper() != Looper.getMainLooper()) {
+            throw new AssertionError("getExtendedPackageInfo called off main thread");
+        }
+
+        // Prepare cache purging
+        PurgeCacheReceiver.registerIfNeeded(context);
+
+        // Get from cache
+        ExtendedPackageInfo info;
+        info = sPackageCache.get(packageName);
+
+        // Create new if not ready
+        boolean createNew = info == null;
+        if (createNew) {
+            info = new ExtendedPackageInfo(packageName);
+            sPackageCache.put(packageName, info);
+        }
+
+        // Invoke or schedule callback
+        if (info.isReady()) {
+            // Info is ready, invoke callback immediately
+            callback.onPackageInfoAvailable(info);
+        } else {
+            // Schedule our callback to be invoked when scan is ready
+            info.mRunWhenReadyList.add(callback);
+
+            // If we just created object, initialize it's scan
+            if (createNew) {
+                (info.new ScanManifestTask(context)).execute();
+            }
+        }
+    }
+
+
+    /*
+      Loading of all package infos at once
+    */
+    private static ExtendedPackageInfo[] sAllPackageInfos = null;
+
+    public interface AllCallback {
+        void onAllPackagesInfosAvailable(ExtendedPackageInfo[] infos);
+    }
+
+    public static void getAllPackageInfos(Context context, final AllCallback callback) {
+        // Ensure this is called from main thread
+        if (BuildConfig.DEBUG && Looper.myLooper() != Looper.getMainLooper()) {
+            throw new AssertionError("getExtendedPackageInfo called off main thread");
+        }
+
+        // Check for cached value
+        if (sAllPackageInfos != null) {
+            callback.onAllPackagesInfosAvailable(sAllPackageInfos);
+            return;
+        }
+
+        // A closure...
+        class L {
+            int packagesToLoadLeft;
+        }
+        final L state = new L();
+
+        // Get list of installed packages
+        List<PackageInfo> installedPackages = context.getPackageManager().getInstalledPackages(0);
+        state.packagesToLoadLeft = installedPackages.size();
+
+        // Prepare result array
+        final ExtendedPackageInfo[] allInfos = new ExtendedPackageInfo[installedPackages.size()];
+
+        // Scan all packages
+        int index = 0;
+        for (PackageInfo installedPackage : installedPackages) {
+            final int ii = index++;
+            getExtendedPackageInfo(context, installedPackage.packageName, new Callback() {
+                @Override
+                public void onPackageInfoAvailable(ExtendedPackageInfo extendedPackageInfo) {
+                    // Fill in result array
+                    allInfos[ii] = extendedPackageInfo;
+
+                    // If all package infos are ready
+                    if (--state.packagesToLoadLeft == 0) {
+                        // Save to cache
+                        sAllPackageInfos = allInfos;
+
+                        // Invoke callback
+                        callback.onAllPackagesInfosAvailable(allInfos);
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Receiver used to remove packages from cache when they are changed
+     */
+    private static class PurgeCacheReceiver extends BroadcastReceiver {
+
+        private static boolean sRegistered = false;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            sAllPackageInfos = null;
+            sPackageCache.remove(intent.getData().getSchemeSpecificPart());
+        }
+
+        static void registerIfNeeded(Context context) {
+            if (!sRegistered) {
+                sRegistered = true;
+                IntentFilter filter = new IntentFilter(Intent.ACTION_PACKAGE_ADDED);
+                filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+                filter.addDataScheme("package");
+                context.getApplicationContext().registerReceiver(new PurgeCacheReceiver(), filter);
+            }
+        }
     }
 }

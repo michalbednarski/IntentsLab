@@ -241,12 +241,9 @@ public class ComponentInfoFragment extends Fragment {
         mComponentName = intent.getString(ARG_COMPONENT_NAME);
 
 
-        final ExtendedPackageInfo epi = new ExtendedPackageInfo(getActivity(), mPackageName, PackageManager.GET_META_DATA);
-
-        epi.runWhenReady(new Runnable() {
-
+        ExtendedPackageInfo.getExtendedPackageInfo(getActivity(), mPackageName, new ExtendedPackageInfo.Callback() {
             @Override
-            public void run() {
+            public void onPackageInfoAvailable(ExtendedPackageInfo epi) {
                 // Get loaded component info
                 mExtendedComponentInfo = epi.getComponentInfo(mComponentName);
                 if (mExtendedComponentInfo == null) {
