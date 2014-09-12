@@ -510,8 +510,7 @@ public class IntentGeneralFragment extends IntentEditorPanel implements OnItemSe
 
     private void findComponent() {
         getIntentEditor().updateIntent();
-        new AttachIntentFilterDialog()
-                .enableFindMode()
+        new FindComponentDialog()
                 .show(getActivity().getSupportFragmentManager(), "component-finder");
     }
 

@@ -19,32 +19,29 @@
   -->
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:orientation="vertical">
 
-    <LinearLayout
+    <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/filtering">
+        android:id="@+id/options"
+        android:text="@string/filter_options"/>
 
-        <Button
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:id="@+id/options"
-            android:layout_weight="1"
-            android:text="@string/filter_options"/>
-
-        <CheckBox
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/dont_filter"
-            android:id="@+id/skip_filters_checkbox"/>
-    </LinearLayout>
+    <ProgressBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/progress"
+        android:layout_gravity="center_horizontal"
+        android:layout_margin="16dp"/>
 
     <ListView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:id="@+id/apps_list_view"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        android:visibility="gone"
+        tools:visibility="visible"/>
 </LinearLayout>

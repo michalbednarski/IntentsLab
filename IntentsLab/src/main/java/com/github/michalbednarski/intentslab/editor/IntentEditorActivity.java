@@ -297,6 +297,8 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 .setVisible(mAttachedIntentFilters != null);
         menu.findItem(R.id.component_info)
                 .setVisible(mEditedIntent.getComponent() != null);
+        menu.findItem(R.id.attach_intent_filter)
+                .setVisible(mEditedIntent.getComponent() != null);
 
         // Intent tracking options
         {
@@ -335,28 +337,23 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 );
                 finish();
                 return true;
-            case R.id.attach_intent_filter:
-                updateIntent();
-                if (mEditedIntent.getComponent() != null) {
-                    // We have specified component, just find IntentFilters for it
-                    final ComponentName componentName = mEditedIntent.getComponent();
-                    ExtendedPackageInfo.getExtendedPackageInfo(this, componentName.getPackageName(), new ExtendedPackageInfo.Callback() {
-                        @Override
-                        public void onPackageInfoAvailable(ExtendedPackageInfo extendedPackageInfo) {
-                            try {
-                                setAttachedIntentFilters(extendedPackageInfo.getComponentInfo(componentName.getClassName()).intentFilters);
-                                Toast.makeText(IntentEditorActivity.this, R.string.intent_filter_attached, Toast.LENGTH_SHORT).show();
-                            } catch (NullPointerException e) {
-                                Toast.makeText(IntentEditorActivity.this, R.string.no_intent_filters_found, Toast.LENGTH_SHORT).show();
-                            }
+            case R.id.attach_intent_filter: {
+                // We have specified component, just find IntentFilters for it
+                final ComponentName componentName = mEditedIntent.getComponent();
+                ExtendedPackageInfo.getExtendedPackageInfo(this, componentName.getPackageName(), new ExtendedPackageInfo.Callback() {
+                    @Override
+                    public void onPackageInfoAvailable(ExtendedPackageInfo extendedPackageInfo) {
+                        try {
+                            setAttachedIntentFilters(extendedPackageInfo.getComponentInfo(componentName.getClassName()).intentFilters);
+                            Toast.makeText(IntentEditorActivity.this, R.string.intent_filter_attached, Toast.LENGTH_SHORT).show();
+                        } catch (NullPointerException e) {
+                            Toast.makeText(IntentEditorActivity.this, R.string.no_intent_filters_found, Toast.LENGTH_SHORT).show();
                         }
-                    });
-                } else {
-                    // Otherwise show dialog for selecting app
-                    (new AttachIntentFilterDialog()).show(getSupportFragmentManager(), "attach_intent_filter_dialog");
-                }
+                    }
+                });
+            }
 
-                return true;
+            return true;
             case R.id.detach_intent_filter:
                 clearAttachedIntentFilters();
                 return true;
