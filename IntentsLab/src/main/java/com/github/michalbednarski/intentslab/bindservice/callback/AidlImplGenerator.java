@@ -257,7 +257,7 @@ class AidlImplGenerator {
                 code.aput(extras, integerLocal, objectLocal);
 
                 // extra[EXTRA_RETURN_TYPE] = baseMethod.getReturnType()
-                code.loadConstant(objectLocal, returnClass);
+                code.loadConstant(objectLocal, returnClass == Void.TYPE ? null : returnClass);
                 code.loadConstant(integerLocal, BaseAidlInvocationHandler.EXTRA_RETURN_TYPE);
                 code.aput(extras, integerLocal, objectLocal);
 
