@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.github.michalbednarski.intentslab.xposedhooks.api">
 
+    <!-- Dummy uses-sdk to prevent manifest merger adding permissions -->
+    <uses-sdk android:targetSdkVersion="20" />
+
     <application/>
 
 </manifest>
