@@ -80,7 +80,7 @@ class SystemService extends IInternalInterface.Stub {
     @Override
     public void refreshPermissions(final IRefreshPermissionsCallback callback) {
         mContext.sendOrderedBroadcast(
-                new Intent().setClassName(BuildConfig.PACKAGE_NAME, QueryPermissionsReceiver.class.getName()),
+                new Intent().setClassName(BuildConfig.APPLICATION_ID, QueryPermissionsReceiver.class.getName()),
                 null, // No permission - explicit intent
                 new BroadcastReceiver() {
                     @Override
@@ -137,7 +137,7 @@ class SystemService extends IInternalInterface.Stub {
                     mContext,
                     0,
                     new Intent()
-                            .setClassName(BuildConfig.PACKAGE_NAME, RequestPermissionActivity.class.getName())
+                            .setClassName(BuildConfig.APPLICATION_ID, RequestPermissionActivity.class.getName())
                             .setAction(uid + (packageName == null ? "" : ("|" + packageName))),
                     0
                     );
