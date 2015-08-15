@@ -62,6 +62,19 @@ class ActivityManagerWrapper {
             mIApplicationThreadAsInterface = Class.forName("android.app.ApplicationThreadNative").getMethod("asInterface", IBinder.class);
             mStartActivityMethod =
                     new CrossVersionReflectedMethod(mAmClass)
+                    .tryMethodVariant( // android M
+                        "startActivity",
+                        mIApplicationThreadClass,   "caller",           null,
+                        String.class,               "callingPackage",   null,
+                        Intent.class,               "intent",           null,
+                        String.class,               "resolvedType",     null,
+                        IBinder.class,              "resultTo",         null,
+                        String.class,               "resultWho",        null,
+                        int.class,                  "requestCode",      0,
+                        int.class,                  "startFlags",       0,
+                        "android.app.ProfilerInfo", "profilerInfo",     null,
+                        Bundle.class,               "options",          null
+                    )
                     .tryMethodVariant( // 4.3
                         "startActivity",
                         mIApplicationThreadClass,   "caller",           null,
@@ -137,6 +150,22 @@ class ActivityManagerWrapper {
                     );
             mBroadcastIntentMethod =
                     new CrossVersionReflectedMethod(mAmClass)
+                    .tryMethodVariant( // M preview
+                            "broadcastIntent",
+                            mIApplicationThreadClass, "caller", null,
+                            Intent.class, "intent", null,
+                            String.class, "resolvedType", null,
+                            IIntentReceiver.class, "resultTo", null,
+                            int.class, "resultCode", 0,
+                            String.class, "resultData", null,
+                            Bundle.class, "map", null,
+                            String.class, "requiredPermission", null,
+                            int.class, "appOp", 0,
+                            Bundle.class, "options", null,
+                            boolean.class, "serialized", false,
+                            boolean.class, "sticky", false,
+                            int.class, "userId", 0
+                    )
                     .tryMethodVariant( // 4.3
                             "broadcastIntent",
                             mIApplicationThreadClass, "caller", null,

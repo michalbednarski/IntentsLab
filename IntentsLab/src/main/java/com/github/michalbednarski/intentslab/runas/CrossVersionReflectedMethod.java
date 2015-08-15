@@ -61,7 +61,13 @@ public class CrossVersionReflectedMethod {
             int argCount = typesNamesAndDefaults.length / 3;
             Class<?>[] refArguments = new Class<?>[argCount];
             for (int i = 0; i < argCount; i++) {
-                refArguments[i] = (Class<?>) typesNamesAndDefaults[i * 3];
+                Object refArgument = typesNamesAndDefaults[i * 3];
+                if (refArgument instanceof Class) {
+                    refArguments[i] = (Class<?>) refArgument;
+                } else {
+                    refArguments[i] = Class.forName((String) refArgument);
+                }
+
             }
 
             // Get method
@@ -73,7 +79,8 @@ public class CrossVersionReflectedMethod {
                 mArgNamesToIndexes.put((String) typesNamesAndDefaults[i * 3 + 1], i);
                 mDefaultArgs[i] = typesNamesAndDefaults[i * 3 + 2];
             }
-        } catch (NoSuchMethodException ignored) {}
+        } catch (NoSuchMethodException ignored) {
+        } catch (ClassNotFoundException ignored) {}
         return this;
     }
 
