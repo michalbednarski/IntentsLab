@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * Fetcher for applications
  */
-public class ApplicationFetcher extends Fetcher {
+public class ApplicationFetcher extends AsyncTaskFetcher {
     private static final String TAG = "ApplicationFetcher";
 
 

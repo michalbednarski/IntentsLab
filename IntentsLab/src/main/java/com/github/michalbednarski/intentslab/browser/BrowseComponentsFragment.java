@@ -27,7 +27,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ServiceInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -44,12 +43,16 @@ import android.widget.ExpandableListView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
 import com.github.michalbednarski.intentslab.AppInfoActivity;
 import com.github.michalbednarski.intentslab.BuildConfig;
 import com.github.michalbednarski.intentslab.PermissionInfoFragment;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
 import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
+
+import org.jdeferred.DoneCallback;
+import org.jdeferred.FailCallback;
 
 /**
  * Fragment for displaying components or other data provided by {@link Fetcher}
@@ -67,7 +70,7 @@ public class BrowseComponentsFragment extends Fragment {
     };
 
     private Fetcher mFetcher;
-    private FetchTask mFetchTask;
+    private MyCallback mCallback;
 
     private ProgressBar mProgressIndicator;
     private ExpandableListView mExpandableListView;
@@ -90,8 +93,7 @@ public class BrowseComponentsFragment extends Fragment {
             }
         }
         setHasOptionsMenu(true);
-        mFetchTask = new FetchTask();
-        mFetchTask.execute();
+        startFetcher();
     }
 
     @Override
@@ -103,20 +105,19 @@ public class BrowseComponentsFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.browse_components, container, false);
+
+        // Find views
         mProgressIndicator = (ProgressBar) view.findViewById(R.id.progressBar);
         mExpandableListView = (ExpandableListView) view.findViewById(R.id.expandableListView);
         mNonExpandableListView = (ListView) view.findViewById(R.id.listView);
         mEmptyMessage = (TextView) view.findViewById(R.id.empty_message);
         mCustomErrorText = (TextView) view.findViewById(R.id.custom_error);
-        return view;
-    }
 
-    @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        if (mFetchTask == null && mLoadedData != null) {
+        // Fill views
+        if (mLoadedData != null) {
             updateView();
         }
+        return view;
     }
 
     @Override
@@ -132,9 +133,8 @@ public class BrowseComponentsFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mFetchTask != null) {
-            mFetchTask.cancel(true);
-            mFetchTask = null;
+        if (mCallback != null) {
+            mCallback.mCancelled = true;
         }
     }
 
@@ -144,54 +144,47 @@ public class BrowseComponentsFragment extends Fragment {
 
     void setFetcher(Fetcher fetcher) {
         mFetcher = fetcher;
-        if (mFetchTask != null) {
-            mFetchTask.cancel(true);
+        if (mCallback != null) {
+            mCallback.mCancelled = true;
         }
-        mFetchTask = new FetchTask();
-        mFetchTask.execute();
+
+        clearDataAndShowLoadingIndicator();
+        startFetcher();
     }
 
-    private class FetchTask extends AsyncTask<Object, Object, Object> {
+    private void startFetcher() {
+        mCallback = new MyCallback();
+        mFetcher
+                .getEntriesAsync(getActivity().getApplicationContext())
+                .done(mCallback)
+                .fail(mCallback);
+    }
+
+    private class MyCallback implements DoneCallback<Object>, FailCallback<Throwable> {
+        boolean mCancelled;
 
         @Override
-        protected void onPreExecute() {
-            // Reset lists and show loading animation
-            if (mProgressIndicator != null) {
-                mNonExpandableListView.setEmptyView(null);
-                mNonExpandableListView.setVisibility(View.GONE);
-                mNonExpandableListView.setOnItemClickListener(null);
-                mNonExpandableListView.setAdapter(null);
-
-                mExpandableListView.setEmptyView(null);
-                mExpandableListView.setVisibility(View.GONE);
-                mExpandableListView.setOnChildClickListener(null);
-                mExpandableListView.setAdapter((ExpandableListAdapter) null);
-
-                mEmptyMessage.setVisibility(View.GONE);
-                mCustomErrorText.setVisibility(View.GONE);
-                mProgressIndicator.setVisibility(View.VISIBLE);
+        public void onDone(Object result) {
+            if (!mCancelled) {
+                if (BuildConfig.DEBUG && !(
+                        result instanceof Fetcher.Category[] ||
+                                result instanceof Fetcher.Component[] ||
+                                result instanceof Fetcher.CustomError
+                )) {
+                    throw new AssertionError("Fetcher " + mFetcher + " returned unexpected value " + result);
+                }
+                mLoadedData = result;
+                updateView();
+                mCallback = null;
             }
-
-            mLoadedData = null;
         }
 
         @Override
-        protected Object doInBackground(Object[] params) {
-            return mFetcher.getEntries(getActivity().getApplicationContext());
-        }
-
-        @Override
-        protected void onPostExecute(Object o) {
-            if (BuildConfig.DEBUG && !(
-                    o instanceof Fetcher.Category[] ||
-                    o instanceof Fetcher.Component[] ||
-                    o instanceof Fetcher.CustomError
-                    )) {
-                throw new AssertionError("Fetcher " + mFetcher + " returned unexpected value " + o);
+        public void onFail(Throwable result) {
+            if (!mCancelled) {
+                mLoadedData = new Fetcher.CustomError(result.getMessage());
+                updateView();
             }
-            mLoadedData = o;
-            updateView();
-            mFetchTask = null;
         }
     }
 
@@ -214,6 +207,26 @@ public class BrowseComponentsFragment extends Fragment {
             mCustomErrorText.setVisibility(View.VISIBLE);
         }
         mProgressIndicator.setVisibility(View.GONE);
+    }
+
+    private void clearDataAndShowLoadingIndicator() {
+        if (mProgressIndicator != null) {
+            mNonExpandableListView.setEmptyView(null);
+            mNonExpandableListView.setVisibility(View.GONE);
+            mNonExpandableListView.setOnItemClickListener(null);
+            mNonExpandableListView.setAdapter(null);
+
+            mExpandableListView.setEmptyView(null);
+            mExpandableListView.setVisibility(View.GONE);
+            mExpandableListView.setOnChildClickListener(null);
+            mExpandableListView.setAdapter((ExpandableListAdapter) null);
+
+            mEmptyMessage.setVisibility(View.GONE);
+            mCustomErrorText.setVisibility(View.GONE);
+            mProgressIndicator.setVisibility(View.VISIBLE);
+        }
+
+        mLoadedData = null;
     }
 
 

@@ -49,7 +49,7 @@ import java.util.List;
 /**
  * Fetcher for application components
  */
-public class ComponentFetcher extends Fetcher {
+public class ComponentFetcher extends AsyncTaskFetcher {
     private static final String TAG = "ComponentFetcher";
 
     static final boolean DEVELOPMENT_PERMISSIONS_SUPPORTED =

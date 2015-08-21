@@ -21,6 +21,8 @@ package com.github.michalbednarski.intentslab.browser;
 import android.content.Context;
 import android.os.Parcelable;
 import android.view.Menu;
+
+import org.jdeferred.Promise;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -77,13 +79,12 @@ abstract class Fetcher implements Parcelable, Cloneable {
 
     /**
      * Fetch data for display in {@link BrowseComponentsFragment}
-     * This method will be invoked in background thread.
      *
      * @param context The application context
      *
      * @return {@link Category[]}, {@link Component[]} or {@link CustomError}
      */
-    abstract Object getEntries(Context context);
+    abstract Promise<Object, Throwable, Void> getEntriesAsync(Context context);
 
 
 

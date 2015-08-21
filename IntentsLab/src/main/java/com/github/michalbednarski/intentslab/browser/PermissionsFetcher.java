@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * Fetcher for permissions
  */
-public class PermissionsFetcher extends Fetcher {
+public class PermissionsFetcher extends AsyncTaskFetcher {
     private boolean mGrouped = true;
     private int mProtectionFilter =
             ComponentFetcher.PROTECTION_ANY_LEVEL;

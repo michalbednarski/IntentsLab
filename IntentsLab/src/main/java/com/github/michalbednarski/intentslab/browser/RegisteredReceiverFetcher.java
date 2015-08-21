@@ -38,7 +38,7 @@ import java.util.Iterator;
 /**
  * Fetcher for receivers registered with {@link Context#registerReceiver(android.content.BroadcastReceiver, IntentFilter)}
  */
-public class RegisteredReceiverFetcher extends Fetcher {
+public class RegisteredReceiverFetcher extends AsyncTaskFetcher {
 
     private boolean mExcludeProtected = true;
 
