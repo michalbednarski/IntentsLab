@@ -220,6 +220,7 @@ public class FindComponentDialog extends DialogFragment implements AdapterView.O
                             .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, ComponentInfoFragment.class.getName())
                             .putExtra(ComponentInfoFragment.ARG_PACKAGE_NAME, info.packageName)
                             .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, info.name)
+                            .putExtra(ComponentInfoFragment.ARG_COMPONENT_TYPE, ((IntentEditorActivity) getActivity()).getComponentType())
                             .putExtra(ComponentInfoFragment.ARG_LAUNCHED_FROM_INTENT_EDITOR, true)
             );
             return true;

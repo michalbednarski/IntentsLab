@@ -45,7 +45,13 @@ import android.widget.Toast;
 import com.github.michalbednarski.intentslab.AppInfoActivity;
 import com.github.michalbednarski.intentslab.FormattedTextBuilder;
 import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.appinfo.MyComponentInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageManagerImpl;
 import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
+
+import org.jdeferred.DoneCallback;
+import org.jdeferred.FailCallback;
 
 /**
  * Fragment for displaying provider info
@@ -55,85 +61,88 @@ import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
 public class ProviderInfoFragment extends Fragment {
     private static final String TAG = "ProviderInfoActivity";
 
-    String mPackageName, mComponentName;
-    private ProviderInfo mProviderInfo = null;
+    private String mPackageName, mComponentName;
+    private MyComponentInfo mProviderInfo = null;
+
+    private CharSequence mDescription;
+
+    private TextView mTitleText;
+    private TextView mComponentText;
+    private ImageView mIconView;
+    private TextView mDescriptionText;
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
-        View view = inflater.inflate(R.layout.activity_provider_info, container, false);
 
         mPackageName = getArguments().getString(ComponentInfoFragment.ARG_PACKAGE_NAME);
         mComponentName = getArguments().getString(ComponentInfoFragment.ARG_COMPONENT_NAME);
 
-        // Fill mProviderInfo
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-                fillProviderInfo();
-            } else {
-                fillProviderInfoLegacy();
-            }
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-            Toast.makeText(getActivity(), R.string.component_not_found, Toast.LENGTH_SHORT).show();
-            //finish();
-            return null;
-        }
+        setHasOptionsMenu(true);
 
-        PackageManager packageManager = getActivity().getPackageManager();
+        MyPackageManagerImpl
+                .getInstance(getActivity())
+                .getPackageInfo(false, mPackageName)
+                .then(new DoneCallback<MyPackageInfo>() {
+                    @Override
+                    public void onDone(MyPackageInfo result) {
+                        mProviderInfo = result.getProviderByName(mComponentName);
+                        if (mProviderInfo == null) {
+                            onProviderMissing();
+                            return;
+                        }
+                        buildDescriptionText();
+                        fillView();
+                    }
+                })
+                .fail(new FailCallback<Void>() {
+                    @Override
+                    public void onFail(Void result) {
+                        onProviderMissing();
+                    }
+                });
+    }
 
-        // Header icon and text
-        ((TextView) view.findViewById(R.id.title)).setText(
-                mProviderInfo.loadLabel(packageManager)
-        );
-        ((TextView) view.findViewById(R.id.component)).setText(
-                new ComponentName(mPackageName, mComponentName).flattenToShortString()
-        );
-        ((ImageView) view.findViewById(R.id.icon)).setImageDrawable(
-                mProviderInfo.loadIcon(packageManager)
-        );
+    private void buildDescriptionText() {
+        ProviderInfo rawProviderInfo = mProviderInfo.getProviderInfo();
 
         // Start building description
         FormattedTextBuilder text = new FormattedTextBuilder();
 
         // Authority
-        if (mProviderInfo.authority != null) {
-            text.appendValue("Authority", mProviderInfo.authority);
+        if (rawProviderInfo.authority != null) {
+            text.appendValue("Authority", rawProviderInfo.authority);
         }
 
         // Permission/exported
-        if (!mProviderInfo.exported) {
+        if (!mProviderInfo.isExported()) {
             text.appendHeader(getString(R.string.component_not_exported));
         } else {
-            if (mProviderInfo.readPermission == null) {
-                if (mProviderInfo.writePermission == null) {
+            String readPermission = mProviderInfo.getPermission();
+            String writePermission = mProviderInfo.getWritePermission();
+            if (readPermission == null) {
+                if (writePermission == null) {
                     text.appendHeader(getString(R.string.provider_rw_world_accessible));
                 } else {
-                    text.appendValue(getString(R.string.provider_w_only_permission), mProviderInfo.writePermission, true, FormattedTextBuilder.ValueSemantic.PERMISSION);
+                    text.appendValue(getString(R.string.provider_w_only_permission), writePermission, true, FormattedTextBuilder.ValueSemantic.PERMISSION);
                 }
-            } else if (mProviderInfo.readPermission.equals(mProviderInfo.writePermission)) {
-                text.appendValue(getString(R.string.provider_rw_permission), mProviderInfo.readPermission, true, FormattedTextBuilder.ValueSemantic.PERMISSION);
+            } else if (readPermission.equals(writePermission)) {
+                text.appendValue(getString(R.string.provider_rw_permission), readPermission, true, FormattedTextBuilder.ValueSemantic.PERMISSION);
             } else {
-                text.appendValue(getString(R.string.provider_r_permission), mProviderInfo.readPermission, true, FormattedTextBuilder.ValueSemantic.PERMISSION);
-                if (mProviderInfo.writePermission == null) {
+                text.appendValue(getString(R.string.provider_r_permission), readPermission, true, FormattedTextBuilder.ValueSemantic.PERMISSION);
+                if (writePermission == null) {
                     text.appendValuelessKeyContinuingGroup(getResources().getText(R.string.provider_no_w_permission));
                 } else {
-                    text.appendValue(getString(R.string.provider_w_permission), mProviderInfo.writePermission, false, FormattedTextBuilder.ValueSemantic.PERMISSION);
+                    text.appendValue(getString(R.string.provider_w_permission), writePermission, false, FormattedTextBuilder.ValueSemantic.PERMISSION);
                 }
             }
         }
 
         // Permission granting
-        if (mProviderInfo.grantUriPermissions) {
-            if (mProviderInfo.uriPermissionPatterns != null) {
-                PatternMatcher[] uriPermissionPatterns = mProviderInfo.uriPermissionPatterns;
+        if (rawProviderInfo.grantUriPermissions) {
+            if (rawProviderInfo.uriPermissionPatterns != null) {
+                PatternMatcher[] uriPermissionPatterns = rawProviderInfo.uriPermissionPatterns;
                 String[] listItems = new String[uriPermissionPatterns.length];
                 for (int i = 0; i < uriPermissionPatterns.length; i++) {
                     PatternMatcher pattern = uriPermissionPatterns[i];
@@ -146,12 +155,22 @@ public class ProviderInfoFragment extends Fragment {
         }
 
         // <meta-data>
-        text.appendFormattedText(ComponentInfoFragment.dumpMetaData(getActivity(), mPackageName, mProviderInfo.metaData));
+        text.appendFormattedText(ComponentInfoFragment.dumpMetaData(getActivity(), mPackageName, rawProviderInfo.metaData));
 
-        // Put description in TextView
-        TextView textView = (TextView) view.findViewById(R.id.description);
-        textView.setMovementMethod(LinkMovementMethod.getInstance());
-        textView.setText(text.getText());
+        mDescription = text.getText();
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+        View view = inflater.inflate(R.layout.activity_provider_info, container, false);
+
+        mTitleText = ((TextView) view.findViewById(R.id.title));
+        mComponentText = ((TextView) view.findViewById(R.id.component));
+        mIconView = ((ImageView) view.findViewById(R.id.icon));
+
+        mDescriptionText = (TextView) view.findViewById(R.id.description);
+        mDescriptionText.setMovementMethod(LinkMovementMethod.getInstance());
 
         // Set button action
         view.findViewById(R.id.go_to_provider_lab).setOnClickListener(new View.OnClickListener() {
@@ -161,8 +180,48 @@ public class ProviderInfoFragment extends Fragment {
             }
         });
 
+        // Fill view if contents are ready
+        fillView();
+
         // Return view
         return view;
+    }
+
+    @Override
+    public void onDestroyView() {
+        mTitleText = null;
+        mComponentText = null;
+        mIconView = null;
+        mDescriptionText = null;
+        super.onDestroyView();
+    }
+
+    private void fillView() {
+        // If we don't have information or views, don't fill
+        if (mProviderInfo == null || mDescriptionText == null) {
+            return;
+        }
+
+        PackageManager packageManager = getActivity().getPackageManager();
+
+        // Header icon and text
+        mTitleText.setText(
+                mProviderInfo.getProviderInfo().loadLabel(packageManager) // TODO: loadLabel for MyComponentInfo
+        );
+        mComponentText.setText(
+                new ComponentName(mPackageName, mComponentName).flattenToShortString()
+        );
+        mIconView.setImageDrawable(
+                mProviderInfo.loadIcon(packageManager)
+        );
+
+        // Put description in TextView
+        mDescriptionText.setText(mDescription);
+    }
+
+    private void onProviderMissing() {
+        Toast.makeText(getActivity(), R.string.component_not_found, Toast.LENGTH_SHORT).show();
+        //finish();
     }
 
     @Override
@@ -187,33 +246,6 @@ public class ProviderInfoFragment extends Fragment {
         return false;
     }
 
-    @TargetApi(Build.VERSION_CODES.GINGERBREAD)
-    private void fillProviderInfo() throws PackageManager.NameNotFoundException {
-        mProviderInfo = getActivity().getPackageManager().getProviderInfo(
-                new ComponentName(mPackageName, mComponentName),
-                PackageManager.GET_DISABLED_COMPONENTS |
-                        PackageManager.GET_META_DATA |
-                        PackageManager.GET_URI_PERMISSION_PATTERNS
-        );
-    }
-
-    private void fillProviderInfoLegacy() throws PackageManager.NameNotFoundException {
-        PackageInfo packageInfo = getActivity().getPackageManager().getPackageInfo(
-                mPackageName,
-                PackageManager.GET_PROVIDERS |
-                        PackageManager.GET_DISABLED_COMPONENTS |
-                        PackageManager.GET_META_DATA |
-                        PackageManager.GET_URI_PERMISSION_PATTERNS
-        );
-        for (ProviderInfo provider : packageInfo.providers) {
-            if (provider.name.equals(mComponentName)) {
-                mProviderInfo = provider;
-                return;
-            }
-        }
-        throw new PackageManager.NameNotFoundException("No such provider (manual search in PackageInfo)");
-    }
-
     /**
      * Open provider lab for trying given authority
      */
@@ -230,7 +262,10 @@ public class ProviderInfoFragment extends Fragment {
      * Triggered by provider lab button
      */
     void goToProviderLab() {
-        String authority = mProviderInfo.authority;
+        if (mProviderInfo == null) {
+            return;
+        }
+        String authority = mProviderInfo.getProviderInfo().authority;
         if (authority == null) {
             Log.e(TAG, "Missing authority");
             return;

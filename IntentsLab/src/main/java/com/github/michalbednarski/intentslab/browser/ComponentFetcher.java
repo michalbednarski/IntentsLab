@@ -194,9 +194,22 @@ public class ComponentFetcher extends Fetcher {
             ArrayList<Component> selectedComponents = new ArrayList<Component>();
 
             if ((type & PackageManager.GET_ACTIVITIES) != 0) {
+                if (pack.activities != null) {
+                    for (ActivityInfo activity : pack.activities) {
+                        // TODO: this is hack, find way to pass activity/receiver info properly
+                        if (activity.taskAffinity == null) {
+                            activity.taskAffinity = "";
+                        }
+                    }
+                }
                 scanComponents(pm, pack.activities, selectedComponents);
             }
             if ((type & PackageManager.GET_RECEIVERS) != 0) {
+                if (pack.receivers != null) {
+                    for (ActivityInfo receiver : pack.receivers) {
+                        receiver.taskAffinity = null; // TODO: this is hack, find way to pass activity/receiver info properly
+                    }
+                }
                 scanComponents(pm, pack.receivers, selectedComponents);
             }
             if ((type & PackageManager.GET_SERVICES) != 0) {

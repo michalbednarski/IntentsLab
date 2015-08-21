@@ -20,11 +20,13 @@ package com.github.michalbednarski.intentslab.browser;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageItemInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.content.pm.ProviderInfo;
+import android.content.pm.ServiceInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -46,6 +48,7 @@ import com.github.michalbednarski.intentslab.AppInfoActivity;
 import com.github.michalbednarski.intentslab.BuildConfig;
 import com.github.michalbednarski.intentslab.PermissionInfoFragment;
 import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
 import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
 
 /**
@@ -312,6 +315,13 @@ public class BrowseComponentsFragment extends Fragment {
         Bundle arguments = new Bundle();
         arguments.putString(ComponentInfoFragment.ARG_PACKAGE_NAME, componentInfo.packageName);
         arguments.putString(ComponentInfoFragment.ARG_COMPONENT_NAME, componentInfo.name);
+        if (componentInfo instanceof ActivityInfo) {
+            // TODO: better detection, pass information as needed
+            int type = ((ActivityInfo) componentInfo).taskAffinity == null ? IntentEditorConstants.BROADCAST : IntentEditorConstants.ACTIVITY;
+            arguments.putInt(ComponentInfoFragment.ARG_COMPONENT_TYPE, type);
+        } else if (componentInfo instanceof ServiceInfo) {
+            arguments.putInt(ComponentInfoFragment.ARG_COMPONENT_TYPE, IntentEditorConstants.SERVICE);
+        }
         ((BrowseComponentsActivity) getActivity()).openFragment(
                 (componentInfo instanceof ProviderInfo ?
                         ProviderInfoFragment.class :

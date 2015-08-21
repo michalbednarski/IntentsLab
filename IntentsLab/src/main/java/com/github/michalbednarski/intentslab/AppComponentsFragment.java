@@ -39,6 +39,7 @@ import android.widget.ExpandableListView;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
+import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
 import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
 
 import java.util.ArrayList;
@@ -400,6 +401,11 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
                         .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, ComponentInfoFragment.class.getName())
                         .putExtra(ComponentInfoFragment.ARG_PACKAGE_NAME, mPackageName)
                         .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, componentInfo.name)
+                        .putExtra(ComponentInfoFragment.ARG_COMPONENT_TYPE,
+                                mPresentSections[groupPosition] == SECTION_RECEIVERS ? IntentEditorConstants.BROADCAST :
+                                mPresentSections[groupPosition] == SECTION_SERVICES ? IntentEditorConstants.SERVICE :
+                                IntentEditorConstants.ACTIVITY
+                        )
                         .putExtra(ComponentInfoFragment.ARG_LAUNCHED_FROM_APP_INFO, true)
                 );
                 return true;

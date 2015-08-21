@@ -47,8 +47,14 @@ import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.XmlViewerFragment;
+import com.github.michalbednarski.intentslab.appinfo.MyComponentInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageManagerImpl;
 import com.github.michalbednarski.intentslab.editor.IntentEditorActivity;
 import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
+
+import org.jdeferred.DoneCallback;
+import org.jdeferred.FailCallback;
 
 /**
  * Fragment used for displaying component (activity, broadcast or service) info.
@@ -60,6 +66,7 @@ import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
 public class ComponentInfoFragment extends Fragment {
     public static final String ARG_PACKAGE_NAME = "package";
     public static final String ARG_COMPONENT_NAME = "component";
+    public static final String ARG_COMPONENT_TYPE = "comType";
 
     /**
      * If this extra is true, "Go to intent editor" button will just finish activity
@@ -75,8 +82,10 @@ public class ComponentInfoFragment extends Fragment {
 
     private String mPackageName;
     private String mComponentName;
+    private int mComponentType;
 
-    private ExtendedPackageInfo.ExtendedComponentInfo mExtendedComponentInfo;
+    private MyPackageInfo mPackageInfo;
+    private MyComponentInfo mComponentInfo;
 
 
     // Views
@@ -223,13 +232,6 @@ public class ComponentInfoFragment extends Fragment {
         return text.getText();
     }
 
-    @SuppressLint("InlinedApi")
-    public static boolean isComponentDisabledState(int state, boolean defaultEnabled) {
-        return state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED ||
-                state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER ||
-                (state == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && !defaultEnabled);
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -239,81 +241,111 @@ public class ComponentInfoFragment extends Fragment {
         Bundle intent = getArguments();
         mPackageName = intent.getString(ARG_PACKAGE_NAME);
         mComponentName = intent.getString(ARG_COMPONENT_NAME);
+        mComponentType = intent.getInt(ARG_COMPONENT_TYPE, -1);
 
+        MyPackageManagerImpl
+                .getInstance(getActivity())
+                .getPackageInfo(true, mPackageName)
+                .then(new DoneCallback<MyPackageInfo>() {
+                    @Override
+                    public void onDone(MyPackageInfo result) {
+                        mPackageInfo = result;
 
-        ExtendedPackageInfo.getExtendedPackageInfo(getActivity(), mPackageName, new ExtendedPackageInfo.Callback() {
-            @Override
-            public void onPackageInfoAvailable(ExtendedPackageInfo epi) {
-                // Get loaded component info
-                mExtendedComponentInfo = epi.getComponentInfo(mComponentName);
-                if (mExtendedComponentInfo == null) {
-                    Log.e(TAG, "component not found in manifest");
-                    Log.e(TAG, "packageName=" + mPackageName);
-                    Log.e(TAG, "componentName=" + mComponentName);
-                    Toast.makeText(getActivity(), R.string.component_not_found, Toast.LENGTH_SHORT).show();
-                    //finish(); // TODO: Show message directly in fragment instead of Toast if in tablet view
-                    return;
-                }
+                        // Get loaded component info
+                        switch (mComponentType) {
+                            case IntentEditorConstants.ACTIVITY:
+                                mComponentInfo = result.getActivityByName(mComponentName);
+                                break;
+                            case IntentEditorConstants.BROADCAST:
+                                mComponentInfo = result.getReceiverByName(mComponentName);
+                                break;
+                            case IntentEditorConstants.SERVICE:
+                                mComponentInfo = result.getServiceByName(mComponentName);
+                                break;
+                            default:
+                                mComponentInfo = null;
+                        }
+                        if (mComponentInfo == null) {
+                            onComponentMissing();
+                            return;
+                        }
 
-                PackageManager packageManager = getActivity().getPackageManager();
+                        buildContents();
 
-                // Header icon and component name
-                mTitleText = mExtendedComponentInfo.systemComponentInfo.loadLabel(packageManager);
-
-
-
-                // Description text
-                FormattedTextBuilder text = new FormattedTextBuilder();
-
-                // Description: disabled
-                if (isComponentDisabledState(
-                        packageManager.getComponentEnabledSetting(new ComponentName(mPackageName, mComponentName)),
-                        mExtendedComponentInfo.systemComponentInfo.enabled
-                        )) {
-                    text.appendHeader(getString(R.string.component_disabled));
-                } else if (!mExtendedComponentInfo.systemComponentInfo.applicationInfo.enabled) {
-                    text.appendHeader(getString(R.string.component_in_disabled_application));
-                }
-
-                // Description: permission/exported
-                if (!mExtendedComponentInfo.systemComponentInfo.exported) {
-                    text.appendHeader(getString(R.string.component_not_exported));
-                } else {
-                    String permission = mExtendedComponentInfo.getPermission();
-                    if (permission != null) {
-                        text.appendValue(getString(R.string.permission_required_title), permission, true, FormattedTextBuilder.ValueSemantic.PERMISSION);
+                        if (haveView()) {
+                            fillViews();
+                        }
                     }
-                }
-
-                // Description: <intent-filter>'s
-                final boolean isBroadcast = mExtendedComponentInfo.componentType == IntentEditorConstants.BROADCAST;
-                if (mExtendedComponentInfo.intentFilters == null) {
-                    text.appendHeader(getString(R.string.unknown_intent_filters));
-                } else if (mExtendedComponentInfo.intentFilters.length == 0) {
-                    text.appendHeader(getString(R.string.no_intent_filters));
-                } else {
-                    text.appendHeader(getString(R.string.intent_filters));
-                    for (IntentFilter filter : mExtendedComponentInfo.intentFilters) {
-                        text.appendFormattedText(dumpIntentFilter(filter, getResources(), isBroadcast));
+                })
+                .fail(new FailCallback<Void>() {
+                    @Override
+                    public void onFail(Void result) {
+                        onComponentMissing();
                     }
-                }
+                });
+    }
 
-                text.appendFormattedText(dumpMetaData(getActivity(), mPackageName, mExtendedComponentInfo.systemComponentInfo.metaData));
+    private void buildContents() {
+        PackageManager packageManager = getActivity().getPackageManager();
 
-                // Put text in TextView
-                mDescription = text.getText();
+        // Header icon and component name
+        mTitleText = mComponentInfo.loadLabel(packageManager);
 
 
-                // Show or hide "Receive broadcast" button
-                mShowReceiveBroadcast = isBroadcast &&
-                        mExtendedComponentInfo.intentFilters != null &&
-                        mExtendedComponentInfo.intentFilters.length != 0;
 
-                if (haveView()) {
-                    fillViews();
-                }
+        // Description text
+        FormattedTextBuilder text = new FormattedTextBuilder();
+
+        // Description: disabled
+        if (!mComponentInfo.isEnabled(packageManager)) {
+            text.appendHeader(getString(R.string.component_disabled));
+        } else if (!mPackageInfo.isApplicationEnabled()) {
+            text.appendHeader(getString(R.string.component_in_disabled_application));
+        }
+
+        // Description: permission/exported
+        if (!mComponentInfo.isExported()) {
+            text.appendHeader(getString(R.string.component_not_exported));
+        } else {
+            String permission = mComponentInfo.getPermission();
+            if (permission != null) {
+                text.appendValue(getString(R.string.permission_required_title), permission, true, FormattedTextBuilder.ValueSemantic.PERMISSION);
             }
-        });
+        }
+
+        // Description: <intent-filter>'s
+        final boolean isBroadcast = mComponentType == IntentEditorConstants.BROADCAST;
+        IntentFilter[] intentFilters = mComponentInfo.getIntentFilters();
+        if (intentFilters == null) {
+            text.appendHeader(getString(R.string.unknown_intent_filters));
+        } else if (intentFilters.length == 0) {
+            text.appendHeader(getString(R.string.no_intent_filters));
+        } else {
+            text.appendHeader(getString(R.string.intent_filters));
+            for (IntentFilter filter : intentFilters) {
+                text.appendFormattedText(dumpIntentFilter(filter, getResources(), isBroadcast));
+            }
+        }
+
+        // Description: <meta-data>
+        text.appendFormattedText(dumpMetaData(getActivity(), mPackageName, mComponentInfo.getMetaData()));
+
+        // Put text in TextView
+        mDescription = text.getText();
+
+
+        // Show or hide "Receive broadcast" button
+        mShowReceiveBroadcast = isBroadcast &&
+                intentFilters != null &&
+                intentFilters.length != 0;
+    }
+
+    private void onComponentMissing() {
+        Log.e(TAG, "component not found in manifest");
+        Log.e(TAG, "packageName=" + mPackageName);
+        Log.e(TAG, "componentName=" + mComponentName);
+        Toast.makeText(getActivity(), R.string.component_not_found, Toast.LENGTH_SHORT).show();
+        //finish(); // TODO: Show message directly in fragment instead of Toast if in tablet view
     }
 
     private boolean haveView() {
@@ -334,7 +366,7 @@ public class ComponentInfoFragment extends Fragment {
         );
 
         mIconView.setImageDrawable(
-                mExtendedComponentInfo.systemComponentInfo.loadIcon(getActivity().getPackageManager())
+                mComponentInfo.loadIcon(getActivity().getPackageManager())
         );
 
         mDescriptionTextView.setText(mDescription);
@@ -366,8 +398,8 @@ public class ComponentInfoFragment extends Fragment {
                 startActivity(
                         new Intent(getActivity(), IntentEditorActivity.class)
                                 .putExtra(IntentEditorActivity.EXTRA_INTENT, new Intent().setClassName(mPackageName, mComponentName))
-                                .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, mExtendedComponentInfo.componentType)
-                                .putExtra(IntentEditorActivity.EXTRA_INTENT_FILTERS, mExtendedComponentInfo.intentFilters)
+                                .putExtra(IntentEditorActivity.EXTRA_COMPONENT_TYPE, mComponentType)
+                                .putExtra(IntentEditorActivity.EXTRA_INTENT_FILTERS, mComponentInfo.getIntentFilters())
                 );
             }
         });
@@ -377,13 +409,13 @@ public class ComponentInfoFragment extends Fragment {
         mReceiveBroadcastButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ReceiveBroadcastService.startReceiving(getActivity(), mExtendedComponentInfo.intentFilters, false);
+                ReceiveBroadcastService.startReceiving(getActivity(), mComponentInfo.getIntentFilters(), false);
             }
         });
         mReceiveBroadcastButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                ReceiveBroadcastService.startReceiving(getActivity(), mExtendedComponentInfo.intentFilters, true);
+                ReceiveBroadcastService.startReceiving(getActivity(), mComponentInfo.getIntentFilters(), true);
                 return true;
             }
         });
