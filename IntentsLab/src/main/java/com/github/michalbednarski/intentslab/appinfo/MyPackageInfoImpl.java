@@ -1,8 +1,10 @@
 package com.github.michalbednarski.intentslab.appinfo;
 
+import android.content.pm.ApplicationInfo;
 import android.content.pm.ComponentInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.support.v4.util.ArrayMap;
 
 import java.util.Collection;
@@ -45,6 +47,11 @@ class MyPackageInfoImpl implements MyPackageInfo {
     @Override
     public String getPackageName() {
         return mPackageName;
+    }
+
+    @Override
+    public CharSequence loadLabel(PackageManager pm) {
+        return mSystemPackageInfo.applicationInfo.loadLabel(pm);
     }
 
     @Override
@@ -94,5 +101,16 @@ class MyPackageInfoImpl implements MyPackageInfo {
     @Override
     public boolean isApplicationEnabled() {
         return mSystemPackageInfo.applicationInfo.enabled;
+    }
+
+
+    @Override
+    public boolean isSystemApplication() {
+        return (mSystemPackageInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
+    }
+
+    @Override
+    public Bundle getMetaData() {
+        return mSystemPackageInfo.applicationInfo.metaData;
     }
 }

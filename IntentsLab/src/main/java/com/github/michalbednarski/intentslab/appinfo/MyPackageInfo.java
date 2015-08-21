@@ -1,5 +1,8 @@
 package com.github.michalbednarski.intentslab.appinfo;
 
+import android.content.pm.PackageManager;
+import android.os.Bundle;
+
 import java.util.Collection;
 
 /**
@@ -7,6 +10,8 @@ import java.util.Collection;
  */
 public interface MyPackageInfo {
     String getPackageName();
+
+    CharSequence loadLabel(PackageManager pm);
 
     Collection<MyComponentInfo> getActivities();
     MyComponentInfo getActivityByName(String name);
@@ -21,4 +26,11 @@ public interface MyPackageInfo {
     MyComponentInfo getProviderByName(String name);
 
     boolean isApplicationEnabled();
+
+    boolean isSystemApplication();
+
+    /**
+     * Get meta data for 'application'
+     */
+    Bundle getMetaData();
 }

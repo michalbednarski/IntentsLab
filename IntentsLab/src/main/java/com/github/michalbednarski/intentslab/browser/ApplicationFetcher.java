@@ -19,25 +19,30 @@
 package com.github.michalbednarski.intentslab.browser;
 
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.os.Parcel;
 import android.view.Menu;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+
 import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageManagerImpl;
+
+import org.jdeferred.DoneFilter;
+import org.jdeferred.Promise;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Fetcher for applications
  */
-public class ApplicationFetcher extends AsyncTaskFetcher {
+public class ApplicationFetcher extends Fetcher {
     private static final String TAG = "ApplicationFetcher";
 
 
@@ -54,64 +59,55 @@ public class ApplicationFetcher extends AsyncTaskFetcher {
 
     // Fetching
     @Override
-    Object getEntries(Context context) {
-        PackageManager pm = context.getPackageManager();
-        int requestedPackageInfoFlags =
-                PackageManager.GET_DISABLED_COMPONENTS |
-                (requireMetaDataSubstring != null ? PackageManager.GET_META_DATA : 0);
+    Promise<Object, Throwable, Void> getEntriesAsync(final Context context) {
+        return MyPackageManagerImpl
+                .getInstance(context)
+                .getPackages(false)
+                .then(new DoneFilter<Collection<MyPackageInfo>, Object>() {
+                    @Override
+                    public Object filterDone(Collection<MyPackageInfo> result) {
+                        PackageManager pm = context.getPackageManager();
 
-        List<PackageInfo> allPackages = pm.getInstalledPackages(requestedPackageInfoFlags);
+                        ArrayList<Component> selectedApps = new ArrayList<>();
 
-        ArrayList<Component> selectedApps = new ArrayList<Component>();
+                        for (MyPackageInfo pack : result) {
+                            // System app filter
+                            if ((
+                                    (pack.isSystemApplication() ?
+                                            APP_TYPE_SYSTEM :
+                                            APP_TYPE_USER)
+                                    & appType) == 0) {
+                                continue;
+                            }
 
-        for (PackageInfo pack : allPackages) {
-            ApplicationInfo applicationInfo = pack.applicationInfo;
+                            // Metadata filter
+                            if (!checkMetaDataFilter(pack.getMetaData())) {
+                                continue;
+                            }
 
-            // Filter out non-applications
-            if (applicationInfo == null) {
-                continue;
-            }
-
-            // System app filter
-            if (((
-                    (applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 ?
-                            APP_TYPE_SYSTEM :
-                            APP_TYPE_USER)
-                    & appType) == 0) {
-                continue;
-            }
-
-            // Metadata filter
-            if (!checkMetaDataFilter(applicationInfo)) {
-                continue;
-            }
-
-            // Build and add app descriptor
-            Component app = new Component();
-            app.title = String.valueOf(applicationInfo.loadLabel(pm));
-            app.subtitle = pack.packageName;
-            app.componentInfo = applicationInfo;
-            selectedApps.add(app);
-
-            // Allow cancelling task
-            if (Thread.interrupted()) {
-                return null;
-            }
-        }
-        return selectedApps.toArray(new Component[selectedApps.size()]);
+                            // Build and add app descriptor
+                            Component app = new Component();
+                            app.title = String.valueOf(pack.loadLabel(pm));
+                            app.subtitle = pack.getPackageName();
+                            app.componentInfo = pack;
+                            selectedApps.add(app);
+                        }
+                        return selectedApps.toArray(new Component[selectedApps.size()]);
+                    }
+                });
     }
 
-    private boolean checkMetaDataFilter(ApplicationInfo cmp) {
+    private boolean checkMetaDataFilter(Bundle metaData) {
         if (requireMetaDataSubstring == null) {
             return true;
         }
-        if (cmp.metaData == null || cmp.metaData.isEmpty()) {
+        if (metaData == null || metaData.isEmpty()) {
             return false;
         }
         if (requireMetaDataSubstring.length() == 0) {
             return true;
         }
-        for (String key : cmp.metaData.keySet()) {
+        for (String key : metaData.keySet()) {
             if (key.contains(requireMetaDataSubstring)) {
                 return true;
             }

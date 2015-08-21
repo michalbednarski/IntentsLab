@@ -48,6 +48,7 @@ import com.github.michalbednarski.intentslab.AppInfoActivity;
 import com.github.michalbednarski.intentslab.BuildConfig;
 import com.github.michalbednarski.intentslab.PermissionInfoFragment;
 import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageInfo;
 import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
 import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
 
@@ -305,15 +306,17 @@ public class BrowseComponentsFragment extends Fragment {
             return;
         }
 
-        PackageItemInfo componentInfo = (PackageItemInfo) baseComponentInfo;
-        if (componentInfo instanceof ApplicationInfo) {
+
+        if (baseComponentInfo instanceof MyPackageInfo) {
+            MyPackageInfo packageInfo = (MyPackageInfo) baseComponentInfo;
             startActivity(
                     new Intent(getActivity(), AppInfoActivity.class)
-                    .putExtra(AppInfoActivity.EXTRA_PACKAGE_NAME, componentInfo.packageName)
+                    .putExtra(AppInfoActivity.EXTRA_PACKAGE_NAME, packageInfo.getPackageName())
             );
             return;
         }
 
+        PackageItemInfo componentInfo = (PackageItemInfo) baseComponentInfo;
         if (componentInfo instanceof PermissionInfo) {
             Bundle arguments = new Bundle();
             arguments.putString(PermissionInfoFragment.ARG_PERMISSION_NAME, componentInfo.name);
