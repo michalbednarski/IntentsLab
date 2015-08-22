@@ -18,6 +18,9 @@
 
 package com.github.michalbednarski.intentslab.runas;
 
+import com.github.michalbednarski.intentslab.BuildConfig;
+import com.github.michalbednarski.intentslab.Utils;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -32,7 +35,7 @@ public class CrossVersionReflectedMethod {
     private final Class<?> mClass;
     private Method mMethod = null;
     private Object[] mDefaultArgs;
-    private final HashMap<String, Integer> mArgNamesToIndexes = new HashMap<String, Integer>();
+    private HashMap<String, Integer> mArgNamesToIndexes;
 
 
     public CrossVersionReflectedMethod(Class<?> aClass) {
@@ -74,6 +77,7 @@ public class CrossVersionReflectedMethod {
             mMethod = mClass.getMethod(methodName, (Class<?>[]) refArguments);
 
             // If we're here - method exists
+            mArgNamesToIndexes = new HashMap<>();
             mDefaultArgs = new Object[argCount];
             for (int i = 0; i < argCount; i++) {
                 mArgNamesToIndexes.put((String) typesNamesAndDefaults[i * 3 + 1], i);
@@ -81,6 +85,94 @@ public class CrossVersionReflectedMethod {
             }
         } catch (NoSuchMethodException ignored) {
         } catch (ClassNotFoundException ignored) {}
+        return this;
+    }
+
+    /**
+     * Try finding method method variant in reflected class,
+     * allowing method in class to have additional arguments between provided ones
+     *
+     * @param methodName Name of method to be found
+     * @param typesNamesAndDefaults
+     *          any amount of (in order, all required for each set)
+     *           - Types (as class, used in reflection)
+     *           - Names (used for {@link #invoke(Object, Object...)} call)
+     *           - Default values
+     */
+    public CrossVersionReflectedMethod tryMethodVariantInexact(String methodName, Object... typesNamesAndDefaults) {
+        // If we have already found an implementation, skip next checks
+        if (mMethod != null) {
+            return this;
+        }
+
+        int expectedArgCount = typesNamesAndDefaults.length / 3;
+
+        for (Method method : mClass.getMethods()) {
+            if (!methodName.equals(method.getName())) {
+                continue;
+            }
+
+            // Matched name, try matching arguments
+            // Get list of arguments for reflection call
+
+            try {
+                // These are for arguments provided to this method
+                Class<?> expectedArgumentClass = null;
+                int expectedArgumentI = 0;
+
+                // This is for method arguments found through reflection
+                int actualArgumentI = 0;
+
+                // Parameters for method - we'll copy them to fields
+                // when we're sure that this is right method
+                HashMap<String, Integer> argNamesToIndexes = new HashMap<>();
+                Object[] defaultArgs = new Object[method.getParameterTypes().length];
+
+                // Iterate over actual method arguments
+                for (Class<?> methodParam : method.getParameterTypes()) {
+                    // Get expected argument if we haven't it cached
+                    if (expectedArgumentClass == null) {
+                        Object refArgument = typesNamesAndDefaults[expectedArgumentI * 3];
+                        if (refArgument instanceof Class) {
+                            expectedArgumentClass = (Class<?>) refArgument;
+                        } else {
+                            expectedArgumentClass = Class.forName((String) refArgument);
+                        }
+                    }
+
+                    // Check if this argument is expected one
+                    if (methodParam == expectedArgumentClass) {
+                        argNamesToIndexes.put((String) typesNamesAndDefaults[expectedArgumentI * 3 + 1], actualArgumentI);
+                        defaultArgs[actualArgumentI] = typesNamesAndDefaults[expectedArgumentI * 3 + 2];
+
+                        // Note this argument is passed
+                        expectedArgumentI++;
+                        expectedArgumentClass = null;
+                    } else {
+                        try {
+                            defaultArgs[actualArgumentI] = Utils.getDefaultValueForPrimitveClass(methodParam);
+                        } catch (Exception ignored) { /* Not primitive - leave null */ }
+                    }
+
+                    actualArgumentI++;
+                }
+
+                // Check if method has all requested arguments
+                if (expectedArgumentI != expectedArgCount) {
+                    continue;
+                }
+
+                // Export result if matched
+                mMethod = method;
+                mDefaultArgs = defaultArgs;
+                mArgNamesToIndexes = argNamesToIndexes;
+            } catch (ClassNotFoundException e) {
+                // No such class on this system, probably okay
+                if (BuildConfig.DEBUG) {
+                    e.printStackTrace();
+                }
+            }
+        }
         return this;
     }
 

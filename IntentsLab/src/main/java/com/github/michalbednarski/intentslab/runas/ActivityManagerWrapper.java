@@ -62,7 +62,7 @@ class ActivityManagerWrapper {
             mIApplicationThreadAsInterface = Class.forName("android.app.ApplicationThreadNative").getMethod("asInterface", IBinder.class);
             mStartActivityMethod =
                     new CrossVersionReflectedMethod(mAmClass)
-                    .tryMethodVariant( // android M
+                    .tryMethodVariantInexact( // 6.0 & 4.3
                         "startActivity",
                         mIApplicationThreadClass,   "caller",           null,
                         String.class,               "callingPackage",   null,
@@ -72,21 +72,6 @@ class ActivityManagerWrapper {
                         String.class,               "resultWho",        null,
                         int.class,                  "requestCode",      0,
                         int.class,                  "startFlags",       0,
-                        "android.app.ProfilerInfo", "profilerInfo",     null,
-                        Bundle.class,               "options",          null
-                    )
-                    .tryMethodVariant( // 4.3
-                        "startActivity",
-                        mIApplicationThreadClass,   "caller",           null,
-                        String.class,               "callingPackage",   null,
-                        Intent.class,               "intent",           null,
-                        String.class,               "resolvedType",     null,
-                        IBinder.class,              "resultTo",         null,
-                        String.class,               "resultWho",        null,
-                        int.class,                  "requestCode",      0,
-                        int.class,                  "startFlags",       0,
-                        String.class,               "profileFile",      null,
-                        ParcelFileDescriptor.class, "profileFd",        null,
                         Bundle.class,               "options",          null
                     )
                     .tryMethodVariant( // < 4.3_r0.9 (pre commit f265ea)
@@ -136,20 +121,36 @@ class ActivityManagerWrapper {
                         boolean.class,              "autoStopProfiler", false
                     )
                     .tryMethodVariant( // < 4.0.1_r1 (pre commit 62f20ecf492d2b29881bba307c79ff55e68760e6)
-                            "startActivity",
-                            mIApplicationThreadClass, "caller", null,
-                            Intent.class, "intent", null,
-                            String.class, "resolvedType", null,
-                            Uri[].class, "grantedUriPermissions", null,
-                            int.class, "grantedMode", 0,
-                            IBinder.class, "resultTo", null,
-                            String.class, "resultWho", null,
-                            int.class, "requestCode", 0,
-                            boolean.class, "onlyIfNeeded", false,
-                            boolean.class, "debug", false
+                        "startActivity",
+                        mIApplicationThreadClass,   "caller",           null,                            
+                        Intent.class,               "intent",           null,                            
+                        String.class,               "resolvedType",     null,                            
+                        Uri[].class,                "grantedUriPermissions", null,                            
+                        int.class,                  "grantedMode",      0,                            
+                        IBinder.class,              "resultTo",         null,                            
+                        String.class,               "resultWho",        null,                            
+                        int.class,                  "requestCode",      0,                            
+                        boolean.class,              "onlyIfNeeded",     false,                            
+                        boolean.class,              "debug",            false
                     );
             mBroadcastIntentMethod =
                     new CrossVersionReflectedMethod(mAmClass)
+                    .tryMethodVariantInexact( // 6.0
+                            "broadcastIntent",
+                            mIApplicationThreadClass, "caller", null,
+                            Intent.class, "intent", null,
+                            String.class, "resolvedType", null,
+                            IIntentReceiver.class, "resultTo", null,
+                            int.class, "resultCode", 0,
+                            String.class, "resultData", null,
+                            Bundle.class, "map", null,
+                            String[].class, "requiredPermissions", null,
+                            int.class, "appOp", 0,
+                            Bundle.class, "options", null,
+                            boolean.class, "serialized", false,
+                            boolean.class, "sticky", false,
+                            int.class, "userId", 0
+                    )
                     .tryMethodVariant( // M preview
                             "broadcastIntent",
                             mIApplicationThreadClass, "caller", null,
