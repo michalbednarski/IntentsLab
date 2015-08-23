@@ -50,7 +50,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
 
 /**
@@ -209,7 +211,14 @@ public class ComponentFetcher extends Fetcher {
                             app.components = selectedComponents.toArray(new Component[selectedComponents.size()]);
                             selectedApps.add(app);
                         }
-                        return selectedApps.toArray(new Category[selectedApps.size()]);
+                        Category[] selectedAppsArray = selectedApps.toArray(new Category[selectedApps.size()]);
+                        Arrays.sort(selectedAppsArray, new Comparator<Category>() {
+                            @Override
+                            public int compare(Category lhs, Category rhs) {
+                                return lhs.subtitle.compareTo(rhs.subtitle);
+                            }
+                        });
+                        return selectedAppsArray;
                     }
                 });
     }

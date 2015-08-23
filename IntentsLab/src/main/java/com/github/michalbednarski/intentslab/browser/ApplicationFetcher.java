@@ -37,7 +37,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 
 /**
  * Fetcher for applications
@@ -92,7 +94,14 @@ public class ApplicationFetcher extends Fetcher {
                             app.componentInfo = pack;
                             selectedApps.add(app);
                         }
-                        return selectedApps.toArray(new Component[selectedApps.size()]);
+                        Component[] selectedAppsArray = selectedApps.toArray(new Component[selectedApps.size()]);
+                        Arrays.sort(selectedAppsArray, new Comparator<Component>() {
+                            @Override
+                            public int compare(Component lhs, Component rhs) {
+                                return lhs.subtitle.compareTo(rhs.subtitle);
+                            }
+                        });
+                        return selectedAppsArray;
                     }
                 });
     }
