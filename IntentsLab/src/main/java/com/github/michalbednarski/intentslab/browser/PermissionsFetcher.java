@@ -54,7 +54,7 @@ public class PermissionsFetcher extends AsyncTaskFetcher {
             }
 
             for (PermissionInfo permission : aPackage.permissions) {
-                if (ComponentFetcher.checkProtectionLevel(permission, mProtectionFilter) &&
+                if (ComponentFetcher.checkProtectionLevelRaw(permission, mProtectionFilter) &&
                         (mNameSubstring == null || permission.name.toLowerCase().contains(mNameSubstring.toLowerCase()))
                     ) {
                     Component component = new Component();

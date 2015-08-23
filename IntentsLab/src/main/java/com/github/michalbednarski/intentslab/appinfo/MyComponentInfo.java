@@ -13,6 +13,11 @@ import android.os.Bundle;
 public interface MyComponentInfo {
     String getName();
 
+    /**
+     * See {@link com.github.michalbednarski.intentslab.editor.IntentEditorConstants}
+     */
+    int getType();
+
     boolean isExported();
 
     String getPermission();
@@ -30,4 +35,6 @@ public interface MyComponentInfo {
     Bundle getMetaData();
 
     ProviderInfo getProviderInfo(); // TODO: split to multiple methods for getting relevant info
+
+    MyPackageInfo getOwnerPackage();
 }

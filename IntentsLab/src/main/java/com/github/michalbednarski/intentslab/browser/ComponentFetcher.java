@@ -21,17 +21,12 @@ package com.github.michalbednarski.intentslab.browser;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.pm.ActivityInfo;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.ComponentInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 import android.content.pm.ProviderInfo;
-import android.content.pm.ServiceInfo;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Parcel;
-import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
@@ -40,16 +35,28 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.Spinner;
 import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.appinfo.MyComponentInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageManager;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageManagerImpl;
+import com.github.michalbednarski.intentslab.appinfo.MyPermissionInfo;
+import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
+
+import org.jdeferred.DoneFilter;
+import org.jdeferred.Promise;
+import org.jdeferred.impl.DefaultDeferredManager;
+import org.jdeferred.multiple.MultipleResults;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Fetcher for application components
  */
-public class ComponentFetcher extends AsyncTaskFetcher {
+public class ComponentFetcher extends Fetcher {
     private static final String TAG = "ComponentFetcher";
 
     static final boolean DEVELOPMENT_PERMISSIONS_SUPPORTED =
@@ -143,142 +150,105 @@ public class ComponentFetcher extends AsyncTaskFetcher {
 
     // Fetching
     @Override
-    Object getEntries(Context context) {
-        PackageManager pm = context.getPackageManager();
-        int requestedPackageInfoFlags =
-                type |
-                PackageManager.GET_DISABLED_COMPONENTS |
-                (requireMetaDataSubstring != null ? PackageManager.GET_META_DATA : 0);
+    Promise<Object, Throwable, Void> getEntriesAsync(Context context) {
+        MyPackageManager myPackageManager = MyPackageManagerImpl.getInstance(context);
 
-        boolean workAroundSmallBinderBuffer = false;
-        List<PackageInfo> allPackages = null;
-        try {
-            allPackages = pm.getInstalledPackages(requestedPackageInfoFlags);
-        } catch (Exception e) {
-            Log.w(TAG, "Loading all apps at once failed, retrying separately", e);
-        }
+        Promise<Collection<MyPackageInfo>, Void, Void> packagesPromise = myPackageManager.getPackages(false);
+        Promise<Map<String, MyPermissionInfo>, Void, Void> permissionsPromise = myPackageManager.getPermissions();
 
-        if (allPackages == null || allPackages.isEmpty()) {
-            workAroundSmallBinderBuffer = true;
-            allPackages = pm.getInstalledPackages(0);
-        }
+        DefaultDeferredManager dm = new DefaultDeferredManager();
+        final PackageManager pm = context.getPackageManager();
+        return dm
+                .when(packagesPromise, permissionsPromise)
+                .then(new DoneFilter<MultipleResults, Object>() {
+                    @Override
+                    public Object filterDone(MultipleResults result) {
+                        @SuppressWarnings("unchecked")
+                        Collection<MyPackageInfo> packages = (Collection<MyPackageInfo>) result.get(0).getResult();
+                        @SuppressWarnings("unchecked")
+                        Map<String, MyPermissionInfo> permissions = (Map<String, MyPermissionInfo>) result.get(1).getResult();
 
-        ArrayList<Category> selectedApps = new ArrayList<Category>();
+                        ArrayList<Category> selectedApps = new ArrayList<Category>();
 
-        for (PackageInfo pack : allPackages) {
-            // Filter out non-applications
-            if (pack.applicationInfo == null) {
-                continue;
-            }
+                        //
+                        for (MyPackageInfo pack : packages) {
+                            // System app filter
+                            if (((
+                                    pack.isSystemApplication() ?
+                                            APP_TYPE_SYSTEM :
+                                            APP_TYPE_USER)
+                                    & appType) == 0) {
+                                continue;
+                            }
 
-            // System app filter
-            if (((
-                    (pack.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0 ?
-                            APP_TYPE_SYSTEM :
-                            APP_TYPE_USER)
-                    & appType) == 0) {
-                continue;
-            }
+                            // Scan components
+                            ArrayList<Component> selectedComponents = new ArrayList<Component>();
 
-            // Load component information separately if they were to big to send them all at once
-            if (workAroundSmallBinderBuffer) {
-                try {
-                    pack = pm.getPackageInfo(pack.packageName, requestedPackageInfoFlags);
-                } catch (PackageManager.NameNotFoundException e) {
-                    Log.w(TAG, "getPackageInfo() thrown NameNotFoundException for " + pack.packageName, e);
-                    continue;
-                }
-            }
+                            if ((type & PackageManager.GET_ACTIVITIES) != 0) {
+                                scanComponents(permissions, pack.getActivities(), selectedComponents, false);
+                            }
+                            if ((type & PackageManager.GET_RECEIVERS) != 0) {
+                                scanComponents(permissions, pack.getReceivers(), selectedComponents, false);
+                            }
+                            if ((type & PackageManager.GET_SERVICES) != 0) {
+                                scanComponents(permissions, pack.getServices(), selectedComponents, false);
+                            }
+                            if ((type & PackageManager.GET_PROVIDERS) != 0) {
+                                scanComponents(permissions, pack.getProviders(), selectedComponents, testWritePermissionForProviders);
+                            }
 
-            // Scan components
-            ArrayList<Component> selectedComponents = new ArrayList<Component>();
+                            // Check if we filtered out all components and skip whole app if so
+                            if (selectedComponents.isEmpty()) {
+                                continue;
+                            }
 
-            if ((type & PackageManager.GET_ACTIVITIES) != 0) {
-                if (pack.activities != null) {
-                    for (ActivityInfo activity : pack.activities) {
-                        // TODO: this is hack, find way to pass activity/receiver info properly
-                        if (activity.taskAffinity == null) {
-                            activity.taskAffinity = "";
+                            // Build and add app descriptor
+                            Category app = new Category();
+                            app.title = String.valueOf(pack.loadLabel(pm));
+                            app.subtitle = pack.getPackageName();
+                            app.components = selectedComponents.toArray(new Component[selectedComponents.size()]);
+                            selectedApps.add(app);
                         }
+                        return selectedApps.toArray(new Category[selectedApps.size()]);
                     }
-                }
-                scanComponents(pm, pack.activities, selectedComponents);
-            }
-            if ((type & PackageManager.GET_RECEIVERS) != 0) {
-                if (pack.receivers != null) {
-                    for (ActivityInfo receiver : pack.receivers) {
-                        receiver.taskAffinity = null; // TODO: this is hack, find way to pass activity/receiver info properly
-                    }
-                }
-                scanComponents(pm, pack.receivers, selectedComponents);
-            }
-            if ((type & PackageManager.GET_SERVICES) != 0) {
-                scanComponents(pm, pack.services, selectedComponents);
-            }
-            if ((type & PackageManager.GET_PROVIDERS) != 0) {
-                scanComponents(pm, pack.providers, selectedComponents);
-            }
-
-            // Check if we filtered out all components and skip whole app if so
-            if (selectedComponents.isEmpty()) {
-                continue;
-            }
-
-            // Build and add app descriptor
-            Category app = new Category();
-            app.title = String.valueOf(pack.applicationInfo.loadLabel(pm));
-            app.subtitle = pack.packageName;
-            app.components = selectedComponents.toArray(new Component[selectedComponents.size()]);
-            selectedApps.add(app);
-
-            // Allow cancelling task
-            if (Thread.interrupted()) {
-                return null;
-            }
-        }
-        return selectedApps.toArray(new Category[selectedApps.size()]);
+                });
     }
 
-    private void scanComponents(PackageManager pm, ComponentInfo[] components, ArrayList<Component> outList) {
-        // Skip apps not having any components of requested type
-        if (!(components != null && components.length != 0)) {
-            return;
-        }
-
+    private void scanComponents(Map<String, MyPermissionInfo> pm, Collection<MyComponentInfo> components, ArrayList<Component> outList, boolean checkWritePermission) {
         // Scan components
-        for (ComponentInfo cmp : components) {
-            if (!checkMetaDataFilter(cmp)) {
+        for (MyComponentInfo cmp : components) {
+            if (!checkMetaDataFilter(cmp.getMetaData())) {
                 continue;
             }
-            if (!checkPermissionFilter(pm, cmp)) {
+            if (!checkPermissionFilter(pm, cmp, checkWritePermission)) {
                 continue;
             }
-            if (includeOnlyProvidersAllowingPermissionGranting && cmp instanceof ProviderInfo) {
-                ProviderInfo providerInfo = (ProviderInfo) cmp;
+            if (includeOnlyProvidersAllowingPermissionGranting && cmp.getType() == IntentEditorConstants.PROVIDER) {
+                ProviderInfo providerInfo = cmp.getProviderInfo();
                 if (!providerInfo.grantUriPermissions) {
                     continue;
                 }
             }
             Component component = new Component();
-            String name = cmp.name;
-            String packageName = cmp.packageName;
+            String name = cmp.getName();
+            String packageName = cmp.getOwnerPackage().getPackageName();
             component.title = name.startsWith(packageName) ? name.substring(packageName.length()) : name;
             component.componentInfo = cmp;
             outList.add(component);
         }
     }
 
-    private boolean checkMetaDataFilter(ComponentInfo cmp) {
+    private boolean checkMetaDataFilter(Bundle metaData) {
         if (requireMetaDataSubstring == null) {
             return true;
         }
-        if (cmp.metaData == null || cmp.metaData.isEmpty()) {
+        if (metaData == null || metaData.isEmpty()) {
             return false;
         }
         if (requireMetaDataSubstring.length() == 0) {
             return true;
         }
-        for (String key : cmp.metaData.keySet()) {
+        for (String key : metaData.keySet()) {
             if (key.contains(requireMetaDataSubstring)) {
                 return true;
             }
@@ -286,21 +256,17 @@ public class ComponentFetcher extends AsyncTaskFetcher {
         return false;
     }
 
-    private boolean checkPermissionFilter(PackageManager pm, ComponentInfo cmp) {
+    private boolean checkPermissionFilter(Map<String, MyPermissionInfo> permissionMap, MyComponentInfo cmp, boolean checkWritePermission) {
         // Not exported?
-        if (!cmp.exported) {
+        if (!cmp.isExported()) {
             return (protection & PROTECTION_UNEXPORTED) != 0;
         }
 
         // Get checked permission
         String permission =
-                cmp instanceof ServiceInfo ? ((ServiceInfo) cmp).permission :
-                cmp instanceof ActivityInfo ? ((ActivityInfo) cmp).permission :
-                cmp instanceof ProviderInfo ? (
-                        testWritePermissionForProviders ?
-                                ((ProviderInfo) cmp).writePermission :
-                                ((ProviderInfo) cmp).readPermission
-                ) : null;
+                checkWritePermission ?
+                        cmp.getWritePermission() :
+                        cmp.getPermission();
 
         // World accessible
         if (permission == null) {
@@ -316,11 +282,8 @@ public class ComponentFetcher extends AsyncTaskFetcher {
         }
 
         // Obtain PermissionInfo
-        PermissionInfo permissionInfo;
-        try {
-            permissionInfo = pm.getPermissionInfo(permission, 0);
-        } catch (PackageManager.NameNotFoundException e) {
-            Log.v("PermissionFilter", "Unknown permission " + permission + " for " + cmp.name, e);
+        MyPermissionInfo permissionInfo = permissionMap.get(permission);
+        if (permissionInfo == null) {
             return (protection & PROTECTION_UNKNOWN) != 0;
         }
 
@@ -328,7 +291,30 @@ public class ComponentFetcher extends AsyncTaskFetcher {
     }
 
     @SuppressLint("InlinedApi")
-    static boolean checkProtectionLevel(PermissionInfo permissionInfo, int protectionFilter) {
+    static boolean checkProtectionLevel(MyPermissionInfo permissionInfo, int protectionFilter) {
+        // Skip test if all options are checked
+        if ((protectionFilter & PROTECTION_ANY_LEVEL) == PROTECTION_ANY_LEVEL) {
+            return true;
+        }
+
+        // Match against our flags
+        return ((
+                permissionInfo.isNormal() ? PROTECTION_NORMAL :
+                permissionInfo.isDangerous() ? PROTECTION_DANGEROUS :
+                (
+                    (permissionInfo.isSignature()
+                        ? PROTECTION_SIGNATURE : 0) |
+                    (permissionInfo.isSystem()
+                        ? PROTECTION_SYSTEM : 0) |
+                    (permissionInfo.isDevelopment()
+                        ? PROTECTION_DEVELOPMENT : 0)
+                )
+        ) & protectionFilter) != 0;
+    }
+
+    @SuppressLint("InlinedApi")
+    // TODO: drop this method once we migrate PermissionFetcher to MyPackageManager
+    static boolean checkProtectionLevelRaw(PermissionInfo permissionInfo, int protectionFilter) {
         // Skip test if all options are checked
         if ((protectionFilter & PROTECTION_ANY_LEVEL) == PROTECTION_ANY_LEVEL) {
             return true;
@@ -349,10 +335,10 @@ public class ComponentFetcher extends AsyncTaskFetcher {
                 (
                     ((protectionLevelBase == PermissionInfo.PROTECTION_SIGNATURE)
                         ? PROTECTION_SIGNATURE : 0) |
-                    (((protectionLevelFlags & PermissionInfo.PROTECTION_FLAG_SYSTEM) != 0)
-                        ? PROTECTION_SYSTEM : 0) |
-                    (((protectionLevelFlags & PermissionInfo.PROTECTION_FLAG_DEVELOPMENT) != 0)
-                        ? PROTECTION_DEVELOPMENT : 0)
+                        (((protectionLevelFlags & PermissionInfo.PROTECTION_FLAG_SYSTEM) != 0)
+                                ? PROTECTION_SYSTEM : 0) |
+                        (((protectionLevelFlags & PermissionInfo.PROTECTION_FLAG_DEVELOPMENT) != 0)
+                                ? PROTECTION_DEVELOPMENT : 0)
                 )
         ) & protectionFilter) != 0;
     }

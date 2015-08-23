@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PermissionInfo;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -32,6 +33,7 @@ public class MyPackageManagerImpl implements MyPackageManager {
             PackageManager.GET_RECEIVERS |
             PackageManager.GET_SERVICES |
             PackageManager.GET_PROVIDERS |
+            PackageManager.GET_PERMISSIONS |
             PackageManager.GET_DISABLED_COMPONENTS |
             PackageManager.GET_URI_PERMISSION_PATTERNS |
             PackageManager.GET_META_DATA;
@@ -73,6 +75,12 @@ public class MyPackageManagerImpl implements MyPackageManager {
      */
     boolean mLoadedAllPackages;
 
+
+    /**
+     * Scanned permissions
+     * Guarded by {@link #mLock}
+     */
+    Map<String, MyPermissionInfoImpl> mPermissions = new ArrayMap<>();
 
     private MyPackageManagerImpl(Context context) {
         // 'context' is application context
@@ -149,6 +157,58 @@ public class MyPackageManagerImpl implements MyPackageManager {
         return loadPackageInfo(packageName);
     }
 
+    // Note: this function is currently run in synchronized(mLock)
+    private void fillPermissionsBasedOnPackageInfo(MyPackageInfoImpl packageInfo, PermissionInfo[] permissions) {
+        if (permissions == null || permissions.length == 0) {
+            return;
+        }
+
+        for (PermissionInfo permissionInfo : permissions) {
+
+            // TODO: convert mPermissions to parameter used only on one thread
+            MyPermissionInfoImpl nowRegisteredPermission = mPermissions.get(permissionInfo.name);
+
+            String expectedOwnerPackage = null;
+
+            // If we have this permission in cache already ask system whichever is in use
+            if (
+                    // We already seen this permission
+                    nowRegisteredPermission != null &&
+                    // and now we see it in different package
+                    !packageInfo.mPackageName.equals(nowRegisteredPermission.mSystemPermissionInfo.packageName)) {
+
+                // If we know that currently registered permission is correct one then keep it
+                if (!nowRegisteredPermission.mOwnerVerified) {
+                    continue;
+                }
+
+                // Get expected owner package if we don't know it yet
+                expectedOwnerPackage = nowRegisteredPermission.mRealOwnerPackageName;
+                if (expectedOwnerPackage == null) {
+                    try {
+                        expectedOwnerPackage = mPm.getPermissionInfo(permissionInfo.name, 0).packageName;
+                    } catch (PackageManager.NameNotFoundException e) {
+                        Log.w(TAG, "Found permission in package but not in system", e);
+                        continue;
+                    }
+                    nowRegisteredPermission.mRealOwnerPackageName = expectedOwnerPackage;
+                }
+
+                // Skip this permission if we aren't expected owner
+                if (expectedOwnerPackage.equals(packageInfo.mPackageName)) {
+                    continue;
+                }
+            }
+
+            // Register this permission
+            MyPermissionInfoImpl permissionToRegister = new MyPermissionInfoImpl(permissionInfo, packageInfo);
+            if (expectedOwnerPackage != null) {
+                permissionToRegister.mOwnerVerified = true;
+            }
+            mPermissions.put(permissionInfo.name, permissionToRegister);
+        }
+    }
+
     private MyPackageInfoImpl loadPackageInfo(String packageName) {
         PackageInfo packageInfo;
         try {
@@ -198,10 +258,13 @@ public class MyPackageManagerImpl implements MyPackageManager {
             return null;
         }
 
-        // Load component information separately if they were to big to send them all at once
+        // Convert package info
         MyPackageInfoImpl myPackageInfo = new MyPackageInfoImpl(packageInfo);
         synchronized (mLock) {
             mPackages.put(packageInfo.packageName, myPackageInfo);
+
+            // And scan permissions
+            fillPermissionsBasedOnPackageInfo(myPackageInfo, packageInfo.permissions);
         }
         return myPackageInfo;
     }
@@ -250,6 +313,27 @@ public class MyPackageManagerImpl implements MyPackageManager {
                             fillIntentFiltersForPackage(myPackageInfo);
                         }
                         deferred.resolve(myPackageInfo);
+                    }
+                });
+            }
+        }
+
+        return new AndroidDeferredObject<>(deferred);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Promise<Map<String, MyPermissionInfo>, Void, Void> getPermissions() {
+        final DeferredObject<Map<String, MyPermissionInfo>, Void, Void> deferred = new DeferredObject<>();
+        synchronized (mLock) {
+            if (mLoadedAllPackages) {
+                deferred.resolve((Map) mPermissions);
+            } else {
+                mWorkerHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadAllInstalledPackagesInfoIfNeeded();
+                        deferred.resolve((Map) mPermissions);
                     }
                 });
             }

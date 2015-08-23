@@ -48,6 +48,7 @@ import com.github.michalbednarski.intentslab.AppInfoActivity;
 import com.github.michalbednarski.intentslab.BuildConfig;
 import com.github.michalbednarski.intentslab.PermissionInfoFragment;
 import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.appinfo.MyComponentInfo;
 import com.github.michalbednarski.intentslab.appinfo.MyPackageInfo;
 import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
 import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
@@ -293,57 +294,65 @@ public class BrowseComponentsFragment extends Fragment {
     }
 
     private void showComponent(Object baseComponentInfo) {
+        BrowseComponentsActivity activity = (BrowseComponentsActivity) getActivity();
+        // Registered receiver
         if (baseComponentInfo instanceof RegisteredReceiverInfo) {
             Bundle arguments = new Bundle();
             arguments.putParcelable(
                     RegisteredReceiverInfoFragment.ARG_REGISTERED_RECEIVER,
                     (RegisteredReceiverInfo) baseComponentInfo
             );
-            ((BrowseComponentsActivity) getActivity()).openFragment(
+            activity.openFragment(
                     RegisteredReceiverInfoFragment.class,
                     arguments
             );
             return;
         }
 
-
+        // Package
         if (baseComponentInfo instanceof MyPackageInfo) {
             MyPackageInfo packageInfo = (MyPackageInfo) baseComponentInfo;
             startActivity(
                     new Intent(getActivity(), AppInfoActivity.class)
-                    .putExtra(AppInfoActivity.EXTRA_PACKAGE_NAME, packageInfo.getPackageName())
+                            .putExtra(AppInfoActivity.EXTRA_PACKAGE_NAME, packageInfo.getPackageName())
             );
             return;
         }
 
-        PackageItemInfo componentInfo = (PackageItemInfo) baseComponentInfo;
-        if (componentInfo instanceof PermissionInfo) {
+        // Permission
+        if (baseComponentInfo instanceof PermissionInfo) {
+            PackageItemInfo componentInfo = (PackageItemInfo) baseComponentInfo;
             Bundle arguments = new Bundle();
             arguments.putString(PermissionInfoFragment.ARG_PERMISSION_NAME, componentInfo.name);
-            ((BrowseComponentsActivity) getActivity()).openFragment(
+            activity.openFragment(
                     PermissionInfoFragment.class,
                     arguments
             );
             return;
         }
 
+        // Component
+        if (baseComponentInfo instanceof MyComponentInfo) {
+            MyComponentInfo componentInfo = (MyComponentInfo) baseComponentInfo;
+            int type = componentInfo.getType();
 
-        Bundle arguments = new Bundle();
-        arguments.putString(ComponentInfoFragment.ARG_PACKAGE_NAME, componentInfo.packageName);
-        arguments.putString(ComponentInfoFragment.ARG_COMPONENT_NAME, componentInfo.name);
-        if (componentInfo instanceof ActivityInfo) {
-            // TODO: better detection, pass information as needed
-            int type = ((ActivityInfo) componentInfo).taskAffinity == null ? IntentEditorConstants.BROADCAST : IntentEditorConstants.ACTIVITY;
-            arguments.putInt(ComponentInfoFragment.ARG_COMPONENT_TYPE, type);
-        } else if (componentInfo instanceof ServiceInfo) {
-            arguments.putInt(ComponentInfoFragment.ARG_COMPONENT_TYPE, IntentEditorConstants.SERVICE);
+            Bundle arguments = new Bundle();
+            arguments.putString(ComponentInfoFragment.ARG_PACKAGE_NAME, componentInfo.getOwnerPackage().getPackageName());
+            arguments.putString(ComponentInfoFragment.ARG_COMPONENT_NAME, componentInfo.getName());
+
+            if (type == IntentEditorConstants.PROVIDER) {
+                activity.openFragment(
+                        ProviderInfoFragment.class,
+                        arguments
+                );
+            } else {
+                arguments.putInt(ComponentInfoFragment.ARG_COMPONENT_TYPE, type);
+                activity.openFragment(
+                        ComponentInfoFragment.class,
+                        arguments
+                );
+            }
         }
-        ((BrowseComponentsActivity) getActivity()).openFragment(
-                (componentInfo instanceof ProviderInfo ?
-                        ProviderInfoFragment.class :
-                        ComponentInfoFragment.class),
-                arguments
-        );
     }
 
     private class ExpandableAdapter extends BaseExpandableListAdapter implements ExpandableListView.OnChildClickListener {

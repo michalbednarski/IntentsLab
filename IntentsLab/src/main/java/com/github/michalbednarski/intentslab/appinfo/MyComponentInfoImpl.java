@@ -18,6 +18,7 @@ class MyComponentInfoImpl implements MyComponentInfo {
 
     int mType;
     ComponentInfo mComponentInfo;
+    MyPackageInfoImpl mOwnerPackage;
 
 
     public IntentFilter[] mIntentFilters;
@@ -26,6 +27,11 @@ class MyComponentInfoImpl implements MyComponentInfo {
     @Override
     public String getName() {
         return mComponentInfo.name;
+    }
+
+    @Override
+    public int getType() {
+        return mType;
     }
 
     @Override
@@ -92,9 +98,15 @@ class MyComponentInfoImpl implements MyComponentInfo {
         return (ProviderInfo) mComponentInfo;
     }
 
-    MyComponentInfoImpl(int type, ComponentInfo componentInfo) {
+    @Override
+    public MyPackageInfo getOwnerPackage() {
+        return mOwnerPackage;
+    }
+
+    MyComponentInfoImpl(int type, ComponentInfo componentInfo, MyPackageInfoImpl ownerPackage) {
         mType = type;
         mComponentInfo = componentInfo;
+        mOwnerPackage = ownerPackage;
     }
 
 

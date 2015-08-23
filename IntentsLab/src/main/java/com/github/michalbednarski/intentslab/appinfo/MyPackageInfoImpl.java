@@ -7,6 +7,8 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.util.ArrayMap;
 
+import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
+
 import java.util.Collection;
 import java.util.Map;
 
@@ -28,7 +30,7 @@ class MyPackageInfoImpl implements MyPackageInfo {
         if (systemComponentInfos != null) {
             for (ComponentInfo component : systemComponentInfos) {
                 // TODO: handle duplicate components in manifest
-                processedComponents.put(component.name, new MyComponentInfoImpl(type, component));
+                processedComponents.put(component.name, new MyComponentInfoImpl(type, component, this));
             }
         }
 
@@ -38,10 +40,10 @@ class MyPackageInfoImpl implements MyPackageInfo {
     MyPackageInfoImpl(PackageInfo packageInfo) {
         mPackageName = packageInfo.packageName;
         mSystemPackageInfo = packageInfo;
-        mActivities = convertComponentsToMy(PackageManager.GET_ACTIVITIES, packageInfo.activities);
-        mReceivers = convertComponentsToMy(PackageManager.GET_RECEIVERS, packageInfo.receivers);
-        mServices = convertComponentsToMy(PackageManager.GET_SERVICES, packageInfo.services);
-        mProviders = convertComponentsToMy(PackageManager.GET_PROVIDERS, packageInfo.providers);
+        mActivities = convertComponentsToMy(IntentEditorConstants.ACTIVITY, packageInfo.activities);
+        mReceivers = convertComponentsToMy(IntentEditorConstants.BROADCAST, packageInfo.receivers);
+        mServices = convertComponentsToMy(IntentEditorConstants.SERVICE, packageInfo.services);
+        mProviders = convertComponentsToMy(IntentEditorConstants.PROVIDER, packageInfo.providers);
     }
 
     @Override
