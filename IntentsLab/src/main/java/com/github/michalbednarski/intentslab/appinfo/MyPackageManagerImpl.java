@@ -110,27 +110,12 @@ public class MyPackageManagerImpl implements MyPackageManager {
         }
 
         // Load all packages
-        boolean workAroundSmallBinderBuffer = false;
-        List<PackageInfo> allPackages = null;
-        try {
-            allPackages = mPm.getInstalledPackages(STANDARD_FLAGS);
-        } catch (Exception e) {
-            Log.w(TAG, "Loading all apps at once failed, retrying separately", e);
-        }
-
-        // If loading with STANDARD_FLAGS failed, retry with 0 flags
-        // and ask system for package details separately
-        if (allPackages == null || allPackages.isEmpty()) {
-            workAroundSmallBinderBuffer = true;
-            allPackages = mPm.getInstalledPackages(0);
-        }
+        // We just load package names and not components now because
+        // some packages (notably Google Play Services) are too big
+        List<PackageInfo> allPackages = mPm.getInstalledPackages(0);
 
         for (PackageInfo pack : allPackages) {
-            if (workAroundSmallBinderBuffer) {
-                loadPackageInfo(pack.packageName);
-            } else {
-                convertPackageInfoAndAddToCache(pack);
-            }
+             loadPackageInfo(pack.packageName);
         }
 
         mLoadedAllPackages = true;
