@@ -21,16 +21,10 @@ package com.github.michalbednarski.intentslab;
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.content.pm.ComponentInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
-import android.content.pm.ProviderInfo;
-import android.content.pm.ServiceInfo;
 import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.view.LayoutInflater;
@@ -39,12 +33,16 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.github.michalbednarski.intentslab.appinfo.MyComponentInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageManagerImpl;
+import com.github.michalbednarski.intentslab.appinfo.PermissionDetails;
 import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
+import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
 import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import org.jdeferred.DoneCallback;
 
 /**
  * Created by mb on 14.07.13.
@@ -55,13 +53,13 @@ public class PermissionInfoFragment extends ListFragment {
     private PackageManager mPm;
 
     private CharSequence mDetailsText;
-    private PackageInfo mDefinedBy;
+    private MyPackageInfo mDefinedBy;
 
     private boolean mAppListsReady = false;
-    private PackageInfo[] mGrantedTo;
-    private PackageInfo[] mImplicitlyGrantedTo;
-    private PackageInfo[] mDeniedTo;
-    private ComponentInfo[] mEnforcingComponents;
+    private MyPackageInfo[] mGrantedTo;
+    private MyPackageInfo[] mImplicitlyGrantedTo;
+    private MyPackageInfo[] mDeniedTo;
+    private MyComponentInfo[] mEnforcingComponents;
 
 
 
@@ -80,6 +78,7 @@ public class PermissionInfoFragment extends ListFragment {
         FormattedTextBuilder headerText = new FormattedTextBuilder();
         headerText.appendGlobalHeader(permissionName);
         try {
+            // TODO: load this from MyPackageManager too?
             final PermissionInfo permissionInfo = mPm.getPermissionInfo(permissionName, 0);
 
             headerText.appendGlobalHeader(String.valueOf(permissionInfo.loadLabel(mPm)));
@@ -96,7 +95,6 @@ public class PermissionInfoFragment extends ListFragment {
 
 
             headerText.appendValue(getString(R.string.permission_protection_level), protectionLevelToString(permissionInfo.protectionLevel));
-            mDefinedBy = mPm.getPackageInfo(permissionInfo.packageName, 0);
         } catch (PackageManager.NameNotFoundException e) {
             // Undeclared permission
             e.printStackTrace();
@@ -104,117 +102,24 @@ public class PermissionInfoFragment extends ListFragment {
 
         mDetailsText = headerText.getText();
 
-        (new ScanUsingAppsTask()).execute(permissionName);
-    }
+        MyPackageManagerImpl
+                .getInstance(getActivity())
+                .getPermissionDetails(permissionName)
+                .then(new DoneCallback<PermissionDetails>() {
+                    @Override
+                    public void onDone(PermissionDetails result) {
+                        // Export data to fields
+                        mDefinedBy = result.permissionInfo.getOwnerPackage();
+                        mGrantedTo = result.grantedTo;
+                        mImplicitlyGrantedTo = result.implicitlyGrantedTo;
+                        mDeniedTo = result.deniedTo;
+                        mEnforcingComponents = result.enforcingComponents;
 
-    class ScanUsingAppsTask extends AsyncTask<String, Object, Object> {
-        @Override
-        protected Object doInBackground(String... params) {
-            String permissionName = params[0];
-
-            // Lists of packages
-            ArrayList<PackageInfo> packagesGrantedPermission = new ArrayList<PackageInfo>();
-            ArrayList<PackageInfo> packagesDeniedPermission = new ArrayList<PackageInfo>();
-            ArrayList<PackageInfo> packagesImplicitlyGrantedPermission = new ArrayList<PackageInfo>();
-            ArrayList<ComponentInfo> enforcingComponents = new ArrayList<ComponentInfo>();
-
-            // Scan packages
-            List<PackageInfo> installedPackages = mPm.getInstalledPackages(
-                    PackageManager.GET_ACTIVITIES |
-                    PackageManager.GET_RECEIVERS |
-                    PackageManager.GET_SERVICES |
-                    PackageManager.GET_PROVIDERS |
-                    PackageManager.GET_PERMISSIONS
-            );
-            boolean workAroundSmallBinderBuffer = false;
-            if (installedPackages.size() == 0) {
-                installedPackages = mPm.getInstalledPackages(0);
-                workAroundSmallBinderBuffer = true;
-            }
-
-            for (PackageInfo packageInfo : installedPackages) {
-                if (workAroundSmallBinderBuffer) {
-                    try {
-                        packageInfo = mPm.getPackageInfo(packageInfo.packageName,
-                                PackageManager.GET_ACTIVITIES |
-                                PackageManager.GET_RECEIVERS |
-                                PackageManager.GET_SERVICES |
-                                PackageManager.GET_PROVIDERS |
-                                PackageManager.GET_PERMISSIONS
-                        );
-                    } catch (PackageManager.NameNotFoundException e) {
-                        // Shouldn't happen (package removed in meantime?)
-                        e.printStackTrace();
-                        continue;
+                        // Fill list
+                        mAppListsReady = true;
+                        mListAdapter.notifyDataSetChanged();
                     }
-                }
-
-                // Find components enforcing this permission
-                if (packageInfo.activities != null) {
-                    for (ActivityInfo activityInfo : packageInfo.activities) {
-                        if (permissionName.equals(activityInfo.permission)) {
-                            enforcingComponents.add(activityInfo);
-                        }
-                    }
-                }
-
-                if (packageInfo.receivers != null) {
-                    for (ActivityInfo receiverInfo : packageInfo.receivers) {
-                        if (permissionName.equals(receiverInfo.permission)) {
-                            enforcingComponents.add(receiverInfo);
-                        }
-                    }
-                }
-
-                if (packageInfo.services != null) {
-                    for (ServiceInfo serviceInfo : packageInfo.services) {
-                        if (permissionName.equals(serviceInfo.permission)) {
-                            enforcingComponents.add(serviceInfo);
-                        }
-                    }
-                }
-
-                if (packageInfo.providers != null) {
-                    for (ProviderInfo providerInfo : packageInfo.providers) {
-                        if (permissionName.equals(providerInfo.readPermission) || permissionName.equals(providerInfo.writePermission)) {
-                            enforcingComponents.add(providerInfo);
-                        }
-                    }
-                }
-
-                // Check if app requested/has permission
-                if (
-                        packageInfo.requestedPermissions != null &&
-                        Arrays.asList(packageInfo.requestedPermissions).contains(permissionName)) {
-                    if (isPermissionGrantedTo(permissionName, packageInfo)) {
-                        packagesGrantedPermission.add(packageInfo);
-                    } else {
-                        packagesDeniedPermission.add(packageInfo);
-                    }
-                    continue;
-                }
-                if (isPermissionGrantedTo(permissionName, packageInfo)) {
-                    packagesImplicitlyGrantedPermission.add(packageInfo);
-                }
-            }
-
-            // Prepare ListView displaying all these lists
-            mGrantedTo = packagesGrantedPermission.toArray(new PackageInfo[packagesGrantedPermission.size()]);
-            mImplicitlyGrantedTo = packagesImplicitlyGrantedPermission.toArray(new PackageInfo[packagesImplicitlyGrantedPermission.size()]);
-            mDeniedTo = packagesDeniedPermission.toArray(new PackageInfo[packagesDeniedPermission.size()]);
-            mEnforcingComponents = enforcingComponents.toArray(new ComponentInfo[enforcingComponents.size()]);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Object o) {
-            mAppListsReady = true;
-            mListAdapter.notifyDataSetChanged();
-        }
-    }
-
-    private boolean isPermissionGrantedTo(String permissionName, PackageInfo packageInfo) {
-        return mPm.checkPermission(permissionName, packageInfo.packageName) == PackageManager.PERMISSION_GRANTED;
+                });
     }
 
     @SuppressLint("InlinedApi")
@@ -261,23 +166,24 @@ public class PermissionInfoFragment extends ListFragment {
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         Object item = mListAdapter.getItem(position);
-        if (item instanceof ComponentInfo) {
+        if (item instanceof MyComponentInfo) {
             // Component, jump to component info
-            ComponentInfo componentInfo = (ComponentInfo) item;
+            MyComponentInfo componentInfo = (MyComponentInfo) item;
             Intent intent = new Intent(getActivity(), SingleFragmentActivity.class);
-            if (componentInfo instanceof ProviderInfo) {
+            if (componentInfo.getType() == IntentEditorConstants.PROVIDER) {
                 intent.putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, ProviderInfoFragment.class.getName());
             } else {
                 intent.putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, ComponentInfoFragment.class.getName());
+                intent.putExtra(ComponentInfoFragment.ARG_COMPONENT_TYPE, componentInfo.getType());
             }
             startActivity(
                     intent
-                    .putExtra(ComponentInfoFragment.ARG_PACKAGE_NAME, componentInfo.packageName)
-                    .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, componentInfo.name)
+                    .putExtra(ComponentInfoFragment.ARG_PACKAGE_NAME, componentInfo.getOwnerPackage().getPackageName())
+                    .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, componentInfo.getName())
             );
         } else {
             // Package, show our package info
-            String packageName = ((PackageInfo) item).packageName;
+            String packageName = ((MyPackageInfo) item).getPackageName();
             startActivity(
                     new Intent(getActivity(), AppInfoActivity.class)
                     .putExtra(AppInfoActivity.EXTRA_PACKAGE_NAME, packageName)
@@ -385,20 +291,20 @@ public class PermissionInfoFragment extends ListFragment {
             return convertView;
         }
 
-        private View createItemViewForPackage(View convertView, ViewGroup parent, PackageInfo packageInfo) {
+        private View createItemViewForPackage(View convertView, ViewGroup parent, MyPackageInfo packageInfo) {
             return createItemView(
                     convertView, parent,
-                    String.valueOf(packageInfo.applicationInfo.loadLabel(mPm)),
-                    packageInfo.packageName,
-                    packageInfo.applicationInfo.loadIcon(mPm)
+                    String.valueOf(packageInfo.loadLabel(mPm)),
+                    packageInfo.getPackageName(),
+                    packageInfo.loadIcon(mPm)
             );
         }
 
-        private View createItemViewForComponent(View convertView, ViewGroup parent, ComponentInfo componentInfo) {
+        private View createItemViewForComponent(View convertView, ViewGroup parent, MyComponentInfo componentInfo) {
             return createItemView(
                     convertView, parent,
                     String.valueOf(componentInfo.loadLabel(mPm)),
-                    new ComponentName(componentInfo.packageName, componentInfo.name).flattenToShortString(),
+                    new ComponentName(componentInfo.getOwnerPackage().getPackageName(), componentInfo.getName()).flattenToShortString(),
                     componentInfo.loadIcon(mPm)
             );
         }

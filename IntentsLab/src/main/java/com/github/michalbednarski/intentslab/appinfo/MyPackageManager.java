@@ -18,4 +18,6 @@ public interface MyPackageManager {
     Promise<MyPackageInfo, Void, Void> getPackageInfo(boolean withIntentFilters, String packageName);
 
     Promise<Map<String, MyPermissionInfo>, Void, Void> getPermissions();
+
+    Promise<PermissionDetails, Void, Void> getPermissionDetails(final String permissionName);
 }

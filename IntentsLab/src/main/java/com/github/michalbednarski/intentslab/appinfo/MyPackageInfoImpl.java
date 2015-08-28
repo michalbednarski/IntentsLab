@@ -4,6 +4,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ComponentInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.util.ArrayMap;
 
@@ -21,7 +22,7 @@ class MyPackageInfoImpl implements MyPackageInfo {
 
     boolean mIntentFiltersLoaded;
 
-    private PackageInfo mSystemPackageInfo;
+    PackageInfo mSystemPackageInfo;
     Map<String, MyComponentInfoImpl> mActivities, mReceivers, mServices, mProviders;
 
     private Map<String, MyComponentInfoImpl> convertComponentsToMy(int type, ComponentInfo[] systemComponentInfos) {
@@ -54,6 +55,11 @@ class MyPackageInfoImpl implements MyPackageInfo {
     @Override
     public CharSequence loadLabel(PackageManager pm) {
         return mSystemPackageInfo.applicationInfo.loadLabel(pm);
+    }
+
+    @Override
+    public Drawable loadIcon(PackageManager pm) {
+        return mSystemPackageInfo.applicationInfo.loadIcon(pm);
     }
 
     @Override

@@ -19,6 +19,8 @@ import org.jdeferred.Promise;
 import org.jdeferred.android.AndroidDeferredObject;
 import org.jdeferred.impl.DeferredObject;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -115,7 +117,7 @@ public class MyPackageManagerImpl implements MyPackageManager {
         List<PackageInfo> allPackages = mPm.getInstalledPackages(0);
 
         for (PackageInfo pack : allPackages) {
-             loadPackageInfo(pack.packageName);
+            loadPackageInfo(pack.packageName);
         }
 
         mLoadedAllPackages = true;
@@ -151,47 +153,105 @@ public class MyPackageManagerImpl implements MyPackageManager {
         for (PermissionInfo permissionInfo : permissions) {
 
             // TODO: convert mPermissions to parameter used only on one thread
+
+            // Get MyPermissionInfoImpl from map or add new to it
             MyPermissionInfoImpl nowRegisteredPermission = mPermissions.get(permissionInfo.name);
-
-            String expectedOwnerPackage = null;
-
-            // If we have this permission in cache already ask system whichever is in use
-            if (
-                    // We already seen this permission
-                    nowRegisteredPermission != null &&
-                    // and now we see it in different package
-                    !packageInfo.mPackageName.equals(nowRegisteredPermission.mSystemPermissionInfo.packageName)) {
-
-                // If we know that currently registered permission is correct one then keep it
-                if (!nowRegisteredPermission.mOwnerVerified) {
-                    continue;
-                }
-
-                // Get expected owner package if we don't know it yet
-                expectedOwnerPackage = nowRegisteredPermission.mRealOwnerPackageName;
-                if (expectedOwnerPackage == null) {
-                    try {
-                        expectedOwnerPackage = mPm.getPermissionInfo(permissionInfo.name, 0).packageName;
-                    } catch (PackageManager.NameNotFoundException e) {
-                        Log.w(TAG, "Found permission in package but not in system", e);
-                        continue;
-                    }
-                    nowRegisteredPermission.mRealOwnerPackageName = expectedOwnerPackage;
-                }
-
-                // Skip this permission if we aren't expected owner
-                if (expectedOwnerPackage.equals(packageInfo.mPackageName)) {
-                    continue;
-                }
+            if (nowRegisteredPermission == null) {
+                nowRegisteredPermission = new MyPermissionInfoImpl();
+                mPermissions.put(permissionInfo.name, nowRegisteredPermission);
             }
 
-            // Register this permission
-            MyPermissionInfoImpl permissionToRegister = new MyPermissionInfoImpl(permissionInfo, packageInfo);
-            if (expectedOwnerPackage != null) {
-                permissionToRegister.mOwnerVerified = true;
+            // Fill it with info from PackageInfo
+            boolean needInfoFromPackageManager = nowRegisteredPermission.fillWithInfoFromApp(permissionInfo, packageInfo);
+
+            // Fill it with info from PackageManagerImpl
+            if (needInfoFromPackageManager) {
+                PermissionInfo permissionInfoFromPM = null;
+                try {
+                    permissionInfoFromPM = mPm.getPermissionInfo(permissionInfo.name, 0);
+                } catch (PackageManager.NameNotFoundException e) {
+                    Log.w(TAG, "Found permission in package but not in system", e);
+                    // Pass null to fillWithInfoFromPackageManager
+                }
+                nowRegisteredPermission.fillWithInfoFromPackageManager(permissionInfoFromPM);
             }
-            mPermissions.put(permissionInfo.name, permissionToRegister);
         }
+    }
+
+    private PermissionDetails collectPermissionDetails(String permission) {
+        // Fill packages details
+        loadAllInstalledPackagesInfoIfNeeded();
+
+        // Get permission details from package manager
+        // TODO: deduplicate this code
+        MyPermissionInfoImpl myPermissionInfo = mPermissions.get(permission);
+        if (myPermissionInfo == null) {
+            myPermissionInfo = new MyPermissionInfoImpl();
+            // Don't add this permission to map if it doesn't exist
+        }
+        if (!myPermissionInfo.mOwnerVerified) {
+            PermissionInfo permissionInfo = null;
+            try {
+                permissionInfo = mPm.getPermissionInfo(permission, 0);
+            } catch (PackageManager.NameNotFoundException ignored) {}
+            myPermissionInfo.fillWithInfoFromPackageManager(permissionInfo);
+
+        }
+
+        // Collect usage info
+        ArrayList<MyPackageInfo> grantedTo = new ArrayList<>();
+        ArrayList<MyPackageInfo> implicitlyGrantedTo = new ArrayList<>();
+        ArrayList<MyPackageInfo> deniedTo = new ArrayList<>();
+        ArrayList<MyComponentInfo> enforcingComponents = new ArrayList<>();
+
+        for (MyPackageInfoImpl packageInfo : mPackages.values()) {
+            // Find enforcing components
+            for (MyComponentInfoImpl component : packageInfo.mActivities.values()) {
+                if (permission.equals(component.getPermission())) {
+                    enforcingComponents.add(component);
+                }
+            }
+            for (MyComponentInfoImpl component : packageInfo.mReceivers.values()) {
+                if (permission.equals(component.getPermission())) {
+                    enforcingComponents.add(component);
+                }
+            }
+            for (MyComponentInfoImpl component : packageInfo.mServices.values()) {
+                if (permission.equals(component.getPermission())) {
+                    enforcingComponents.add(component);
+                }
+            }
+            for (MyComponentInfoImpl component : packageInfo.mProviders.values()) {
+                if (permission.equals(component.getPermission()) ||
+                        permission.equals(component.getWritePermission())) {
+                    enforcingComponents.add(component);
+                }
+            }
+
+            // Categorize to granted/denied
+            String[] requestedPermissions = packageInfo.mSystemPackageInfo.requestedPermissions;
+            boolean requested = requestedPermissions != null &&
+                    Arrays.asList(requestedPermissions).contains(permission);
+            boolean granted = mPm.checkPermission(permission, packageInfo.mPackageName) == PackageManager.PERMISSION_GRANTED;
+            if (granted) {
+                if (requested) {
+                    grantedTo.add(packageInfo);
+                } else {
+                    implicitlyGrantedTo.add(packageInfo);
+                }
+            } else if (requested) {
+                deniedTo.add(packageInfo);
+            }
+        }
+
+        // Pack results and return
+        PermissionDetails permissionDetails = new PermissionDetails();
+        permissionDetails.permissionInfo = myPermissionInfo;
+        permissionDetails.grantedTo = grantedTo.toArray(new MyPackageInfo[grantedTo.size()]);
+        permissionDetails.implicitlyGrantedTo = implicitlyGrantedTo.toArray(new MyPackageInfo[implicitlyGrantedTo.size()]);
+        permissionDetails.deniedTo = deniedTo.toArray(new MyPackageInfo[deniedTo.size()]);
+        permissionDetails.enforcingComponents = enforcingComponents.toArray(new MyComponentInfo[enforcingComponents.size()]);
+        return permissionDetails;
     }
 
     private MyPackageInfoImpl loadPackageInfo(String packageName) {
@@ -210,7 +270,9 @@ public class MyPackageManagerImpl implements MyPackageManager {
             try {
                 // Activities and general
                 packageInfo = mPm.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES | PackageManager.GET_META_DATA | PackageManager.GET_DISABLED_COMPONENTS);
-                if (packageInfo.applicationInfo == null) { return null; }
+                if (packageInfo.applicationInfo == null) {
+                    return null;
+                }
 
                 // Receivers
                 PackageInfo partialPackageInfo = mPm.getPackageInfo(packageName, PackageManager.GET_RECEIVERS | PackageManager.GET_META_DATA | PackageManager.GET_DISABLED_COMPONENTS);
@@ -326,6 +388,21 @@ public class MyPackageManagerImpl implements MyPackageManager {
 
         return new AndroidDeferredObject<>(deferred);
     }
+
+    @Override
+    public Promise<PermissionDetails, Void, Void> getPermissionDetails(final String permissionName) {
+        final DeferredObject<PermissionDetails, Void, Void> deferred = new DeferredObject<>();
+        mWorkerHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                deferred.resolve(collectPermissionDetails(permissionName));
+            }
+        });
+
+        return new AndroidDeferredObject<>(deferred);
+    }
+
+
 
     private class PackagesChangedReceiver extends BroadcastReceiver {
         @Override

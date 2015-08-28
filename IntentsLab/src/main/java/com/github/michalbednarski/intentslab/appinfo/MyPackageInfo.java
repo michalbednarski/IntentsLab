@@ -1,6 +1,7 @@
 package com.github.michalbednarski.intentslab.appinfo;
 
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
 import java.util.Collection;
@@ -12,6 +13,7 @@ public interface MyPackageInfo {
     String getPackageName();
 
     CharSequence loadLabel(PackageManager pm);
+    Drawable loadIcon(PackageManager packageManager); // TODO: Context?
 
     Collection<MyComponentInfo> getActivities();
     MyComponentInfo getActivityByName(String name);
