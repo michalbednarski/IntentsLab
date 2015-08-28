@@ -107,6 +107,10 @@ class MyComponentInfoImpl implements MyComponentInfo {
         mType = type;
         mComponentInfo = componentInfo;
         mOwnerPackage = ownerPackage;
+
+        // Reuse info from package to free some memory
+        componentInfo.packageName = ownerPackage.mPackageName;
+        componentInfo.applicationInfo = ownerPackage.mSystemPackageInfo.applicationInfo;
     }
 
 
