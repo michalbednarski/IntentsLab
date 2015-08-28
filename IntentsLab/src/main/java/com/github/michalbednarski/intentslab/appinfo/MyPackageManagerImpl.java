@@ -289,6 +289,13 @@ public class MyPackageManagerImpl implements MyPackageManager {
                 // Permissions
                 partialPackageInfo = mPm.getPackageInfo(packageName, PackageManager.GET_PERMISSIONS);
                 packageInfo.permissions = partialPackageInfo.permissions;
+                packageInfo.requestedPermissions = partialPackageInfo.requestedPermissions;
+
+                // uncomment when we'll be interested in requestedPermissionFlags
+                /*if (Build.VERSION.SDK_INT >= 16) {
+                    packageInfo.requestedPermissionsFlags = partialPackageInfo.requestedPermissionsFlags;
+                }*/
+
             } catch (Exception e1) {
                 Log.w(TAG, "getPackageInfo() by components thrown Exception for " + packageName + "", e1);
                 return null;
