@@ -45,10 +45,12 @@ import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.SavedItemsDatabase;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.Utils;
+import com.github.michalbednarski.intentslab.appinfo.MyComponentInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageManagerImpl;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceDescriptor;
 import com.github.michalbednarski.intentslab.bindservice.manager.BindServiceManager;
 import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
-import com.github.michalbednarski.intentslab.browser.ExtendedPackageInfo;
 import com.github.michalbednarski.intentslab.runas.IRemoteInterface;
 import com.github.michalbednarski.intentslab.runas.RunAsInitReceiver;
 import com.github.michalbednarski.intentslab.runas.RunAsManager;
@@ -58,6 +60,9 @@ import com.github.michalbednarski.intentslab.valueeditors.framework.Editor;
 import com.github.michalbednarski.intentslab.xposedhooks.api.IntentTracker;
 import com.github.michalbednarski.intentslab.xposedhooks.api.XIntentsLab;
 import com.github.michalbednarski.intentslab.xposedhooks.api.XIntentsLabStatic;
+
+import org.jdeferred.DoneCallback;
+import org.jdeferred.FailCallback;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -337,23 +342,9 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
                 );
                 finish();
                 return true;
-            case R.id.attach_intent_filter: {
-                // We have specified component, just find IntentFilters for it
-                final ComponentName componentName = mEditedIntent.getComponent();
-                ExtendedPackageInfo.getExtendedPackageInfo(this, componentName.getPackageName(), new ExtendedPackageInfo.Callback() {
-                    @Override
-                    public void onPackageInfoAvailable(ExtendedPackageInfo extendedPackageInfo) {
-                        try {
-                            setAttachedIntentFilters(extendedPackageInfo.getComponentInfo(componentName.getClassName()).intentFilters);
-                            Toast.makeText(IntentEditorActivity.this, R.string.intent_filter_attached, Toast.LENGTH_SHORT).show();
-                        } catch (NullPointerException e) {
-                            Toast.makeText(IntentEditorActivity.this, R.string.no_intent_filters_found, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-            }
-
-            return true;
+            case R.id.attach_intent_filter:
+                attachIntentFilters();
+                return true;
             case R.id.detach_intent_filter:
                 clearAttachedIntentFilters();
                 return true;
@@ -447,6 +438,52 @@ public class IntentEditorActivity extends FragmentTabsActivity/*FragmentActivity
     void setMethodId(int newMethodId) {
         mMethodId = newMethodId;
         safelyInvalidateOptionsMenu();
+    }
+
+    void attachIntentFilters() {
+        final ComponentName componentName = mEditedIntent.getComponent();
+        MyPackageManagerImpl
+                .getInstance(this)
+                .getPackageInfo(true, componentName.getPackageName())
+                .then(new DoneCallback<MyPackageInfo>() {
+                    @Override
+                    public void onDone(MyPackageInfo result) {
+                        // Find component
+                        String className = componentName.getClassName();
+                        MyComponentInfo componentInfo = null;
+                        switch (mComponentType) {
+                            case IntentEditorConstants.ACTIVITY:
+                                componentInfo = result.getActivityByName(className);
+                                break;
+                            case IntentEditorConstants.BROADCAST:
+                                componentInfo = result.getReceiverByName(className);
+                                break;
+                            case IntentEditorConstants.SERVICE:
+                                componentInfo = result.getServiceByName(className);
+                                break;
+                        }
+                        if (componentInfo == null) {
+                            Toast.makeText(IntentEditorActivity.this, R.string.component_not_found, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        // Get intent filters
+                        IntentFilter[] intentFilters = componentInfo.getIntentFilters();
+                        if (intentFilters == null || intentFilters.length == 0) {
+                            Toast.makeText(IntentEditorActivity.this, R.string.no_intent_filters_found, Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        // Attach them
+                        setAttachedIntentFilters(intentFilters);
+                        Toast.makeText(IntentEditorActivity.this, R.string.intent_filter_attached, Toast.LENGTH_SHORT).show();
+                    }
+                }).fail(new FailCallback<Void>() {
+                    @Override
+                    public void onFail(Void result) {
+                        Toast.makeText(IntentEditorActivity.this, R.string.component_not_found, Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     void clearAttachedIntentFilters() {

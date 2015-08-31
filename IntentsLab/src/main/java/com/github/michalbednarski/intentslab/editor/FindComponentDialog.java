@@ -24,11 +24,11 @@ import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.ComponentInfo;
-import android.content.pm.PackageItemInfo;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.support.v4.app.DialogFragment;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -44,10 +44,15 @@ import android.widget.TextView;
 import com.github.michalbednarski.intentslab.R;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.Utils;
+import com.github.michalbednarski.intentslab.appinfo.MyComponentInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageManagerImpl;
 import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
-import com.github.michalbednarski.intentslab.browser.ExtendedPackageInfo;
+
+import org.jdeferred.DoneCallback;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -214,13 +219,13 @@ public class FindComponentDialog extends DialogFragment implements AdapterView.O
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
         ListItem item = mAppListAdapter.getItem(position);
         if (item instanceof ComponentWithMatchingFilters) {
-            ComponentInfo info = ((ComponentWithMatchingFilters) item).componentInfo;
+            MyComponentInfo info = ((ComponentWithMatchingFilters) item).componentInfo;
             startActivity(
                     new Intent(getActivity(), SingleFragmentActivity.class)
                             .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, ComponentInfoFragment.class.getName())
-                            .putExtra(ComponentInfoFragment.ARG_PACKAGE_NAME, info.packageName)
-                            .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, info.name)
-                            .putExtra(ComponentInfoFragment.ARG_COMPONENT_TYPE, ((IntentEditorActivity) getActivity()).getComponentType())
+                            .putExtra(ComponentInfoFragment.ARG_PACKAGE_NAME, info.getOwnerPackage().getPackageName())
+                            .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, info.getName())
+                            .putExtra(ComponentInfoFragment.ARG_COMPONENT_TYPE, info.getType())
                             .putExtra(ComponentInfoFragment.ARG_LAUNCHED_FROM_INTENT_EDITOR, true)
             );
             return true;
@@ -327,7 +332,9 @@ public class FindComponentDialog extends DialogFragment implements AdapterView.O
 
 
     private interface ListItem {
-        PackageItemInfo getComponentForDisplay();
+        CharSequence getTitle(PackageManager pm);
+
+        Drawable loadIcon(PackageManager pm);
 
         String getComponentName();
 
@@ -345,13 +352,18 @@ public class FindComponentDialog extends DialogFragment implements AdapterView.O
         }
 
         @Override
-        public PackageItemInfo getComponentForDisplay() {
-            return matchingComponents[0].componentInfo.applicationInfo;
+        public CharSequence getTitle(PackageManager pm) {
+            return matchingComponents[0].componentInfo.getOwnerPackage().loadLabel(pm);
+        }
+
+        @Override
+        public Drawable loadIcon(PackageManager pm) {
+            return matchingComponents[0].loadIcon(pm);
         }
 
         @Override
         public String getComponentName() {
-            return matchingComponents[0].componentInfo.packageName;
+            return matchingComponents[0].componentInfo.getOwnerPackage().getPackageName();
         }
 
         @Override
@@ -363,26 +375,42 @@ public class FindComponentDialog extends DialogFragment implements AdapterView.O
     }
 
     private class ComponentWithMatchingFilters implements ListItem {
-        final ComponentInfo componentInfo;
+        final MyComponentInfo componentInfo;
 
-        ComponentWithMatchingFilters(ComponentInfo componentInfo) {
+        ComponentWithMatchingFilters(MyComponentInfo componentInfo) {
             this.componentInfo = componentInfo;
         }
 
         @Override
-        public PackageItemInfo getComponentForDisplay() {
-            return componentInfo;
+        public CharSequence getTitle(PackageManager pm) {
+            return componentInfo.loadLabel(pm);
+        }
+
+        @Override
+        public Drawable loadIcon(PackageManager pm) {
+            return componentInfo.loadIcon(pm);
+        }
+
+        @NonNull
+        private ComponentName getComponentNameObject() {
+            return new ComponentName(
+                    componentInfo.getOwnerPackage().getPackageName(),
+                    componentInfo.getName()
+            );
         }
 
         @Override
         public String getComponentName() {
-            return new ComponentName(componentInfo.packageName, componentInfo.name).flattenToShortString();
+            ComponentName componentNameObject = getComponentNameObject();
+            return componentNameObject.flattenToShortString();
         }
+
+
 
         @Override
         public void handleClick() {
             final IntentEditorActivity intentEditorActivity = (IntentEditorActivity) getActivity();
-            intentEditorActivity.setComponentName(new ComponentName(componentInfo.packageName, componentInfo.name));
+            intentEditorActivity.setComponentName(getComponentNameObject());
             dismiss();
         }
     }
@@ -442,18 +470,14 @@ public class FindComponentDialog extends DialogFragment implements AdapterView.O
             // Get package manager
             PackageManager pm = parent.getContext().getPackageManager();
 
-            // Set texts
-            PackageItemInfo componentForDisplay = item.getComponentForDisplay();
-
             // Title (label)
-            final CharSequence applicationLabel = componentForDisplay.loadLabel(pm);
-            ((TextView) convertView.findViewById(android.R.id.text1)).setText(applicationLabel);
+            ((TextView) convertView.findViewById(android.R.id.text1)).setText(item.getTitle(pm));
 
             // Package/component name (secondary text)
             ((TextView) convertView.findViewById(android.R.id.text2)).setText(item.getComponentName());
 
             // Icon
-            ((ImageView) convertView.findViewById(R.id.app_icon)).setImageDrawable(componentForDisplay.loadIcon(pm));
+            ((ImageView) convertView.findViewById(R.id.app_icon)).setImageDrawable(item.loadIcon(pm));
 
             // Return view
             return convertView;
@@ -467,7 +491,7 @@ public class FindComponentDialog extends DialogFragment implements AdapterView.O
      * To start or restart use following code:
      *   (new ListFiltersTask()).execute();
      */
-    private class ListFiltersTask implements ExtendedPackageInfo.AllCallback {
+    private class ListFiltersTask implements DoneCallback<Collection<MyPackageInfo>> {
         private int mComponentType;
         private String mAction;
         private Set<String> mCategories;
@@ -511,18 +535,22 @@ public class FindComponentDialog extends DialogFragment implements AdapterView.O
             }
 
             // Prepare package info
-            ExtendedPackageInfo.getAllPackageInfos(getActivity(), this);
+            MyPackageManagerImpl
+                    .getInstance(getActivity())
+                    .getPackages(true)
+                    .done(this);
         }
 
+
         @Override
-        public void onAllPackagesInfosAvailable(ExtendedPackageInfo[] infos) {
+        public void onDone(Collection<MyPackageInfo> result) {
             mAppsWithMatchingFilters.clear();
 
             // Temporary list holding currently scanned intent filters
             ArrayList<ComponentWithMatchingFilters> matchingComponents = new ArrayList<ComponentWithMatchingFilters>();
 
             // Iterate through packages
-            for (ExtendedPackageInfo extendedPackageInfo : infos) {
+            for (MyPackageInfo extendedPackageInfo : result) {
 
                 // Scan intent filters in package
                 scanIntentFiltersInPackage(extendedPackageInfo, matchingComponents);
@@ -543,18 +571,31 @@ public class FindComponentDialog extends DialogFragment implements AdapterView.O
             mAppListAdapter.notifyDataSetChanged();
         }
 
-        private void scanIntentFiltersInPackage(ExtendedPackageInfo extendedPackageInfo, ArrayList<ComponentWithMatchingFilters> matchingComponents) {
+        private void scanIntentFiltersInPackage(MyPackageInfo extendedPackageInfo, ArrayList<ComponentWithMatchingFilters> matchingComponents) {
 
-            // Get components list and skip app if it's null
-            final ExtendedPackageInfo.ExtendedComponentInfo[] components = extendedPackageInfo.getComponentsByType(mComponentType);
+            // Get components list
+            Collection<MyComponentInfo> components = null;
+            switch (mComponentType) {
+                case IntentEditorConstants.ACTIVITY:
+                    components = extendedPackageInfo.getActivities();
+                    break;
+                case IntentEditorConstants.BROADCAST:
+                    components = extendedPackageInfo.getReceivers();
+                    break;
+                case IntentEditorConstants.SERVICE:
+                    components = extendedPackageInfo.getServices();
+                    break;
+            }
+
+            // Skip app if no components are found
             if (components == null) {
                 return;
             }
 
 
             // Iterate over components
-            for (ExtendedPackageInfo.ExtendedComponentInfo component : components) {
-                IntentFilter[] intentFilters = component.intentFilters;
+            for (MyComponentInfo component : components) {
+                IntentFilter[] intentFilters = component.getIntentFilters();
                 if (intentFilters != null) {
                     // Test the intent filters
                     for (IntentFilter intentFilter : intentFilters) {
@@ -562,7 +603,7 @@ public class FindComponentDialog extends DialogFragment implements AdapterView.O
 
                             // Component matched, add to list
                             matchingComponents.add(
-                                    new ComponentWithMatchingFilters(component.systemComponentInfo)
+                                    new ComponentWithMatchingFilters(component)
                             );
 
                             // End scanning this component, scan next in package
