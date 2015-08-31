@@ -30,8 +30,8 @@ import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.github.michalbednarski.intentslab.CategorizedAdapter;
-import com.github.michalbednarski.intentslab.MasterDetailActivity;
+import com.github.michalbednarski.intentslab.uihelpers.CategorizedAdapter;
+import com.github.michalbednarski.intentslab.uihelpers.MasterDetailActivity;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.bindservice.AidlControlsFragment;
 import com.github.michalbednarski.intentslab.bindservice.manager.BaseServiceFragment;

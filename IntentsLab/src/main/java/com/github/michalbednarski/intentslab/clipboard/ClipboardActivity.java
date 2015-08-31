@@ -19,7 +19,7 @@
 package com.github.michalbednarski.intentslab.clipboard;
 
 import android.support.v4.app.Fragment;
-import com.github.michalbednarski.intentslab.MasterDetailActivity;
+import com.github.michalbednarski.intentslab.uihelpers.MasterDetailActivity;
 
 /**
  * Created by mb on 15.02.14.

@@ -16,7 +16,7 @@
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.github.michalbednarski.intentslab;
+package com.github.michalbednarski.intentslab.uihelpers;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -24,6 +24,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
+
+import com.github.michalbednarski.intentslab.Utils;
 
 import java.util.Arrays;
 

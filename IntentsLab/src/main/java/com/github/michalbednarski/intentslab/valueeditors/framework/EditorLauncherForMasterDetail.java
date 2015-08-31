@@ -22,7 +22,7 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 
 import com.github.michalbednarski.intentslab.BuildConfig;
-import com.github.michalbednarski.intentslab.MasterDetailActivity;
+import com.github.michalbednarski.intentslab.uihelpers.MasterDetailActivity;
 
 /**
  * Variant of EditorLauncher for using editors as detail

@@ -41,6 +41,7 @@ import com.github.michalbednarski.intentslab.appinfo.PermissionDetails;
 import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
 import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
 import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
+import com.github.michalbednarski.intentslab.uihelpers.CategorizedAdapter;
 
 import org.jdeferred.DoneCallback;
 

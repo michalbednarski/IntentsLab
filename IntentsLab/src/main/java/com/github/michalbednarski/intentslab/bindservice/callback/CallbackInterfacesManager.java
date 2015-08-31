@@ -24,7 +24,7 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 
-import com.github.michalbednarski.intentslab.MasterDetailActivity;
+import com.github.michalbednarski.intentslab.uihelpers.MasterDetailActivity;
 import com.github.michalbednarski.intentslab.Utils;
 
 import java.io.File;

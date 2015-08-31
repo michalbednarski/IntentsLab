@@ -16,7 +16,7 @@
  *     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.github.michalbednarski.intentslab;
+package com.github.michalbednarski.intentslab.uihelpers;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -24,6 +24,9 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
 import android.view.View;
+
+import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 
 /**
  * Base activity implementing master-detail pattern

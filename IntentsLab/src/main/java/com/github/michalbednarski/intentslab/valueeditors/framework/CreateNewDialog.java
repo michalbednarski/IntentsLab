@@ -30,7 +30,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.github.michalbednarski.intentslab.BuildConfig;
-import com.github.michalbednarski.intentslab.CategorizedAdapter;
+import com.github.michalbednarski.intentslab.uihelpers.CategorizedAdapter;
 import com.github.michalbednarski.intentslab.bindservice.callback.CreateCallbackDialog;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedObject;
 import com.github.michalbednarski.intentslab.sandbox.SandboxedType;
