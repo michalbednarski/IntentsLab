@@ -205,7 +205,9 @@ public class XmlViewerFragment extends TextFragment {
             try {
                 final Method getCookieName = AssetManager.class.getDeclaredMethod("getCookieName", int.class);
                 String resourcesPath = packageContext.getPackageResourcePath();
-                if (resourcesPath == null && isSystemPackage) {
+                // Some devices will return from getPackageResourcePath for "android" null
+                // or path for calling our own (IntentsLab) package
+                if (isSystemPackage && (resourcesPath == null || resourcesPath.contains(context.getPackageName()))) {
                     resourcesPath = "/system/framework/framework-res.apk";
                 }
                 int cookie = 1;
