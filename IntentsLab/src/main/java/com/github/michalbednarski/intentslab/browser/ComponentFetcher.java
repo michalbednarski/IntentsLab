@@ -223,7 +223,7 @@ public class ComponentFetcher extends Fetcher {
                 });
     }
 
-    private void scanComponents(Map<String, MyPermissionInfo> pm, Collection<MyComponentInfo> components, ArrayList<Component> outList, boolean checkWritePermission) {
+    private void scanComponents(Map<String, MyPermissionInfo> pm, MyComponentInfo[] components, ArrayList<Component> outList, boolean checkWritePermission) {
         // Scan components
         for (MyComponentInfo cmp : components) {
             if (!checkMetaDataFilter(cmp.getMetaData())) {

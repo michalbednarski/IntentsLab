@@ -574,7 +574,7 @@ public class FindComponentDialog extends DialogFragment implements AdapterView.O
         private void scanIntentFiltersInPackage(MyPackageInfo extendedPackageInfo, ArrayList<ComponentWithMatchingFilters> matchingComponents) {
 
             // Get components list
-            Collection<MyComponentInfo> components = null;
+            MyComponentInfo[] components = null;
             switch (mComponentType) {
                 case IntentEditorConstants.ACTIVITY:
                     components = extendedPackageInfo.getActivities();

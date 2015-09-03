@@ -123,8 +123,8 @@ class MyPackageInfoImpl implements MyPackageInfo {
     }
 
     @Override
-    public Collection<MyComponentInfo> getActivities() {
-        return Arrays.asList(mActivities);
+    public MyComponentInfo[] getActivities() {
+        return mActivities;
     }
 
     @Override
@@ -133,8 +133,8 @@ class MyPackageInfoImpl implements MyPackageInfo {
     }
 
     @Override
-    public Collection<MyComponentInfo> getReceivers() {
-        return Arrays.asList(mReceivers);
+    public MyComponentInfo[] getReceivers() {
+        return mReceivers;
     }
 
     @Override
@@ -143,8 +143,8 @@ class MyPackageInfoImpl implements MyPackageInfo {
     }
 
     @Override
-    public Collection<MyComponentInfo> getServices() {
-        return Arrays.asList(mServices);
+    public MyComponentInfo[] getServices() {
+        return mServices;
     }
 
     @Override
@@ -153,8 +153,8 @@ class MyPackageInfoImpl implements MyPackageInfo {
     }
 
     @Override
-    public Collection<MyComponentInfo> getProviders() {
-        return Arrays.asList(mProviders);
+    public MyComponentInfo[] getProviders() {
+        return mProviders;
     }
 
     @Override

@@ -135,19 +135,19 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
                         }
 
                         // Check receivers, services and providers
-                        Collection<MyComponentInfo> componentsCollection = result.getReceivers();
-                        if (componentsCollection.size() != 0) {
-                            mReceivers = componentsCollection.toArray(new MyComponentInfo[componentsCollection.size()]);
+                        MyComponentInfo[] componentsCollection = result.getReceivers();
+                        if (componentsCollection.length != 0) {
+                            mReceivers = componentsCollection;
                             presentSections.add(SECTION_RECEIVERS);
                         }
                         componentsCollection = result.getServices();
-                        if (componentsCollection.size() != 0) {
-                            mServices = componentsCollection.toArray(new MyComponentInfo[componentsCollection.size()]);
+                        if (componentsCollection.length != 0) {
+                            mServices = componentsCollection;
                             presentSections.add(SECTION_SERVICES);
                         }
                         componentsCollection = result.getProviders();
-                        if (componentsCollection.size() != 0) {
-                            mProviders = componentsCollection.toArray(new MyComponentInfo[componentsCollection.size()]);
+                        if (componentsCollection.length != 0) {
+                            mProviders = componentsCollection;
                             presentSections.add(SECTION_PROVIDERS);
                         }
 
