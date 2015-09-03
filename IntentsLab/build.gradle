@@ -11,13 +11,12 @@ android {
         versionName "1.0"
     }
 
-    sourceSets {
-        // http://blog.danlew.net/2014/04/16/android-localization-tips/
-        applicationVariants.all { variant ->
-            if (variant.buildType.isDebuggable()) {
-                variant.mergedFlavor.addResourceConfiguration("zz_ZZ")
-            }
-        }
+    // enable en_XA and ar_XB pseudolocales
+    // http://blog.danlew.net/2015/04/06/pseudolocalization-visiting-androids-bizarro-world/
+    buildTypes {
+         debug {
+             pseudoLocalesEnabled true
+         }
     }
 }
 
