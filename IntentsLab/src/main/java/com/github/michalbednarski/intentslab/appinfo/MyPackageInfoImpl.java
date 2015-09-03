@@ -7,10 +7,14 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.util.ArrayMap;
+import android.util.Log;
 
 import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,12 +22,15 @@ import java.util.Map;
  */
 class MyPackageInfoImpl implements MyPackageInfo {
 
+    private static final String TAG = "MyPackageInfoImpl";
     String mPackageName;
 
     boolean mIntentFiltersLoaded;
 
     PackageInfo mSystemPackageInfo;
     Map<String, MyComponentInfoImpl> mActivities, mReceivers, mServices, mProviders;
+
+    List<MyPermissionInfo> mDefinedPermissions;
 
     private Map<String, MyComponentInfoImpl> convertComponentsToMy(int type, ComponentInfo[] systemComponentInfos) {
         Map<String, MyComponentInfoImpl> processedComponents = new ArrayMap<>();
@@ -104,6 +111,63 @@ class MyPackageInfoImpl implements MyPackageInfo {
     @Override
     public MyComponentInfo getProviderByName(String name) {
         return mProviders.get(name);
+    }
+
+    @Override
+    public Collection<MyPermissionInfo> getDefinedPermissions() {
+        return mDefinedPermissions;
+    }
+
+    @Override
+    public UsedAppPermissionDetails getRequestedAndGrantedPermissions(PackageManager pm) {
+
+        HashSet<String> testedPermissions = new HashSet<>();
+        ArrayList<String> grantedPermissions = new ArrayList<>();
+        ArrayList<String> deniedPermissions = new ArrayList<>();
+
+        if (mSystemPackageInfo.requestedPermissions != null) {
+            for (String permission : mSystemPackageInfo.requestedPermissions) {
+                if (pm.checkPermission(permission, mPackageName) == PackageManager.PERMISSION_GRANTED) {
+                    grantedPermissions.add(permission);
+                } else {
+                    deniedPermissions.add(permission);
+                }
+                testedPermissions.add(permission);
+            }
+        }
+
+        // Scan shared user packages for permissions (implicitly granted)
+        ArrayList<String> implicitlyGrantedPermissions = new ArrayList<String>();
+        for (String sharedUidPackageName : pm.getPackagesForUid(mSystemPackageInfo.applicationInfo.uid)) {
+            if (mPackageName.equals(sharedUidPackageName)) {
+                continue;
+            }
+            final PackageInfo sharedUidPackageInfo;
+            try {
+                sharedUidPackageInfo = pm.getPackageInfo(sharedUidPackageName, PackageManager.GET_PERMISSIONS);
+            } catch (PackageManager.NameNotFoundException e) {
+                Log.w(TAG, "Shared uid package not found", e);
+                continue;
+            }
+            if (sharedUidPackageInfo.requestedPermissions == null) {
+                continue;
+            }
+            for (String permission : sharedUidPackageInfo.requestedPermissions) {
+                if (!testedPermissions.contains(permission)) {
+                    testedPermissions.add(permission);
+                    if (pm.checkPermission(permission, mPackageName) == PackageManager.PERMISSION_GRANTED) {
+                        implicitlyGrantedPermissions.add(permission);
+                    }
+                }
+            }
+        }
+
+        // Wrap result
+        UsedAppPermissionDetails result = new UsedAppPermissionDetails();
+        result.grantedPermissions = grantedPermissions.toArray(new String[grantedPermissions.size()]);
+        result.implicitlyGrantedPermissions = implicitlyGrantedPermissions.toArray(new String[implicitlyGrantedPermissions.size()]);
+        result.deniedPermissions = deniedPermissions.toArray(new String[deniedPermissions.size()]);
+        return result;
     }
 
     @Override

@@ -27,6 +27,10 @@ public interface MyPackageInfo {
     Collection<MyComponentInfo> getProviders();
     MyComponentInfo getProviderByName(String name);
 
+    Collection<MyPermissionInfo> getDefinedPermissions();
+
+    UsedAppPermissionDetails getRequestedAndGrantedPermissions(PackageManager pm); // TODO: async or preload
+
     boolean isApplicationEnabled();
 
     boolean isSystemApplication();

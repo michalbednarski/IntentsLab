@@ -21,11 +21,8 @@ package com.github.michalbednarski.intentslab;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.content.pm.ComponentInfo;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ProviderInfo;
+import android.database.DataSetObservable;
 import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -38,12 +35,21 @@ import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.github.michalbednarski.intentslab.appinfo.MyComponentInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageInfo;
+import com.github.michalbednarski.intentslab.appinfo.MyPackageManagerImpl;
+import com.github.michalbednarski.intentslab.appinfo.MyPermissionInfo;
+import com.github.michalbednarski.intentslab.appinfo.UsedAppPermissionDetails;
 import com.github.michalbednarski.intentslab.browser.ComponentInfoFragment;
-import com.github.michalbednarski.intentslab.editor.IntentEditorConstants;
 import com.github.michalbednarski.intentslab.providerlab.ProviderInfoFragment;
 
+import org.jdeferred.DoneCallback;
+import org.jdeferred.FailCallback;
+
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collection;
 
 /**
  * Fragment hosted in AppInfoActivity, displays components and permissions of app
@@ -66,11 +72,11 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
     private int[] mPresentSections;
 
     // Arrays of components
-    private ComponentInfo[] mActivities;
-    private ComponentInfo[] mActivitiesNotExported;
-    private ComponentInfo[] mReceivers;
-    private ComponentInfo[] mServices;
-    private ProviderInfo[] mProviders;
+    private MyComponentInfo[] mActivities;
+    private MyComponentInfo[] mActivitiesNotExported;
+    private MyComponentInfo[] mReceivers;
+    private MyComponentInfo[] mServices;
+    private MyComponentInfo[] mProviders;
 
     // Arrays of permissions
     private String[] mDefinedPermissions;
@@ -83,6 +89,8 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
 
     private LayoutInflater mInflater;
 
+    private DataSetObservable mObservable = new DataSetObservable();
+
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -93,128 +101,104 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setRetainInstance(true);
+
         mPackageName = ((AppInfoHost) getActivity()).getViewedPackageName();
 
         final PackageManager packageManager = getActivity().getPackageManager();
 
-        ArrayList<Integer> presentSections = new ArrayList<Integer>();
+        MyPackageManagerImpl
+                .getInstance(getActivity())
+                .getPackageInfo(false, mPackageName)
+                .done(new DoneCallback<MyPackageInfo>() {
+                    @Override
+                    public void onDone(MyPackageInfo result) {
+                        ArrayList<Integer> presentSections = new ArrayList<>();
 
+                        // Scan activities and group them as exported and not exported
+                        {
+                            ArrayList<MyComponentInfo> exportedActivities = new ArrayList<>();
+                            ArrayList<MyComponentInfo> notExportedActivities = new ArrayList<>();
 
+                            for (MyComponentInfo activity : result.getActivities()) {
+                                (activity.isExported() ? exportedActivities : notExportedActivities).add(activity);
+                            }
 
-        try {
-            final PackageInfo packageInfo = packageManager.getPackageInfo(
-                    mPackageName,
-                    PackageManager.GET_ACTIVITIES |
-                    PackageManager.GET_RECEIVERS |
-                    PackageManager.GET_SERVICES |
-                    PackageManager.GET_PROVIDERS |
-                    PackageManager.GET_PERMISSIONS
-            );
-
-            // Scan activities and group them as exported and not exported
-            {
-                ArrayList<ActivityInfo> exportedActivities = new ArrayList<ActivityInfo>();
-                ArrayList<ActivityInfo> notExportedActivities = new ArrayList<ActivityInfo>();
-
-                if (packageInfo.activities != null && packageInfo.activities.length != 0) {
-                    for (ActivityInfo activity : packageInfo.activities) {
-                        (activity.exported ? exportedActivities : notExportedActivities).add(activity);
-                    }
-                }
-
-                if (exportedActivities.size() != 0) {
-                    mActivities = exportedActivities.toArray(new ComponentInfo[exportedActivities.size()]);
-                    presentSections.add(SECTION_ACTIVITIES);
-                }
-                if (notExportedActivities.size() != 0) {
-                    mActivitiesNotExported = notExportedActivities.toArray(new ComponentInfo[notExportedActivities.size()]);
-                    presentSections.add(SECTION_ACTIVITIES_NOT_EXPORTED);
-                }
-            }
-
-            // Check receivers, services and providers
-            if (packageInfo.receivers != null) {
-                mReceivers = packageInfo.receivers;
-                presentSections.add(SECTION_RECEIVERS);
-            }
-            if (packageInfo.services != null) {
-                mServices = packageInfo.services;
-                presentSections.add(SECTION_SERVICES);
-            }
-            if (packageInfo.providers != null) {
-                mProviders = packageInfo.providers;
-                presentSections.add(SECTION_PROVIDERS);
-            }
-
-            // Scan defined permissions
-            if (packageInfo.permissions != null) {
-                mDefinedPermissions = new String[packageInfo.permissions.length];
-                for (int i = 0; i < packageInfo.permissions.length; i++) {
-                    mDefinedPermissions[i] = packageInfo.permissions[i].name;
-                }
-                presentSections.add(SECTION_DEFINED_PERMISSIONS);
-            }
-
-            // Scan requested permissions (granted and denied)
-            HashSet<String> testedPermissions = new HashSet<String>();
-            if (packageInfo.requestedPermissions != null) {
-                ArrayList<String> grantedPermissions = new ArrayList<String>();
-                ArrayList<String> deniedPermissions = new ArrayList<String>();
-                for (String permission : packageInfo.requestedPermissions) {
-                    if (packageManager.checkPermission(permission, mPackageName) == PackageManager.PERMISSION_GRANTED) {
-                        grantedPermissions.add(permission);
-                    } else {
-                        deniedPermissions.add(permission);
-                    }
-                    testedPermissions.add(permission);
-                }
-                if (grantedPermissions.size() != 0) {
-                    mGrantedPermissions = grantedPermissions.toArray(new String[grantedPermissions.size()]);
-                    presentSections.add(SECTION_GRANTED_PERMISSIONS);
-                }
-                if (deniedPermissions.size() != 0) {
-                    mDeniedPermissions = deniedPermissions.toArray(new String[deniedPermissions.size()]);
-                    presentSections.add(SECTION_DENIED_PERMISSIONS);
-                }
-
-            }
-
-            // Scan shared user packages for permissions (implicitly granted)
-            {
-                ArrayList<String> implicitlyGrantedPermissions = new ArrayList<String>();
-                for (String sharedUidPackageName : packageManager.getPackagesForUid(packageInfo.applicationInfo.uid)) {
-                    if (mPackageName.equals(sharedUidPackageName)) {
-                        continue;
-                    }
-                    final PackageInfo sharedUidPackageInfo = packageManager.getPackageInfo(sharedUidPackageName, PackageManager.GET_PERMISSIONS);
-                    if (sharedUidPackageInfo.requestedPermissions == null) {
-                        continue;
-                    }
-                    for (String permission : sharedUidPackageInfo.requestedPermissions) {
-                        if (!testedPermissions.contains(permission)) {
-                            testedPermissions.add(permission);
-                            if (packageManager.checkPermission(permission, mPackageName) == PackageManager.PERMISSION_GRANTED) {
-                                implicitlyGrantedPermissions.add(permission);
+                            if (exportedActivities.size() != 0) {
+                                mActivities = exportedActivities.toArray(new MyComponentInfo[exportedActivities.size()]);
+                                presentSections.add(SECTION_ACTIVITIES);
+                            }
+                            if (notExportedActivities.size() != 0) {
+                                mActivitiesNotExported = notExportedActivities.toArray(new MyComponentInfo[notExportedActivities.size()]);
+                                presentSections.add(SECTION_ACTIVITIES_NOT_EXPORTED);
                             }
                         }
+
+                        // Check receivers, services and providers
+                        Collection<MyComponentInfo> componentsCollection = result.getReceivers();
+                        if (componentsCollection.size() != 0) {
+                            mReceivers = componentsCollection.toArray(new MyComponentInfo[componentsCollection.size()]);
+                            presentSections.add(SECTION_RECEIVERS);
+                        }
+                        componentsCollection = result.getServices();
+                        if (componentsCollection.size() != 0) {
+                            mServices = componentsCollection.toArray(new MyComponentInfo[componentsCollection.size()]);
+                            presentSections.add(SECTION_SERVICES);
+                        }
+                        componentsCollection = result.getProviders();
+                        if (componentsCollection.size() != 0) {
+                            mProviders = componentsCollection.toArray(new MyComponentInfo[componentsCollection.size()]);
+                            presentSections.add(SECTION_PROVIDERS);
+                        }
+
+                        // Scan defined permissions
+                        ArrayList<String> permissionList = new ArrayList<>();
+                        for (MyPermissionInfo permission : result.getDefinedPermissions()) {
+                            permissionList.add(permission.getName());
+                        }
+                        if (!permissionList.isEmpty()) {
+                            mDefinedPermissions = permissionList.toArray(new String[permissionList.size()]);
+                            presentSections.add(SECTION_DEFINED_PERMISSIONS);
+                        }
+
+                        // Scan requested permissions (granted and denied)
+                        UsedAppPermissionDetails requestedAndGrantedPermissions = result.getRequestedAndGrantedPermissions(packageManager);
+
+                        if (requestedAndGrantedPermissions.grantedPermissions.length != 0) {
+                            mGrantedPermissions = requestedAndGrantedPermissions.grantedPermissions;
+                            presentSections.add(SECTION_GRANTED_PERMISSIONS);
+                        }
+                        if (requestedAndGrantedPermissions.deniedPermissions.length != 0) {
+                            mDeniedPermissions = requestedAndGrantedPermissions.deniedPermissions;
+                            presentSections.add(SECTION_DENIED_PERMISSIONS);
+                        }
+                        if (requestedAndGrantedPermissions.implicitlyGrantedPermissions.length != 0) {
+                            mImplicitlyGrantedPermissions = requestedAndGrantedPermissions.implicitlyGrantedPermissions;
+                            presentSections.add(SECTION_IMPLICITLY_GRANTED_PERMISSIONS);
+                        }
+
+                        // Save present sections list as array
+                        mPresentSections = new int[presentSections.size()];
+                        for (int i = 0; i < presentSections.size(); i++) {
+                            mPresentSections[i] = presentSections.get(i);
+                        }
+
+                        mObservable.notifyChanged();
                     }
-                }
-                if (implicitlyGrantedPermissions.size() != 0) {
-                    mImplicitlyGrantedPermissions = implicitlyGrantedPermissions.toArray(new String[implicitlyGrantedPermissions.size()]);
-                    presentSections.add(SECTION_IMPLICITLY_GRANTED_PERMISSIONS);
-                }
-            }
-
-            // Save present sections list as array
-            mPresentSections = new int[presentSections.size()];
-            for (int i = 0; i < presentSections.size(); i++) {
-                mPresentSections[i] = presentSections.get(i);
-            }
-        } catch (PackageManager.NameNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
+                })
+                .fail(new FailCallback<Void>() {
+                    @Override
+                    public void onFail(Void result) {
+                        FragmentActivity activity = getActivity();
+                        if (activity != null) {
+                            Toast.makeText(activity, R.string.component_not_found, Toast.LENGTH_SHORT).show();
+                            activity.finish();
+                        }
+                    }
+                });
     }
+
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -248,17 +232,17 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
 
     @Override
     public void registerDataSetObserver(DataSetObserver observer) {
-        // This is immutable ExpandableListAdapter, do nothing
+        mObservable.registerObserver(observer);
     }
 
     @Override
     public void unregisterDataSetObserver(DataSetObserver observer) {
-        // This is immutable ExpandableListAdapter, do nothing
+        mObservable.registerObserver(observer);
     }
 
     @Override
     public int getGroupCount() {
-        return mPresentSections.length;
+        return mPresentSections == null ? 0 : mPresentSections.length;
     }
 
     @Override
@@ -329,14 +313,14 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
             case SECTION_RECEIVERS:
             case SECTION_SERVICES:
             {
-                ComponentInfo componentInfo = getComponentAt(groupPosition, childPosition);
-                text = new ComponentName(mPackageName, componentInfo.name).getShortClassName();
+                MyComponentInfo componentInfo = getComponentAt(groupPosition, childPosition);
+                text = new ComponentName(mPackageName, componentInfo.getName()).getShortClassName();
                 break;
             }
             case SECTION_PROVIDERS:
             {
-                ProviderInfo providerInfo = mProviders[childPosition];
-                text = providerInfo.authority;
+                MyComponentInfo providerInfo = mProviders[childPosition];
+                text = providerInfo.getProviderInfo().authority;
                 break;
             }
             case SECTION_DEFINED_PERMISSIONS:
@@ -395,29 +379,25 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
             case SECTION_ACTIVITIES_NOT_EXPORTED:
             case SECTION_RECEIVERS:
             case SECTION_SERVICES: {
-                ComponentInfo componentInfo = getComponentAt(groupPosition, childPosition);
+                MyComponentInfo componentInfo = getComponentAt(groupPosition, childPosition);
                 startActivity(
                         new Intent(getActivity(), SingleFragmentActivity.class)
                         .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, ComponentInfoFragment.class.getName())
                         .putExtra(ComponentInfoFragment.ARG_PACKAGE_NAME, mPackageName)
-                        .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, componentInfo.name)
-                        .putExtra(ComponentInfoFragment.ARG_COMPONENT_TYPE,
-                                mPresentSections[groupPosition] == SECTION_RECEIVERS ? IntentEditorConstants.BROADCAST :
-                                mPresentSections[groupPosition] == SECTION_SERVICES ? IntentEditorConstants.SERVICE :
-                                IntentEditorConstants.ACTIVITY
-                        )
+                        .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, componentInfo.getName())
+                        .putExtra(ComponentInfoFragment.ARG_COMPONENT_TYPE, componentInfo.getType())
                         .putExtra(ComponentInfoFragment.ARG_LAUNCHED_FROM_APP_INFO, true)
                 );
                 return true;
             }
             case SECTION_PROVIDERS:
             {
-                ProviderInfo providerInfo = mProviders[childPosition];
+                MyComponentInfo providerInfo = mProviders[childPosition];
                 startActivity(
                         new Intent(getActivity(), SingleFragmentActivity.class)
                         .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, ProviderInfoFragment.class.getName())
                         .putExtra(ComponentInfoFragment.ARG_PACKAGE_NAME, mPackageName)
-                        .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, providerInfo.name)
+                        .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, providerInfo.getName())
                         .putExtra(ComponentInfoFragment.ARG_LAUNCHED_FROM_APP_INFO, true)
                 );
                 return true;
@@ -438,7 +418,7 @@ public class AppComponentsFragment extends Fragment implements ExpandableListAda
         return false;
     }
 
-    private ComponentInfo getComponentAt(int groupPosition, int childPosition) {
+    private MyComponentInfo getComponentAt(int groupPosition, int childPosition) {
         final int section = mPresentSections[groupPosition];
         return (
                 section == SECTION_ACTIVITIES ? mActivities :

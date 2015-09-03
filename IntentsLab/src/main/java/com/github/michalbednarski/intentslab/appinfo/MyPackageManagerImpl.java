@@ -145,7 +145,7 @@ public class MyPackageManagerImpl implements MyPackageManager {
     }
 
     // Note: this function is currently run in synchronized(mLock)
-    private void fillPermissionsBasedOnPackageInfo(MyPackageInfoImpl packageInfo, PermissionInfo[] permissions) {
+    private void fillPermissionsBasedOnPackageInfo(MyPackageInfoImpl packageInfo, PermissionInfo[] permissions, List<MyPermissionInfo> outAppPermissions) {
         if (permissions == null || permissions.length == 0) {
             return;
         }
@@ -175,6 +175,8 @@ public class MyPackageManagerImpl implements MyPackageManager {
                 }
                 nowRegisteredPermission.fillWithInfoFromPackageManager(permissionInfoFromPM);
             }
+
+            outAppPermissions.add(nowRegisteredPermission);
         }
     }
 
@@ -318,7 +320,9 @@ public class MyPackageManagerImpl implements MyPackageManager {
             mPackages.put(packageInfo.packageName, myPackageInfo);
 
             // And scan permissions
-            fillPermissionsBasedOnPackageInfo(myPackageInfo, packageInfo.permissions);
+            ArrayList<MyPermissionInfo> appPermissions = new ArrayList<>();
+            fillPermissionsBasedOnPackageInfo(myPackageInfo, packageInfo.permissions, appPermissions);
+            myPackageInfo.mDefinedPermissions = appPermissions;
         }
         return myPackageInfo;
     }
