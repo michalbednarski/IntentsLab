@@ -45,11 +45,11 @@ class ScanManifestTask {
                     String tagName = manifest.getName();
                     if (tagName.equals("activity") ||
                             tagName.equals("activity-alias")) {
-                        parseComponent(manifest, mPackageInfo.mPackageName, mPackageInfo.mActivities);
+                        parseComponent(manifest, mPackageInfo.mPackageName, mPackageInfo.mActivitiesMap);
                     } else if (tagName.equals("receiver")) {
-                        parseComponent(manifest, mPackageInfo.mPackageName, mPackageInfo.mReceivers);
+                        parseComponent(manifest, mPackageInfo.mPackageName, mPackageInfo.mReceiversMap);
                     } else if (tagName.equals("service")) {
-                        parseComponent(manifest, mPackageInfo.mPackageName, mPackageInfo.mServices);
+                        parseComponent(manifest, mPackageInfo.mPackageName, mPackageInfo.mServicesMap);
                     }
                 }
                 break;

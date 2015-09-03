@@ -208,22 +208,22 @@ public class MyPackageManagerImpl implements MyPackageManager {
 
         for (MyPackageInfoImpl packageInfo : mPackages.values()) {
             // Find enforcing components
-            for (MyComponentInfoImpl component : packageInfo.mActivities.values()) {
+            for (MyComponentInfo component : packageInfo.mActivities) {
                 if (permission.equals(component.getPermission())) {
                     enforcingComponents.add(component);
                 }
             }
-            for (MyComponentInfoImpl component : packageInfo.mReceivers.values()) {
+            for (MyComponentInfo component : packageInfo.mReceivers) {
                 if (permission.equals(component.getPermission())) {
                     enforcingComponents.add(component);
                 }
             }
-            for (MyComponentInfoImpl component : packageInfo.mServices.values()) {
+            for (MyComponentInfo component : packageInfo.mServices) {
                 if (permission.equals(component.getPermission())) {
                     enforcingComponents.add(component);
                 }
             }
-            for (MyComponentInfoImpl component : packageInfo.mProviders.values()) {
+            for (MyComponentInfo component : packageInfo.mProviders) {
                 if (permission.equals(component.getPermission()) ||
                         permission.equals(component.getWritePermission())) {
                     enforcingComponents.add(component);
