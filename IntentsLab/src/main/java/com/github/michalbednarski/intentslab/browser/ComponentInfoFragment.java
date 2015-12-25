@@ -18,7 +18,6 @@
 
 package com.github.michalbednarski.intentslab.browser;
 
-import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -40,10 +39,11 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.github.michalbednarski.intentslab.AppInfoActivity;
-import com.github.michalbednarski.intentslab.ReceiveBroadcastService;
 import com.github.michalbednarski.intentslab.FormattedTextBuilder;
 import com.github.michalbednarski.intentslab.R;
+import com.github.michalbednarski.intentslab.ReceiveBroadcastService;
 import com.github.michalbednarski.intentslab.SingleFragmentActivity;
 import com.github.michalbednarski.intentslab.Utils;
 import com.github.michalbednarski.intentslab.XmlViewerFragment;
@@ -100,8 +100,7 @@ public class ComponentInfoFragment extends Fragment {
     private CharSequence mDescription;
     private boolean mShowReceiveBroadcast;
 
-    static CharSequence dumpIntentFilter(IntentFilter filter, Resources res, boolean isBroadcast) {
-        FormattedTextBuilder ftb = new FormattedTextBuilder();
+    static void dumpIntentFilter(FormattedTextBuilder ftb, IntentFilter filter, Resources res, boolean isBroadcast) {
         int tagColor = res.getColor(R.color.xml_tag);
         int attributeNameColor = res.getColor(R.color.xml_attr_name);
         int attributeValueColor = res.getColor(R.color.xml_attr_value);
@@ -176,11 +175,9 @@ public class ComponentInfoFragment extends Fragment {
         }
 
         ftb.appendColoured("\n</intent-filter>", tagColor);
-        return ftb.getText();
     }
 
-    public static CharSequence dumpMetaData(final Context context, final String packageName, Bundle metaData) {
-        FormattedTextBuilder text = new FormattedTextBuilder();
+    public static void dumpMetaData(FormattedTextBuilder text, final Context context, final String packageName, Bundle metaData) {
         Context foreignContext = null;
         try {
             foreignContext = context.createPackageContext(packageName, 0);
@@ -229,7 +226,6 @@ public class ComponentInfoFragment extends Fragment {
                 }
             }
         }
-        return text.getText();
     }
 
     @Override
@@ -323,12 +319,12 @@ public class ComponentInfoFragment extends Fragment {
         } else {
             text.appendHeader(getString(R.string.intent_filters));
             for (IntentFilter filter : intentFilters) {
-                text.appendFormattedText(dumpIntentFilter(filter, getResources(), isBroadcast));
+                dumpIntentFilter(text, filter, getResources(), isBroadcast);
             }
         }
 
         // Description: <meta-data>
-        text.appendFormattedText(dumpMetaData(getActivity(), mPackageName, mComponentInfo.getMetaData()));
+        dumpMetaData(text, getActivity(), mPackageName, mComponentInfo.getMetaData());
 
         // Put text in TextView
         mDescription = text.getText();
@@ -369,7 +365,7 @@ public class ComponentInfoFragment extends Fragment {
                 mComponentInfo.loadIcon(getActivity().getPackageManager())
         );
 
-        mDescriptionTextView.setText(mDescription);
+        FormattedTextBuilder.putInTextView(mDescriptionTextView, mDescription);
 
         mReceiveBroadcastButton.setVisibility(mShowReceiveBroadcast ? View.VISIBLE : View.GONE);
         mReceiveBroadcastButton.setEnabled(mShowReceiveBroadcast);

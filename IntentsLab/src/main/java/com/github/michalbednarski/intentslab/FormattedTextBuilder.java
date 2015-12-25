@@ -22,30 +22,51 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.support.annotation.NonNull;
+import android.support.v4.util.ArrayMap;
 import android.text.Spannable;
-import android.text.SpannableStringBuilder;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextPaint;
-import android.text.style.*;
+import android.text.style.BulletSpan;
+import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
+import android.text.style.StyleSpan;
+import android.text.style.SuggestionSpan;
 import android.view.View;
+import android.widget.TextView;
+
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class FormattedTextBuilder {
-    private SpannableStringBuilder ssb = new SpannableStringBuilder();
+    private StringBuilder sb = new StringBuilder();
 
-    private void appendSpan(CharSequence text, Object style) {
-        int baseLen = ssb.length();
+    private List<SpanEntry> spans = new ArrayList<>();
+
+    private void appendSpan(String text, Object style) {
+        int baseLen = sb.length();
         int textLen = text.length();
-        ssb.append(text);
-        ssb.setSpan(style, baseLen, baseLen + textLen, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        sb.append(text);
+        addSpan(style, baseLen, baseLen + textLen);
+    }
+
+    private void addSpan(Object style, int start, int end) {
+        SpanEntry spanEntry = new SpanEntry(start, end, style);
+        spans.add(spanEntry);
     }
 
     public void appendHeader(String text) {
-        ssb.append("\n\n");
+        sb.append("\n\n");
         appendSpan(text, new StyleSpan(Typeface.BOLD));
     }
 
     public void appendGlobalHeader(String text) {
-        if (ssb.length() != 0) {
-            ssb.append("\n");
+        if (sb.length() != 0) {
+            sb.append("\n");
         }
         appendSpan(text, new RelativeSizeSpan(1.5f));
     }
@@ -58,13 +79,13 @@ public class FormattedTextBuilder {
         appendValue(key, value, false, ValueSemantic.NONE);
     }
 
-    public void appendValuelessKeyContinuingGroup(CharSequence key) {
-        ssb.append("\n");
+    public void appendValuelessKeyContinuingGroup(String key) {
+        sb.append("\n");
         appendSpan(key, new StyleSpan(Typeface.BOLD));
     }
 
     public void appendRaw(String text) {
-        ssb.append(text);
+        sb.append(text);
     }
 
     public enum ValueSemantic {
@@ -96,29 +117,29 @@ public class FormattedTextBuilder {
                 break;
         }
 
-        ssb.append(startGroup ? "\n\n" : "\n");
+        sb.append(startGroup ? "\n\n" : "\n");
         appendSpan(key + ":", new StyleSpan(Typeface.BOLD));
-        ssb.append(" ");
+        sb.append(" ");
         if (span != null) {
             appendSpan(value, span);
         } else {
-            ssb.append(value);
+            sb.append(value);
         }
 
     }
 
     public void appendText(String text) {
-        ssb.append("\n" + text);
+        sb.append("\n" + text);
     }
 
     public void appendList(String header, String[] items) {
-        ssb.append("\n\n");
+        sb.append("\n\n");
         appendSpan(header + ":", new StyleSpan(Typeface.BOLD));
         //Log.v("FTB-list-header", header);
 
         for (String item : items) {
             //Log.v("FTB-list-item", item);
-            ssb.append("\n");
+            sb.append("\n");
             appendSpan(item, new BulletSpan());
         }
     }
@@ -143,17 +164,233 @@ public class FormattedTextBuilder {
     }
 
     public void appendClickable(String text, ClickableSpan clickableSpan) {
-        ssb.append(' ');
+        sb.append(' ');
         appendSpan(text, clickableSpan);
     }
 
     public CharSequence getText() {
-        return ssb;
+        if (spans.size() < 50) {
+            return getTextAsSystemSpannable();
+        } else {
+            return getTextAsMySpannable();
+        }
+    }
+
+    Spannable getTextAsMySpannable() {
+        // Make span array
+        final SpanEntry[] spansArr = spans.toArray(new SpanEntry[spans.size()]);
+
+        // Return spannable
+        return new MySpannable(sb.toString(), spansArr);
+    }
+
+    Spannable getTextAsSystemSpannable() {
+        final SpannableString systemSpannable = new SpannableString(sb.toString());
+        for (SpanEntry entry : spans) {
+            systemSpannable.setSpan(entry.span, entry.start, entry.end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        return systemSpannable;
     }
 
     public void appendFormattedText(CharSequence text) {
-        ssb.append(text);
+        //ssb.append(text);
+        //
+        int last = 0;
+
+        if (text instanceof Spanned) {
+            Spanned spannedText = (Spanned) text;
+            for (Object span : spannedText.getSpans(0, text.length(), Object.class)) {
+                // Get start and end and check them
+                int start = spannedText.getSpanStart(span);
+                int end = spannedText.getSpanEnd(span);
+                if (BuildConfig.DEBUG) {
+                    if (!(start <= end)) {
+                        throw new AssertionError("Invalid span range");
+                    }
+                    if (!(start >= last)) {
+                        throw new AssertionError("Nested spans are not supported");
+                    }
+                }
+                last = end;
+
+                // Append span
+                addSpan(span, start, end);
+            }
+        }
+        sb.append(text.toString());
+    }
+
+    public static void putInTextView(TextView textView, CharSequence text) {
+        textView.setSpannableFactory(new Spannable.Factory() {
+            @Override
+            public Spannable newSpannable(CharSequence source) {
+                return (Spannable) source;
+            }
+        });
+
+        textView.setText(text, TextView.BufferType.NORMAL);
     }
 
 
+    private static class SpanEntry {
+        int start, end;
+
+        Object span;
+
+        SpanEntry(int start, int end, Object span) {
+            this.start = start;
+            this.end = end;
+            this.span = span;
+        }
+    }
+
+    /**
+     * Custom version of Spannable. pptimized for performance when using strings with many spans
+     * Faster, but uses more memory than system implementation
+     */
+    private static class MySpannable implements Spannable {
+        private final SpanEntry[] mSpansArr;
+        private final String mString;
+        private final Map<Object, SpanEntry> mSpanMap;
+
+        MySpannable(String string, SpanEntry[] spansArr) {
+            // Make span map
+            final ArrayMap<Object, SpanEntry> spanMap = new ArrayMap<>();
+            for (SpanEntry entry : spansArr) {
+                spanMap.put(entry.span, entry);
+            }
+
+            // Put results in fields
+            mSpansArr = spansArr;
+            mString = string;
+            mSpanMap = spanMap;
+        }
+
+        // For Spannable interface itself
+        @SuppressWarnings("unchecked")
+        @Override
+        public <T> T[] getSpans(int start, int end, Class<T> type) {
+            if (type == SuggestionSpan.class) {
+                return (T[]) new SuggestionSpan[0];
+            }
+
+            if (mSpansArr.length == 0) {
+                return (T[]) Array.newInstance(type, 0);
+            }
+
+            // Based on Arrays.binarySearch()
+            int lo = 0;
+            int hi = mSpansArr.length - 1;
+            int mid = -2;
+
+            while (lo <= hi) {
+                mid = (lo + hi) >>> 1;
+                int midVal = mSpansArr[mid].end;
+
+                if (midVal < start) {
+                    lo = mid + 1;
+                } else if (midVal > start) {
+                    hi = mid - 1;
+                } else {
+                    break;
+                }
+            }
+
+            // Iterate over spans in range
+            List<T> result = new ArrayList<>();
+            for (; mid < mSpansArr.length && mSpansArr[mid].start < end; mid++) {
+                if (mSpansArr[mid].end > start && type.isInstance(mSpansArr[mid].span)) {
+                    result.add((T) mSpansArr[mid].span);
+                }
+            }
+
+            return result.toArray((T[]) Array.newInstance(type, result.size()));
+
+        }
+
+        @Override
+        public int getSpanStart(Object tag) {
+            SpanEntry spanEntry = mSpanMap.get(tag);
+            return spanEntry == null ? -1 : spanEntry.start;
+        }
+
+        @Override
+        public int getSpanEnd(Object tag) {
+            SpanEntry spanEntry = mSpanMap.get(tag);
+            return spanEntry == null ? -1 : spanEntry.end;
+        }
+
+        @Override
+        public int getSpanFlags(Object tag) {
+            return Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
+        }
+
+        @Override
+        public int nextSpanTransition(int start, int limit, Class type) {
+            // If there are no spans we won't be able to do binary search
+            if (mSpansArr.length == 0) {
+                return limit;
+            }
+
+            // Based on Arrays.binarySearch()
+            int lo = 0;
+            int hi = mSpansArr.length - 1;
+            int mid = -2;
+
+            while (lo <= hi) {
+                mid = (lo + hi) >>> 1;
+                int midVal = mSpansArr[mid].end;
+
+                if (midVal < start) {
+                    lo = mid + 1;
+                } else if (midVal > start) {
+                    hi = mid - 1;
+                } else {
+                    break;
+                }
+            }
+
+            for (; mid < mSpansArr.length && mSpansArr[mid].start <= limit; mid++) {
+                SpanEntry entry = mSpansArr[mid];
+                if (entry.start > start && entry.start < limit && type.isInstance(entry.span)) {
+                    return entry.start;
+                }
+                if (entry.end > start && entry.end < limit && type.isInstance(entry.span)) {
+                    return entry.end;
+                }
+            }
+            return limit;
+        }
+
+        // For CharSequence
+        @Override
+        public int length() {
+            return mString.length();
+        }
+
+        @Override
+        public char charAt(int index) {
+            return mString.charAt(index);
+        }
+
+        @Override
+        public CharSequence subSequence(int start, int end) {
+            return mString.subSequence(start, end);
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return mString;
+        }
+
+        // For Spannable editing (not actually supported)
+        @Override
+        public void setSpan(Object what, int start, int end, int flags) {
+        }
+
+        @Override
+        public void removeSpan(Object what) {
+        }
+    }
 }

@@ -130,7 +130,7 @@ public class RegisteredReceiverInfoFragment extends Fragment {
                         getResources().getColor(R.color.xml_comment)
                 );
             }
-            text.appendFormattedText(ComponentInfoFragment.dumpIntentFilter(filter, getResources(), true));
+            ComponentInfoFragment.dumpIntentFilter(text, filter, getResources(), true);
             if (hasSpecificPermission) {
                 text.appendRaw("\n");
             }

@@ -101,7 +101,7 @@ public class TextFragment extends Fragment {
             });
             mFakeLongText.setVisibility(View.VISIBLE);
         } else {
-            mXmlTextView.setText((CharSequence) mText);
+            FormattedTextBuilder.putInTextView(mXmlTextView, (CharSequence) mText);
             mXmlWrapperView.setVisibility(View.VISIBLE);
         }
 
