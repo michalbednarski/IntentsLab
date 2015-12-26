@@ -516,8 +516,10 @@ public class FindComponentDialog extends DialogFragment implements AdapterView.O
             // Set filtering constraints
             if ((usedFlags & FLAG_TEST_ACTION) != 0) {
                 mAction = mIntent.getAction();
-                if (mAction != null && "".equals(mAction)) {
+                if (mAction == null || "".equals(mAction)) {
                     mAction = null;
+                } else if(mInsensitiveAndSubstring) {
+                    mAction = mAction.toLowerCase();
                 }
             }
 

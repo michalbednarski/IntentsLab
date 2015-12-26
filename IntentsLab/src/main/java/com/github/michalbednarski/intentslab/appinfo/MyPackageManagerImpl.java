@@ -72,10 +72,16 @@ public class MyPackageManagerImpl implements MyPackageManager {
 
     /**
      * True if we can just return mPackages.values()
-     * in {@link #getPackages(boolean)}
+     * in {@link #getPackages(boolean)} when intent filters are NOT requested
      * Guarded by {@link #mLock}
      */
     boolean mLoadedAllPackages;
+
+    /**
+     * True if we can just return mPackages.values()
+     * in {@link #getPackages(boolean)} when intent filters are requested
+     */
+    boolean mLoadedAllPackagesIncludingIntentFilters;
 
 
     /**
@@ -333,7 +339,7 @@ public class MyPackageManagerImpl implements MyPackageManager {
     public Promise<Collection<MyPackageInfo>, Void, Void> getPackages(final boolean withIntentFilters) {
         final DeferredObject<Collection<MyPackageInfo>, Void, Void> deferred = new DeferredObject<>();
         synchronized (mLock) {
-            if (mLoadedAllPackages) {
+            if (mLoadedAllPackages && (mLoadedAllPackagesIncludingIntentFilters || !withIntentFilters)) {
                 deferred.resolve((Collection) mPackages.values());
             } else {
                 mWorkerHandler.post(new Runnable() {
@@ -342,6 +348,7 @@ public class MyPackageManagerImpl implements MyPackageManager {
                         loadAllInstalledPackagesInfoIfNeeded();
                         if (withIntentFilters) {
                             fillIntentFiltersForAllPackages();
+                            mLoadedAllPackagesIncludingIntentFilters = true;
                         }
                         deferred.resolve((Collection) mPackages.values());
                     }
@@ -422,6 +429,7 @@ public class MyPackageManagerImpl implements MyPackageManager {
             synchronized (mLock) {
                 mPackages.remove(packageName);
                 mLoadedAllPackages = false;
+                mLoadedAllPackagesIncludingIntentFilters = false;
             }
         }
     }
