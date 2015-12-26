@@ -222,6 +222,7 @@ public class ComponentPickerDialogFragment extends DialogFragment implements OnI
                 .putExtra(SingleFragmentActivity.EXTRA_FRAGMENT, ComponentInfoFragment.class.getName())
                 .putExtra(ComponentInfoFragment.ARG_PACKAGE_NAME, isService ? info.serviceInfo.packageName : info.activityInfo.packageName)
                 .putExtra(ComponentInfoFragment.ARG_COMPONENT_NAME, isService ? info.serviceInfo.name : info.activityInfo.name)
+                .putExtra(ComponentInfoFragment.ARG_COMPONENT_TYPE, ((IntentEditorActivity) getActivity()).getComponentType())
                 .putExtra(ComponentInfoFragment.ARG_LAUNCHED_FROM_INTENT_EDITOR, true)
         );
         return true;
