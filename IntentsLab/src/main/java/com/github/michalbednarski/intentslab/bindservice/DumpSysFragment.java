@@ -69,7 +69,7 @@ public class DumpSysFragment extends TextFragment {
         @Override
         protected ArrayList<String> doInBackground(Object[] params) {
             try {
-                InputStream inputStream = Utils.dumpSystemService(mContext, mServiceName, null);
+                InputStream inputStream = Utils.dumpSystemService(mContext, mServiceName, new String[0]);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
                 String line;
                 while ((line = reader.readLine()) != null) {
