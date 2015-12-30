@@ -224,7 +224,11 @@ public class FormattedTextBuilder {
         textView.setSpannableFactory(new Spannable.Factory() {
             @Override
             public Spannable newSpannable(CharSequence source) {
-                return (Spannable) source;
+                if (source instanceof Spannable) {
+                    return (Spannable) source;
+                } else {
+                    return new SpannableString(source.toString());
+                }
             }
         });
 
