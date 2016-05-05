@@ -27,6 +27,7 @@ import android.os.IBinder;
 import android.support.v4.app.FragmentActivity;
 
 import com.github.michalbednarski.intentslab.BuildConfig;
+import com.github.michalbednarski.intentslab.sandbox.remote.IsolatedService;
 
 import java.util.ArrayList;
 
@@ -75,6 +76,11 @@ public class SandboxManager {
         return sSandbox != null && sSandbox.asBinder().isBinderAlive();
     }
 
+    private static boolean isUsingInAppSandbox() {
+        // 16 - Jelly Bean, support for android:isolatedService was added
+        return android.os.Build.VERSION.SDK_INT >= 16;
+    }
+
     public static void initSandboxAndRunWhenReady(Context context, Runnable whenReady) {
         if (BuildConfig.DEBUG && sRefCount == 0) {
             throw new AssertionError("initSandboxAndRunWhenReady called without refSandbox");
@@ -89,8 +95,14 @@ public class SandboxManager {
             if (sApplicationContext == null) {
                 sApplicationContext = context.getApplicationContext();
             }
+            Intent sandboxIntent;
+            if (isUsingInAppSandbox()) {
+                sandboxIntent = new Intent(context, IsolatedService.class);
+            } else {
+                sandboxIntent = new Intent().setClassName(SANDBOX_PACKAGE, SANDBOX_SERVICE_CLASS);
+            }
             sApplicationContext.bindService(
-                    new Intent().setClassName(SANDBOX_PACKAGE, SANDBOX_SERVICE_CLASS),
+                    sandboxIntent,
                     sServiceConnection,
                     Context.BIND_AUTO_CREATE
             );
@@ -98,10 +110,15 @@ public class SandboxManager {
     }
 
     public static void resetSandbox(Context context) {
-        context.sendBroadcast(new Intent().setClassName(SANDBOX_PACKAGE, RESET_RECEIVER_CLASS));
+        if (!isUsingInAppSandbox()) {
+            context.sendBroadcast(new Intent().setClassName(SANDBOX_PACKAGE, RESET_RECEIVER_CLASS));
+        }
     }
 
     public static boolean isSandboxInstalled(Context context) {
+        if (isUsingInAppSandbox()) {
+            return true;
+        }
         try {
             context.getPackageManager().getPackageInfo(SANDBOX_PACKAGE, 0);
             return true;

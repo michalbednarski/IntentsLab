@@ -172,6 +172,12 @@
 
         <activity android:name=".clipboard.ClipboardActivity" />
         <activity android:name=".valueeditors.framework.SingleEditorActivity" />
+
+        <service
+            android:name=".sandbox.remote.IsolatedService"
+            android:process=":sandbox"
+            android:isolatedProcess="true"
+            />
     </application>
 
 </manifest>
