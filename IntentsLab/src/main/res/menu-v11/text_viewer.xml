@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:tools="http://schemas.android.com/tools"
+      xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/action_search"
+          android:icon="@android:drawable/ic_menu_search"
+          android:title="@string/search"
+          android:showAsAction="ifRoom"
+          android:actionViewClass="android.widget.SearchView"
+          tools:ignore="UnusedAttribute"/>
+    <item android:id="@+id/action_find_next"
+          android:icon="@drawable/ic_skip_next_black_24dp"
+          android:showAsAction="ifRoom"
+          android:title="@string/find_next"/>
+</menu>

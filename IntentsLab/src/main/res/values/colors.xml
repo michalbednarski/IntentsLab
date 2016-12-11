@@ -23,4 +23,5 @@
     <color name="xml_attr_value">#060</color>
     <color name="xml_comment">#666</color>
 
+    <color name="search_highlight">#ffea00</color>
 </resources>

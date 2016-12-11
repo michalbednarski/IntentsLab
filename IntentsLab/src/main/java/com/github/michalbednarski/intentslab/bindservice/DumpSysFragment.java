@@ -21,10 +21,10 @@ package com.github.michalbednarski.intentslab.bindservice;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.SpannableString;
 
 import com.github.michalbednarski.intentslab.TextFragment;
 import com.github.michalbednarski.intentslab.Utils;
-import com.github.michalbednarski.intentslab.XmlPreviewBuilder;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -49,21 +49,13 @@ public class DumpSysFragment extends TextFragment {
         Context mContext = getActivity().getApplicationContext();
         String mServiceName = getArguments().getString(ARG_SERVICE_NAME);
 
-        ArrayList<String> mChunkedDump = new ArrayList<String>();
-        private StringBuilder mCurrentChunk = new StringBuilder();
-        private int mLeftToSplit = XmlPreviewBuilder.CHUNK_LINES;
+        private StringBuilder mText = new StringBuilder();
 
         private void addLine(String line) {
-            if (mLeftToSplit-- == 0) {
-                mLeftToSplit = XmlPreviewBuilder.CHUNK_LINES;
-                mChunkedDump.add(mCurrentChunk.toString());
-                mCurrentChunk = new StringBuilder();
+            if (mText.length() != 0) {
+                mText.append('\n');
             }
-
-            if (mCurrentChunk.length() != 0) {
-                mCurrentChunk.append('\n');
-            }
-            mCurrentChunk.append(line);
+            mText.append(line);
         }
 
         @Override
@@ -84,14 +76,7 @@ public class DumpSysFragment extends TextFragment {
 
         @Override
         protected void onPostExecute(Object o) {
-            if (mCurrentChunk.length() != 0) {
-                mChunkedDump.add(mCurrentChunk.toString());
-            }
-            publishText(
-                    mChunkedDump.size() == 0 ? "" :
-                    mChunkedDump.size() == 1 ? mChunkedDump.get(0) :
-                    mChunkedDump.toArray(new String[mChunkedDump.size()])
-            );
+            publishText(new SpannableString(mText));
         }
     }
 }

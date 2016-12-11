@@ -25,6 +25,13 @@
         android:summaryOn="@string/broadcast_autoedit_on"
         android:title="@string/broadcast_autoedit" />
 
+    <CheckBoxPreference
+        android:key="color-xml"
+        android:title="@string/color_xml_title"
+        android:summary="@string/color_xml_summary"
+        android:defaultValue="true"
+        />
+
     <PreferenceCategory android:title="Developer options" >
         <CheckBoxPreference android:key="forcelegacytabs" android:title="Force legacy tabs"/>
         <CheckBoxPreference

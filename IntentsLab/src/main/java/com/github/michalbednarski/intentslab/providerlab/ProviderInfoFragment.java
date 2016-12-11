@@ -132,9 +132,7 @@ public class ProviderInfoFragment extends Fragment {
             } else {
                 text.appendValue(getString(R.string.provider_r_permission), readPermission, true, FormattedTextBuilder.ValueSemantic.PERMISSION);
                 if (writePermission == null) {
-                    // TODO: bring back bold whole line and italic 'probably'
-                    text.appendRaw("\n");
-                    text.appendFormattedText(getResources().getText(R.string.provider_no_w_permission));
+                    text.appendValuelessKeyContinuingGroup(getResources().getText(R.string.provider_no_w_permission));
                 } else {
                     text.appendValue(getString(R.string.provider_w_permission), writePermission, false, FormattedTextBuilder.ValueSemantic.PERMISSION);
                 }

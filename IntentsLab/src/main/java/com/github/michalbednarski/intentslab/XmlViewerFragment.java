@@ -78,7 +78,7 @@ public class XmlViewerFragment extends TextFragment {
             mPackageName = arguments.getString(ARG_PACKAGE_NAME);
             mResourceId = arguments.getInt(ARG_RESOURCE_ID);
 
-            mXmlPreviewBuilder = new XmlPreviewBuilder(getActivity().getResources(), true);
+            mXmlPreviewBuilder = new XmlPreviewBuilder(getActivity());
             mApplicationContext = getActivity().getApplicationContext();
         }
 
@@ -108,7 +108,7 @@ public class XmlViewerFragment extends TextFragment {
 
                             // Attributes
                             for (int i = 0, attrCount = parser.getAttributeCount(); i < attrCount; i++) {
-                                mXmlPreviewBuilder.attrFromResourceParser(parser, i, scannedAppContext);
+                                mXmlPreviewBuilder.attrFromResourceParser(parser, i, scannedAppContext, attrCount == 1);
                             }
                             break;
 
@@ -132,7 +132,7 @@ public class XmlViewerFragment extends TextFragment {
         @Override
         protected void onPostExecute(CharSequence[] text) {
             mTask = null;
-            publishText(mXmlPreviewBuilder.getPossiblyChunkedText());
+            publishText(mXmlPreviewBuilder.getText());
         }
     }
 

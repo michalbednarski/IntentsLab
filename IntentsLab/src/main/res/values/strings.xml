@@ -261,5 +261,9 @@
     <string name="provider_grant_uri_permission_for_all_paths">Provider allows granting permissions for all paths</string>
     <string name="include_only_with_grant_uri_group">Content provider permission granting</string>
     <string name="include_only_with_grant_uri">Include only providers allowing granting of URI permissions</string>
+    <string name="search">Search</string>
+    <string name="find_next">Find next</string>
+    <string name="color_xml_title">Color XML syntax</string>
+    <string name="color_xml_summary">Color AndroidManifest.xml and res/xml/ (May be slow for large files)</string>
 
 </resources>
