@@ -7,9 +7,11 @@ import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.Message;
 import android.support.v4.util.ArrayMap;
 import android.util.Log;
 
@@ -98,7 +100,13 @@ public class MyPackageManagerImpl implements MyPackageManager {
         // Start worker thread
         HandlerThread workerThread = new HandlerThread("MyPackageManager");
         workerThread.start();
-        mWorkerHandler = new Handler(workerThread.getLooper());
+        mWorkerHandler = new Handler(workerThread.getLooper()) {
+            @Override
+            public void dispatchMessage(Message msg) {
+                super.dispatchMessage(msg);
+                Binder.flushPendingCommands();
+            }
+        };
 
         // Register receiver for updates
         PackagesChangedReceiver receiver = new PackagesChangedReceiver();
