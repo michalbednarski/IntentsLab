@@ -26,6 +26,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+
 import com.github.michalbednarski.intentslab.Utils;
 
 import java.io.File;
@@ -102,7 +103,7 @@ public class RemoteEntryPoint {
         return new File(context.getFilesDir().getParentFile(), "rr");
     }
 
-    @SuppressLint("NewApi")
+    @SuppressLint("CommitPrefEdits")
     public static void ensureInstalled(Context context) {
         int checksum = context.getPackageCodePath().hashCode();
         final SharedPreferences preferences = getDefaultSharedPreferences(context);
@@ -120,14 +121,14 @@ public class RemoteEntryPoint {
         }
     }
 
-    @SuppressLint("NewApi")
     public static void install(Context context) throws IOException {
         File script = getScriptFile(context);
         FileWriter writer = new FileWriter(script);
         writer.write(
             "#!/system/bin/sh\n" +
+            "unset LD_LIBRARY_PATH\n" + // For Termux
             "export CLASSPATH=" + context.getPackageCodePath() + "\n" +
-            "exec app_process /system/bin " + RemoteEntryPoint.class.getName() + " " + new ComponentName(context, RunAsInitReceiver.class).flattenToShortString() + " \"$@\"\n"
+            "exec /system/bin/app_process /system/bin " + RemoteEntryPoint.class.getName() + " " + new ComponentName(context, RunAsInitReceiver.class).flattenToShortString() + " \"$@\"\n"
         );
         writer.close();
         Runtime.getRuntime().exec(new String[] {

@@ -33,6 +33,7 @@ import com.github.michalbednarski.intentslab.PickRecentlyRunningActivity;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * Class used for cleaner access to ActivityManagerNative
@@ -41,7 +42,7 @@ import java.lang.reflect.Method;
 class ActivityManagerWrapper {
     private static ActivityManagerWrapper sInstance = null;
 
-    private final Class mAmClass;
+    private final Class mAmIface;
     private final Object mAm;
     private final Class mIApplicationThreadClass;
     private final Method mIApplicationThreadAsInterface;
@@ -56,12 +57,18 @@ class ActivityManagerWrapper {
 
     private ActivityManagerWrapper() {
         try {
-            mAmClass = Class.forName("android.app.ActivityManagerNative");
-            mAm = mAmClass.getMethod("getDefault").invoke(null);
+            mAmIface = Class.forName("android.app.IActivityManager");
+            mAm = Class.forName("android.app.ActivityManagerNative").getMethod("getDefault").invoke(null);
             mIApplicationThreadClass = Class.forName("android.app.IApplicationThread");
-            mIApplicationThreadAsInterface = Class.forName("android.app.ApplicationThreadNative").getMethod("asInterface", IBinder.class);
+            Class<?> applicationThreadStubClass;
+            try {
+                applicationThreadStubClass = Class.forName("android.app.IApplicationThread$Stub");
+            } catch (ClassNotFoundException e) {
+                applicationThreadStubClass = Class.forName("android.app.ApplicationThreadNative");
+            }
+            mIApplicationThreadAsInterface = applicationThreadStubClass.getMethod("asInterface", IBinder.class);
             mStartActivityMethod =
-                    new CrossVersionReflectedMethod(mAmClass)
+                    new CrossVersionReflectedMethod(mAmIface)
                     .tryMethodVariantInexact( // 6.0 & 4.3
                         "startActivity",
                         mIApplicationThreadClass,   "caller",           null,
@@ -134,7 +141,7 @@ class ActivityManagerWrapper {
                         boolean.class,              "debug",            false
                     );
             mBroadcastIntentMethod =
-                    new CrossVersionReflectedMethod(mAmClass)
+                    new CrossVersionReflectedMethod(mAmIface)
                     .tryMethodVariantInexact( // 6.0
                             "broadcastIntent",
                             mIApplicationThreadClass, "caller", null,
@@ -210,7 +217,7 @@ class ActivityManagerWrapper {
                         boolean.class,              "sticky",           false
                     );
             mBindServiceMethod =
-                    new CrossVersionReflectedMethod(mAmClass)
+                    new CrossVersionReflectedMethod(mAmIface)
                     .tryMethodVariant( // 4.4
                         "bindService",
                         mIApplicationThreadClass,   "caller",           null,
@@ -231,13 +238,13 @@ class ActivityManagerWrapper {
                         int.class,                  "flags",            0
                     );
             mSetActivityControllerMethod =
-                    new CrossVersionReflectedMethod(mAmClass)
+                    new CrossVersionReflectedMethod(mAmIface)
                     .tryMethodVariant(
                             "setActivityController",
                             IActivityController.class, "watcher", null
                     );
             mGetRecentTasksMethod =
-                    new CrossVersionReflectedMethod(mAmClass)
+                    new CrossVersionReflectedMethod(mAmIface)
                     .tryMethodVariant(
                             "getRecentTasks",
                             int.class,              "maxNum",           PickRecentlyRunningActivity.MAX_TASKS,
@@ -301,9 +308,15 @@ class ActivityManagerWrapper {
 
     Intent[] getRecentTasks() {
         try {
-            return PickRecentlyRunningActivity.getIntentsFromTasks(
-                    (java.util.List<ActivityManager.RecentTaskInfo>) mGetRecentTasksMethod.invoke(mAm)
-            );
+            Object result = mGetRecentTasksMethod.invoke(mAm);
+            List<ActivityManager.RecentTaskInfo> list = null;
+            if (result instanceof List) {
+                list = (List<ActivityManager.RecentTaskInfo>) result;
+            } else if (result != null && result.getClass().getName().equals("android.content.pm.ParceledListSlice"))
+            {
+                list = (List<ActivityManager.RecentTaskInfo>) result.getClass().getMethod("getList").invoke(result);
+            }
+            return PickRecentlyRunningActivity.getIntentsFromTasks(list);
         } catch (Exception e) {
             return null;
         }
