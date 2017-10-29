@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion '25.0.2'
+    buildToolsVersion '26.0.2'
 
     defaultConfig {
         minSdkVersion 9
@@ -27,4 +27,5 @@ dependencies {
     compile project(':XposedHooksApi')
     compile 'com.google.dexmaker:dexmaker:1.1'
     compile 'org.jdeferred:jdeferred-android-aar:1.2.4'
+    testCompile 'junit:junit:4.12'
 }

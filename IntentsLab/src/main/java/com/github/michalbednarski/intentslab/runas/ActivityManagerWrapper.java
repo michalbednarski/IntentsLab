@@ -218,6 +218,17 @@ class ActivityManagerWrapper {
                     );
             mBindServiceMethod =
                     new CrossVersionReflectedMethod(mAmIface)
+                    .tryMethodVariantInexact( // 6.0
+                        "bindService",
+                        mIApplicationThreadClass,   "caller",           null,
+                        IBinder.class,              "token",            null,
+                        Intent.class,               "service",          null,
+                        String.class,               "resolvedType",     null,
+                        IServiceConnection.class,   "connection",       null,
+                        int.class,                  "flags",            0,
+                        String.class,               "callingPackage",   "com.android.shell",
+                        int.class,                  "userId",           0
+                    )
                     .tryMethodVariant( // 4.4
                         "bindService",
                         mIApplicationThreadClass,   "caller",           null,

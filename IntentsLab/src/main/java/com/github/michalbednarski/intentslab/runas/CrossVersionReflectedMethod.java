@@ -131,7 +131,7 @@ public class CrossVersionReflectedMethod {
                 // Iterate over actual method arguments
                 for (Class<?> methodParam : method.getParameterTypes()) {
                     // Get expected argument if we haven't it cached
-                    if (expectedArgumentClass == null) {
+                    if (expectedArgumentClass == null && expectedArgumentI < expectedArgCount) {
                         Object refArgument = typesNamesAndDefaults[expectedArgumentI * 3];
                         if (refArgument instanceof Class) {
                             expectedArgumentClass = (Class<?>) refArgument;
